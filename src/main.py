@@ -1,26 +1,10 @@
 
-
 from rag import PathRAG
 from utils import setup_logging
-
+from src import chunks
 logger = setup_logging()
 
-
-
-
-
 def main():
-    document = """
-    Canada is a country in North America. It has ten provinces and three territories.
-    Ottawa is the capital city of Canada. The country is known for its natural beauty.
-    """
-
-    # Improved chunking to ensure better connectivity
-    chunks = [
-        "Canada is a country in North America with ten provinces and three territories.",
-        "Ottawa is the capital city of Canada.",
-        "Canada is known for its natural beauty and vast landscapes."
-    ]
 
     query = "What is the capital of Canada?"
 
@@ -30,7 +14,7 @@ def main():
             embedding_model="sentence-transformers/all-MiniLM-L6-v2",
             decay_rate=0.7,  # Lower decay for longer paths
             prune_thresh=0.05,  # Lower threshold to keep more paths
-            sim_should=0.2  # Higher threshold for semantic similarity
+            sim_should=0.5  # Higher threshold for semantic similarity
 
         )
 
