@@ -1,0 +1,63 @@
+2025-06-30 16:30:47,814 - DEBUG - This is a debug message - detailed technical information.
+2025-06-30 16:30:47,815 - INFO - This is an info message - general application flow.
+2025-06-30 16:30:47,815 - WARNING - This is a warning message - something unexpected happened.
+2025-06-30 16:30:47,815 - ERROR - This is an error message - something failed.
+2025-06-30 17:52:50,095 - INFO - Gemini LLM initialized with model: gemini-1.5-flash
+2025-06-30 17:53:08,406 - INFO - Gemini response generated.
+2025-07-01 15:41:58,904 - INFO - PathRAG initialized with decay_rate=0.70, prune_thresh=0.050
+2025-07-01 15:41:58,905 - INFO - Embedding 3 chunks
+2025-07-01 15:41:59,014 - DEBUG - Added node 0 with 384-dim embedding
+2025-07-01 15:41:59,029 - DEBUG - Added node 1 with 384-dim embedding
+2025-07-01 15:41:59,048 - DEBUG - Added node 2 with 384-dim embedding
+2025-07-01 15:41:59,050 - DEBUG - Added edge (0,1) with weight 0.466
+2025-07-01 15:41:59,051 - DEBUG - Added edge (0,2) with weight 0.499
+2025-07-01 15:41:59,052 - DEBUG - Added edge (1,2) with weight 0.393
+2025-07-01 15:41:59,052 - INFO - Graph built with 3 nodes and 6 edges
+2025-07-01 15:41:59,052 - INFO - Graph built with 3 nodes and 6 edges
+2025-07-01 15:41:59,052 - DEBUG - Edge 0->1 with weight 0.466
+2025-07-01 15:41:59,052 - DEBUG - Edge 0->2 with weight 0.499
+2025-07-01 15:41:59,052 - DEBUG - Edge 1->0 with weight 0.466
+2025-07-01 15:41:59,052 - DEBUG - Edge 1->2 with weight 0.393
+2025-07-01 15:41:59,052 - DEBUG - Edge 2->0 with weight 0.499
+2025-07-01 15:41:59,052 - DEBUG - Edge 2->1 with weight 0.393
+2025-07-01 15:41:59,067 - INFO - Retrieved top 3 nodes: [1, 0, 2]
+2025-07-01 15:41:59,067 - INFO - Retrieved nodes: [1, 0, 2]
+2025-07-01 15:41:59,067 - ERROR - Processing failed: Path must contain at least 2 nodes
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/main.py", line 54, in main
+    paths = path_rag.prune_paths(top_nodes, max_hops=max_hops)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/pathrag.py", line 189, in prune_paths
+    flow = self._compute_flow(path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/pathrag.py", line 206, in _compute_flow
+    raise ValueError("Path must contain at least 2 nodes")
+ValueError: Path must contain at least 2 nodes
+2025-07-01 15:42:49,681 - INFO - PathRAG initialized with decay_rate=0.70, prune_thresh=0.050
+2025-07-01 15:42:49,682 - INFO - Embedding 3 chunks
+2025-07-01 15:42:49,705 - DEBUG - Added node 0 with 384-dim embedding
+2025-07-01 15:42:49,719 - DEBUG - Added node 1 with 384-dim embedding
+2025-07-01 15:42:49,734 - DEBUG - Added node 2 with 384-dim embedding
+2025-07-01 15:42:49,735 - DEBUG - Added edge (0,1) with weight 0.466
+2025-07-01 15:42:49,736 - DEBUG - Added edge (0,2) with weight 0.499
+2025-07-01 15:42:49,736 - DEBUG - Added edge (1,2) with weight 0.393
+2025-07-01 15:42:49,736 - INFO - Graph built with 3 nodes and 6 edges
+2025-07-01 15:42:49,736 - INFO - Graph built with 3 nodes and 6 edges
+2025-07-01 15:42:49,736 - DEBUG - Edge 0->1 with weight 0.466
+2025-07-01 15:42:49,736 - DEBUG - Edge 0->2 with weight 0.499
+2025-07-01 15:42:49,737 - DEBUG - Edge 1->0 with weight 0.466
+2025-07-01 15:42:49,737 - DEBUG - Edge 1->2 with weight 0.393
+2025-07-01 15:42:49,737 - DEBUG - Edge 2->0 with weight 0.499
+2025-07-01 15:42:49,737 - DEBUG - Edge 2->1 with weight 0.393
+2025-07-01 15:42:49,757 - INFO - Retrieved top 3 nodes: [1, 0, 2] with similarities [0.742856502532959, 0.6033107042312622, 0.46808308362960815]
+2025-07-01 15:42:49,757 - INFO - Retrieved nodes: [1, 0, 2]
+2025-07-01 15:42:49,758 - DEBUG - Kept path [1, 0] with flow 0.326
+2025-07-01 15:42:49,758 - DEBUG - Kept path [1, 2, 0] with flow 0.096
+2025-07-01 15:42:49,758 - DEBUG - Kept path [1, 0, 2] with flow 0.114
+2025-07-01 15:42:49,758 - DEBUG - Kept path [1, 2] with flow 0.275
+2025-07-01 15:42:49,758 - DEBUG - Kept path [0, 1, 2] with flow 0.090
+2025-07-01 15:42:49,758 - DEBUG - Kept path [0, 2] with flow 0.349
+2025-07-01 15:42:49,758 - INFO - Path pruning retained 6 paths from 3 source nodes
+2025-07-01 15:42:49,759 - INFO - Found 6 paths with 2 hops
+2025-07-01 15:42:49,759 - DEBUG - Path scoring complete. Top path: [0, 2] with score 0.349
+2025-07-01 15:42:49,759 - INFO - Generated prompt with 6 paths (total length: 1066 chars)
