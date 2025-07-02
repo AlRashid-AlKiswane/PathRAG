@@ -5229,3 +5229,162 @@ RuntimeError: Cohere generation failed: status_code: 400, body: {'id': 'a16f89cb
 2025-07-02 22:38:22,099 - DEBUG - Empty embedding_dict provided, returning empty set
 2025-07-02 22:38:25,465 - INFO - Query processed successfully
 2025-07-02 22:38:25,465 - INFO - ✅ Query processed: How does reinforcement learning train agents?
+
+2025-07-02 22:45:11,007 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 22:45:11,009 - DEBUG - Calling load_embedding_model()...
+2025-07-02 22:45:11,009 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 22:45:11,009 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 22:45:45,764 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 22:45:45,764 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 22:45:45,764 - DEBUG - NERModel device set to: cpu
+2025-07-02 22:45:45,764 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 22:45:53,247 - INFO - NERModel successfully loaded.
+2025-07-02 22:45:53,297 - INFO - Initialized Cohere LLM with model: command-light
+2025-07-02 22:45:53,297 - INFO - LightRAG initialized successfully
+2025-07-02 22:45:53,297 - DEBUG - LightRAG instance created.
+2025-07-02 22:45:53,297 - INFO - 📄 Sample medical document prepared.
+2025-07-02 22:45:53,297 - DEBUG - Document content: Machine Learning (ML) is a field of artificial intelligence focused on building systems that learn f
+2025-07-02 22:45:53,297 - INFO - ⚙️ Processing document...
+2025-07-02 22:45:53,297 - INFO - Processing document (size: 3570 chars)
+2025-07-02 22:45:53,298 - DEBUG - Split document into 35 chunks
+2025-07-02 22:45:53,298 - INFO - Document split into 35 chunks
+2025-07-02 22:45:53,298 - DEBUG - Processing chunk 1/35
+2025-07-02 22:45:53,298 - DEBUG - Extracting entities and relations
+2025-07-02 22:45:53,298 - DEBUG - Starting NER prediction...
+2025-07-02 22:45:53,329 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.89573264, 'word': 'Machine Learning', 'start': 0, 'end': 16}, {'entity_group': 'ORG', 'score': 0.6149129, 'word': 'ML', 'start': 18, 'end': 20}]
+2025-07-02 22:45:53,330 - DEBUG - Entity found: Machine Learning [PER] (0-16)
+2025-07-02 22:45:53,330 - DEBUG - Entity found: ML [ORG] (18-20)
+2025-07-02 22:45:53,330 - DEBUG - Found 2 entities
+2025-07-02 22:46:03,474 - DEBUG - Found 0 relations
+2025-07-02 22:46:05,824 - DEBUG - Profiled 2 entities
+2025-07-02 22:46:05,824 - DEBUG - Profiled 0 relations
+2025-07-02 22:46:05,917 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:46:05,917 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:46:05,917 - DEBUG - Chunk 1 processed successfully
+2025-07-02 22:46:05,918 - DEBUG - Processing chunk 2/35
+2025-07-02 22:46:05,918 - DEBUG - Extracting entities and relations
+2025-07-02 22:46:05,918 - DEBUG - Starting NER prediction...
+2025-07-02 22:46:05,927 - DEBUG - NER raw output: []
+2025-07-02 22:46:05,927 - DEBUG - Found 0 entities
+2025-07-02 22:46:07,156 - DEBUG - Found 0 relations
+2025-07-02 22:46:07,156 - DEBUG - Profiled 0 entities
+2025-07-02 22:46:07,156 - DEBUG - Profiled 0 relations
+2025-07-02 22:46:07,156 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:46:07,156 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:46:07,156 - DEBUG - Chunk 2 processed successfully
+2025-07-02 22:46:07,156 - DEBUG - Processing chunk 3/35
+2025-07-02 22:46:07,156 - DEBUG - Extracting entities and relations
+2025-07-02 22:46:07,156 - DEBUG - Starting NER prediction...
+2025-07-02 22:46:07,166 - DEBUG - NER raw output: [{'entity_group': 'ORG', 'score': 0.67445403, 'word': 'In', 'start': 2, 'end': 4}]
+2025-07-02 22:46:07,166 - DEBUG - Entity found: In [ORG] (2-4)
+2025-07-02 22:46:07,166 - DEBUG - Found 1 entities
+2025-07-02 22:46:09,305 - DEBUG - Found 0 relations
+2025-07-02 22:46:10,840 - DEBUG - Profiled 1 entities
+2025-07-02 22:46:10,840 - DEBUG - Profiled 0 relations
+2025-07-02 22:46:10,853 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:46:10,853 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:46:10,853 - DEBUG - Chunk 3 processed successfully
+2025-07-02 22:46:10,853 - DEBUG - Processing chunk 4/35
+2025-07-02 22:46:10,853 - DEBUG - Extracting entities and relations
+2025-07-02 22:46:10,853 - DEBUG - Starting NER prediction...
+2025-07-02 22:46:10,862 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.9126946, 'word': 'Linear Regression', 'start': 28, 'end': 45}, {'entity_group': 'PER', 'score': 0.9144623, 'word': 'Logistic Regression', 'start': 47, 'end': 66}, {'entity_group': 'PER', 'score': 0.7875798, 'word': 'Support Vector Machines', 'start': 68, 'end': 91}, {'entity_group': 'ORG', 'score': 0.90810734, 'word': 'SVM', 'start': 93, 'end': 96}, {'entity_group': 'PER', 'score': 0.89549893, 'word': 'Random Forests', 'start': 99, 'end': 113}, {'entity_group': 'ORG', 'score': 0.5470048, 'word': 'Gradient', 'start': 119, 'end': 127}]
+2025-07-02 22:46:10,862 - DEBUG - Entity found: Linear Regression [PER] (28-45)
+2025-07-02 22:46:10,862 - DEBUG - Entity found: Logistic Regression [PER] (47-66)
+2025-07-02 22:46:10,863 - DEBUG - Entity found: Support Vector Machines [PER] (68-91)
+2025-07-02 22:46:10,863 - DEBUG - Entity found: SVM [ORG] (93-96)
+2025-07-02 22:46:10,863 - DEBUG - Entity found: Random Forests [PER] (99-113)
+2025-07-02 22:46:10,863 - DEBUG - Entity found: Gradient [ORG] (119-127)
+2025-07-02 22:46:10,863 - DEBUG - Found 6 entities
+2025-07-02 22:46:14,935 - DEBUG - Found 0 relations
+2025-07-02 22:48:14,318 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 22:48:14,318 - DEBUG - Calling load_embedding_model()...
+2025-07-02 22:48:14,319 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 22:48:14,319 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 22:48:56,986 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 22:48:56,989 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 22:48:56,989 - DEBUG - NERModel device set to: cpu
+2025-07-02 22:48:56,989 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 22:49:01,674 - INFO - NERModel successfully loaded.
+2025-07-02 22:49:01,706 - INFO - Initialized Cohere LLM with model: command-light
+2025-07-02 22:49:01,707 - INFO - LightRAG initialized successfully
+2025-07-02 22:49:01,707 - DEBUG - LightRAG instance created.
+2025-07-02 22:49:01,707 - INFO - 📄 Sample medical document prepared.
+2025-07-02 22:49:01,707 - DEBUG - Document content: Machine Learning (ML) is a field of artificial intelligence focused on building systems that learn f
+2025-07-02 22:49:01,707 - INFO - ⚙️ Processing document...
+2025-07-02 22:49:01,707 - INFO - Processing document (size: 3570 chars)
+2025-07-02 22:49:01,707 - DEBUG - Split document into 4 chunks
+2025-07-02 22:49:01,707 - INFO - Document split into 4 chunks
+2025-07-02 22:49:01,707 - DEBUG - Processing chunk 1/4
+2025-07-02 22:49:01,707 - DEBUG - Extracting entities and relations
+2025-07-02 22:49:01,707 - DEBUG - Starting NER prediction...
+2025-07-02 22:49:01,744 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.75041187, 'word': 'Machine Learning', 'start': 0, 'end': 16}, {'entity_group': 'ORG', 'score': 0.5091342, 'word': 'ML', 'start': 18, 'end': 20}, {'entity_group': 'LOC', 'score': 0.36674133, 'word': 'It', 'start': 110, 'end': 112}, {'entity_group': 'ORG', 'score': 0.28745452, 'word': 'In', 'start': 220, 'end': 222}, {'entity_group': 'ORG', 'score': 0.35662064, 'word': 'Common', 'start': 315, 'end': 321}, {'entity_group': 'PER', 'score': 0.8989135, 'word': 'Linear Regression', 'start': 341, 'end': 358}, {'entity_group': 'PER', 'score': 0.8556818, 'word': 'Logistic Regression', 'start': 360, 'end': 379}, {'entity_group': 'PER', 'score': 0.8042137, 'word': 'Support Vector Machines', 'start': 381, 'end': 404}, {'entity_group': 'ORG', 'score': 0.699506, 'word': 'SVM', 'start': 406, 'end': 409}, {'entity_group': 'PER', 'score': 0.8862007, 'word': 'Random Forests', 'start': 412, 'end': 426}, {'entity_group': 'PER', 'score': 0.47820947, 'word': 'Gradient', 'start': 432, 'end': 440}, {'entity_group': 'ORG', 'score': 0.73314047, 'word': 'Boosting Machines', 'start': 441, 'end': 458}, {'entity_group': 'ORG', 'score': 0.77471054, 'word': 'Unsupervised lear', 'start': 460, 'end': 477}, {'entity_group': 'ORG', 'score': 0.6320405, 'word': 'Algorithms', 'start': 521, 'end': 531}, {'entity_group': 'ORG', 'score': 0.40920997, 'word': 'K', 'start': 537, 'end': 538}, {'entity_group': 'ORG', 'score': 0.50391084, 'word': 'Means', 'start': 539, 'end': 544}, {'entity_group': 'LOC', 'score': 0.5137959, 'word': 'Clustering', 'start': 545, 'end': 555}, {'entity_group': 'ORG', 'score': 0.50792027, 'word': 'DBSCAN', 'start': 557, 'end': 563}, {'entity_group': 'ORG', 'score': 0.36428168, 'word': 'Principal', 'start': 569, 'end': 578}, {'entity_group': 'LOC', 'score': 0.33221543, 'word': 'Component', 'start': 579, 'end': 588}, {'entity_group': 'ORG', 'score': 0.48677427, 'word': 'Analysis', 'start': 589, 'end': 597}, {'entity_group': 'ORG', 'score': 0.3510311, 'word': 'PCA', 'start': 599, 'end': 602}, {'entity_group': 'LOC', 'score': 0.37099943, 'word': 'Reinforcement', 'start': 653, 'end': 666}, {'entity_group': 'ORG', 'score': 0.6744548, 'word': 'RL', 'start': 677, 'end': 679}, {'entity_group': 'ORG', 'score': 0.53626657, 'word': 'RL', 'start': 795, 'end': 797}, {'entity_group': 'ORG', 'score': 0.4808475, 'word': 'Go', 'start': 844, 'end': 846}, {'entity_group': 'ORG', 'score': 0.5303796, 'word': 'OpenAI', 'start': 869, 'end': 875}, {'entity_group': 'ORG', 'score': 0.2683663, 'word': 'Gym', 'start': 876, 'end': 879}, {'entity_group': 'ORG', 'score': 0.40750775, 'word': 'Deep', 'start': 880, 'end': 884}, {'entity_group': 'ORG', 'score': 0.6336067, 'word': 'Learning', 'start': 885, 'end': 893}, {'entity_group': 'ORG', 'score': 0.41033295, 'word': 'ML', 'start': 911, 'end': 913}]
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Machine Learning [PER] (0-16)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: ML [ORG] (18-20)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: It [LOC] (110-112)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: In [ORG] (220-222)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Common [ORG] (315-321)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Linear Regression [PER] (341-358)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Logistic Regression [PER] (360-379)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Support Vector Machines [PER] (381-404)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: SVM [ORG] (406-409)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Random Forests [PER] (412-426)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Gradient [PER] (432-440)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Boosting Machines [ORG] (441-458)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Unsupervised lear [ORG] (460-477)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Algorithms [ORG] (521-531)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: K [ORG] (537-538)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Means [ORG] (539-544)
+2025-07-02 22:49:01,744 - DEBUG - Entity found: Clustering [LOC] (545-555)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: DBSCAN [ORG] (557-563)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: Principal [ORG] (569-578)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: Component [LOC] (579-588)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: Analysis [ORG] (589-597)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: PCA [ORG] (599-602)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: Reinforcement [LOC] (653-666)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: RL [ORG] (677-679)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: RL [ORG] (795-797)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: Go [ORG] (844-846)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: OpenAI [ORG] (869-875)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: Gym [ORG] (876-879)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: Deep [ORG] (880-884)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: Learning [ORG] (885-893)
+2025-07-02 22:49:01,745 - DEBUG - Entity found: ML [ORG] (911-913)
+2025-07-02 22:49:01,745 - DEBUG - Found 31 entities
+2025-07-02 22:49:05,281 - DEBUG - Found 0 relations
+2025-07-02 22:49:52,922 - DEBUG - Profiled 31 entities
+2025-07-02 22:49:52,922 - DEBUG - Profiled 0 relations
+2025-07-02 22:49:52,976 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:49:52,977 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:49:52,977 - DEBUG - Chunk 1 processed successfully
+2025-07-02 22:49:52,977 - DEBUG - Processing chunk 2/4
+2025-07-02 22:49:52,977 - DEBUG - Extracting entities and relations
+2025-07-02 22:49:52,977 - DEBUG - Starting NER prediction...
+2025-07-02 22:49:53,010 - DEBUG - NER raw output: [{'entity_group': 'ORG', 'score': 0.2762151, 'word': 'It', 'start': 2, 'end': 4}, {'entity_group': 'PER', 'score': 0.6162781, 'word': 'Convolutional Neural Networks', 'start': 92, 'end': 121}, {'entity_group': 'LOC', 'score': 0.6672959, 'word': 'CNNs', 'start': 123, 'end': 127}, {'entity_group': 'PER', 'score': 0.7622991, 'word': 'Recurrent Neural Networks', 'start': 171, 'end': 196}, {'entity_group': 'LOC', 'score': 0.5926671, 'word': 'RNNs', 'start': 198, 'end': 202}, {'entity_group': 'PER', 'score': 0.95222163, 'word': 'Long Short', 'start': 205, 'end': 215}, {'entity_group': 'PER', 'score': 0.8654231, 'word': 'Term Memory', 'start': 216, 'end': 227}, {'entity_group': 'LOC', 'score': 0.63479054, 'word': 'LSTM', 'start': 229, 'end': 233}, {'entity_group': 'PER', 'score': 0.7579686, 'word': 'Gated Recurrent Units', 'start': 240, 'end': 261}, {'entity_group': 'LOC', 'score': 0.540265, 'word': 'GRUs', 'start': 263, 'end': 267}, {'entity_group': 'LOC', 'score': 0.25241977, 'word': 'However', 'start': 332, 'end': 339}, {'entity_group': 'LOC', 'score': 0.50956786, 'word': 'Transformer', 'start': 384, 'end': 395}, {'entity_group': 'ORG', 'score': 0.44801405, 'word': 'Transformers', 'start': 494, 'end': 506}, {'entity_group': 'LOC', 'score': 0.46715754, 'word': 'The', 'start': 649, 'end': 652}, {'entity_group': 'MISC', 'score': 0.38386565, 'word': 'Transformer', 'start': 653, 'end': 664}, {'entity_group': 'MISC', 'score': 0.38420102, 'word': 'Large', 'start': 713, 'end': 718}, {'entity_group': 'LOC', 'score': 0.3326879, 'word': 'Language', 'start': 719, 'end': 727}, {'entity_group': 'ORG', 'score': 0.32090327, 'word': 'Models', 'start': 728, 'end': 734}, {'entity_group': 'ORG', 'score': 0.40499386, 'word': 'LLMs', 'start': 736, 'end': 740}, {'entity_group': 'LOC', 'score': 0.45065042, 'word': 'BERT', 'start': 753, 'end': 757}, {'entity_group': 'ORG', 'score': 0.36336306, 'word': 'GPT', 'start': 759, 'end': 762}, {'entity_group': 'LOC', 'score': 0.38426054, 'word': 'T5', 'start': 764, 'end': 766}, {'entity_group': 'ORG', 'score': 0.3700767, 'word': 'LLaMA', 'start': 772, 'end': 777}, {'entity_group': 'ORG', 'score': 0.44116688, 'word': 'BERT', 'start': 779, 'end': 783}, {'entity_group': 'LOC', 'score': 0.3415095, 'word': 'GPT', 'start': 903, 'end': 906}]
+2025-07-02 22:49:53,010 - DEBUG - Entity found: It [ORG] (2-4)
+2025-07-02 22:49:53,010 - DEBUG - Entity found: Convolutional Neural Networks [PER] (92-121)
+2025-07-02 22:49:53,010 - DEBUG - Entity found: CNNs [LOC] (123-127)
+2025-07-02 22:49:53,010 - DEBUG - Entity found: Recurrent Neural Networks [PER] (171-196)
+2025-07-02 22:49:53,010 - DEBUG - Entity found: RNNs [LOC] (198-202)
+2025-07-02 22:49:53,010 - DEBUG - Entity found: Long Short [PER] (205-215)
+2025-07-02 22:49:53,010 - DEBUG - Entity found: Term Memory [PER] (216-227)
+2025-07-02 22:49:53,010 - DEBUG - Entity found: LSTM [LOC] (229-233)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: Gated Recurrent Units [PER] (240-261)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: GRUs [LOC] (263-267)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: However [LOC] (332-339)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: Transformer [LOC] (384-395)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: Transformers [ORG] (494-506)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: The [LOC] (649-652)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: Transformer [MISC] (653-664)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: Large [MISC] (713-718)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: Language [LOC] (719-727)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: Models [ORG] (728-734)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: LLMs [ORG] (736-740)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: BERT [LOC] (753-757)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: GPT [ORG] (759-762)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: T5 [LOC] (764-766)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: LLaMA [ORG] (772-777)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: BERT [ORG] (779-783)
+2025-07-02 22:49:53,011 - DEBUG - Entity found: GPT [LOC] (903-906)
+2025-07-02 22:49:53,011 - DEBUG - Found 25 entities
+2025-07-02 22:49:54,624 - DEBUG - Found 0 relations
+2025-07-02 22:50:05,579 - ERROR - Cohere generation failed: status_code: 429, body: {'id': '556bcffd-5691-471a-9886-e3f46ef7e050', 'message': "You are using a Trial key, which is limited to 40 API calls / minute. You can continue to use the Trial key for free or upgrade to a Production key with higher rate limits at 'https://dashboard.cohere.com/api-keys'. Contact us on 'https://discord.gg/XW44jPfYJu' or email us at support@cohere.com with any questions"}

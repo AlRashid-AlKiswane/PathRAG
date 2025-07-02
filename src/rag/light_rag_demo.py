@@ -98,8 +98,8 @@ def main():
         logger.info("⚙️ Processing document...")
         try:
             rag.process_document(document=document,
-                                 chunk_size=512,
-                                 chunk_overlap=20)
+                                 chunk_size=1000,
+                                 chunk_overlap=50)
             logger.info("✅ Document processed successfully.")
         except Exception as e:
             logger.error("❌ Failed to process document: %s", e, exc_info=True)
