@@ -3842,3 +3842,1390 @@ RuntimeError: Entity description failed: 429 You exceeded your current quota, pl
 2025-07-02 21:55:55,427 - DEBUG - Calling load_embedding_model()...
 2025-07-02 21:55:55,427 - INFO - 🔄 Starting embedding model loading...
 2025-07-02 21:55:55,427 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 21:56:18,053 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 21:56:18,053 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 21:56:18,053 - DEBUG - NERModel device set to: cpu
+2025-07-02 21:56:18,053 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 21:56:25,125 - INFO - NERModel successfully loaded.
+2025-07-02 21:56:25,125 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 21:56:25,125 - INFO - LightRAG initialized successfully
+2025-07-02 21:56:25,125 - DEBUG - LightRAG instance created.
+2025-07-02 21:56:25,125 - INFO - 📄 Sample medical document prepared.
+2025-07-02 21:56:25,125 - DEBUG - Document content: Machine Learning (ML) is a field of artificial intelligence focused on building systems that learn f
+2025-07-02 21:56:25,125 - INFO - ⚙️ Processing document...
+2025-07-02 21:56:25,126 - INFO - Processing document (size: 3570 chars)
+2025-07-02 21:56:25,126 - DEBUG - Split document into 8 chunks
+2025-07-02 21:56:25,126 - INFO - Document split into 8 chunks
+2025-07-02 21:56:25,126 - DEBUG - Processing chunk 1/8
+2025-07-02 21:56:25,126 - DEBUG - Extracting entities and relations
+2025-07-02 21:56:25,126 - DEBUG - Starting NER prediction...
+2025-07-02 21:56:25,167 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.8496679, 'word': 'Machine Learning', 'start': 0, 'end': 16}, {'entity_group': 'ORG', 'score': 0.4979889, 'word': 'ML', 'start': 18, 'end': 20}, {'entity_group': 'LOC', 'score': 0.49249476, 'word': 'It', 'start': 110, 'end': 112}, {'entity_group': 'MISC', 'score': 0.36396173, 'word': 'In', 'start': 220, 'end': 222}, {'entity_group': 'MISC', 'score': 0.5179672, 'word': '##ed', 'start': 231, 'end': 233}, {'entity_group': 'PER', 'score': 0.90470964, 'word': 'Linear Regression', 'start': 341, 'end': 358}, {'entity_group': 'PER', 'score': 0.88711643, 'word': 'Logistic Regression', 'start': 360, 'end': 379}, {'entity_group': 'PER', 'score': 0.8490203, 'word': 'Support Vector Machines', 'start': 381, 'end': 404}, {'entity_group': 'ORG', 'score': 0.78376687, 'word': 'SVM', 'start': 406, 'end': 409}, {'entity_group': 'PER', 'score': 0.86748683, 'word': 'Random Forests', 'start': 412, 'end': 426}, {'entity_group': 'PER', 'score': 0.58062977, 'word': 'Gradient Boosting Machines', 'start': 432, 'end': 458}]
+2025-07-02 21:56:25,167 - DEBUG - Entity found: Machine Learning [PER] (0-16)
+2025-07-02 21:56:25,167 - DEBUG - Entity found: ML [ORG] (18-20)
+2025-07-02 21:56:25,167 - DEBUG - Entity found: It [LOC] (110-112)
+2025-07-02 21:56:25,167 - DEBUG - Entity found: In [MISC] (220-222)
+2025-07-02 21:56:25,167 - DEBUG - Entity found: ##ed [MISC] (231-233)
+2025-07-02 21:56:25,167 - DEBUG - Entity found: Linear Regression [PER] (341-358)
+2025-07-02 21:56:25,167 - DEBUG - Entity found: Logistic Regression [PER] (360-379)
+2025-07-02 21:56:25,167 - DEBUG - Entity found: Support Vector Machines [PER] (381-404)
+2025-07-02 21:56:25,167 - DEBUG - Entity found: SVM [ORG] (406-409)
+2025-07-02 21:56:25,167 - DEBUG - Entity found: Random Forests [PER] (412-426)
+2025-07-02 21:56:25,167 - DEBUG - Entity found: Gradient Boosting Machines [PER] (432-458)
+2025-07-02 21:56:25,167 - DEBUG - Found 11 entities
+2025-07-02 21:56:30,848 - DEBUG - Found 0 relations
+2025-07-02 21:56:56,449 - DEBUG - Profiled 11 entities
+2025-07-02 21:56:56,449 - DEBUG - Profiled 0 relations
+2025-07-02 21:56:56,561 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 21:56:56,561 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 21:56:56,561 - DEBUG - Chunk 1 processed successfully
+2025-07-02 21:56:56,561 - DEBUG - Processing chunk 2/8
+2025-07-02 21:56:56,561 - DEBUG - Extracting entities and relations
+2025-07-02 21:56:56,561 - DEBUG - Starting NER prediction...
+2025-07-02 21:56:56,574 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.4510351, 'word': 'Means Clustering', 'start': 81, 'end': 97}, {'entity_group': 'PER', 'score': 0.5539799, 'word': 'DBSCAN', 'start': 99, 'end': 105}, {'entity_group': 'PER', 'score': 0.62225467, 'word': 'Principal Component Analysis', 'start': 111, 'end': 139}, {'entity_group': 'ORG', 'score': 0.6573355, 'word': 'PCA', 'start': 141, 'end': 144}, {'entity_group': 'ORG', 'score': 0.75633514, 'word': 'RL', 'start': 219, 'end': 221}, {'entity_group': 'LOC', 'score': 0.4271172, 'word': 'Go', 'start': 386, 'end': 388}, {'entity_group': 'LOC', 'score': 0.82520086, 'word': 'OpenAI', 'start': 411, 'end': 417}]
+2025-07-02 21:56:56,575 - DEBUG - Entity found: Means Clustering [PER] (81-97)
+2025-07-02 21:56:56,575 - DEBUG - Entity found: DBSCAN [PER] (99-105)
+2025-07-02 21:56:56,575 - DEBUG - Entity found: Principal Component Analysis [PER] (111-139)
+2025-07-02 21:56:56,575 - DEBUG - Entity found: PCA [ORG] (141-144)
+2025-07-02 21:56:56,575 - DEBUG - Entity found: RL [ORG] (219-221)
+2025-07-02 21:56:56,575 - DEBUG - Entity found: Go [LOC] (386-388)
+2025-07-02 21:56:56,575 - DEBUG - Entity found: OpenAI [LOC] (411-417)
+2025-07-02 21:56:56,575 - DEBUG - Found 7 entities
+2025-07-02 21:56:57,677 - DEBUG - Found 1 relations
+2025-07-02 21:57:02,900 - ERROR - Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 57
+}
+]
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 118, in describe_entity
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 57
+}
+]
+2025-07-02 21:57:02,906 - ERROR - Error profiling entities: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 57
+}
+]
+2025-07-02 21:57:02,906 - ERROR - Error in document processing: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 57
+}
+]
+2025-07-02 21:57:02,906 - ERROR - ❌ Failed to process document: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 57
+}
+]
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 118, in describe_entity
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 57
+}
+]
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 100, in main
+    rag.process_document(document=document,
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 122, in process_document
+    profiled_entities = self._profile_entities(entities)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 254, in _profile_entities
+    description = self.llm.describe_entity(entity['text'], entity['type'])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 129, in describe_entity
+    raise RuntimeError(f"Entity description failed: {e}") from e
+RuntimeError: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 57
+}
+]
+2025-07-02 22:12:32,837 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 22:12:32,839 - DEBUG - Calling load_embedding_model()...
+2025-07-02 22:12:32,839 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 22:12:32,839 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 22:13:02,155 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 22:13:02,155 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 22:13:02,155 - DEBUG - NERModel device set to: cpu
+2025-07-02 22:13:02,156 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 22:13:06,237 - INFO - NERModel successfully loaded.
+2025-07-02 22:13:06,238 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 22:13:06,238 - INFO - LightRAG initialized successfully
+2025-07-02 22:13:06,238 - DEBUG - LightRAG instance created.
+2025-07-02 22:13:06,238 - INFO - 📄 Sample medical document prepared.
+2025-07-02 22:13:06,238 - DEBUG - Document content: Machine Learning (ML) is a field of artificial intelligence focused on building systems that learn f
+2025-07-02 22:13:06,238 - INFO - ⚙️ Processing document...
+2025-07-02 22:13:06,238 - INFO - Processing document (size: 3570 chars)
+2025-07-02 22:13:06,238 - DEBUG - Split document into 8 chunks
+2025-07-02 22:13:06,238 - INFO - Document split into 8 chunks
+2025-07-02 22:13:06,238 - DEBUG - Processing chunk 1/8
+2025-07-02 22:13:06,238 - DEBUG - Extracting entities and relations
+2025-07-02 22:13:06,238 - DEBUG - Starting NER prediction...
+2025-07-02 22:13:06,278 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.8496679, 'word': 'Machine Learning', 'start': 0, 'end': 16}, {'entity_group': 'ORG', 'score': 0.4979889, 'word': 'ML', 'start': 18, 'end': 20}, {'entity_group': 'LOC', 'score': 0.49249476, 'word': 'It', 'start': 110, 'end': 112}, {'entity_group': 'MISC', 'score': 0.36396173, 'word': 'In', 'start': 220, 'end': 222}, {'entity_group': 'MISC', 'score': 0.5179672, 'word': '##ed', 'start': 231, 'end': 233}, {'entity_group': 'PER', 'score': 0.90470964, 'word': 'Linear Regression', 'start': 341, 'end': 358}, {'entity_group': 'PER', 'score': 0.88711643, 'word': 'Logistic Regression', 'start': 360, 'end': 379}, {'entity_group': 'PER', 'score': 0.8490203, 'word': 'Support Vector Machines', 'start': 381, 'end': 404}, {'entity_group': 'ORG', 'score': 0.78376687, 'word': 'SVM', 'start': 406, 'end': 409}, {'entity_group': 'PER', 'score': 0.86748683, 'word': 'Random Forests', 'start': 412, 'end': 426}, {'entity_group': 'PER', 'score': 0.58062977, 'word': 'Gradient Boosting Machines', 'start': 432, 'end': 458}]
+2025-07-02 22:13:06,278 - DEBUG - Entity found: Machine Learning [PER] (0-16)
+2025-07-02 22:13:06,278 - DEBUG - Entity found: ML [ORG] (18-20)
+2025-07-02 22:13:06,278 - DEBUG - Entity found: It [LOC] (110-112)
+2025-07-02 22:13:06,278 - DEBUG - Entity found: In [MISC] (220-222)
+2025-07-02 22:13:06,278 - DEBUG - Entity found: ##ed [MISC] (231-233)
+2025-07-02 22:13:06,278 - DEBUG - Entity found: Linear Regression [PER] (341-358)
+2025-07-02 22:13:06,279 - DEBUG - Entity found: Logistic Regression [PER] (360-379)
+2025-07-02 22:13:06,279 - DEBUG - Entity found: Support Vector Machines [PER] (381-404)
+2025-07-02 22:13:06,279 - DEBUG - Entity found: SVM [ORG] (406-409)
+2025-07-02 22:13:06,279 - DEBUG - Entity found: Random Forests [PER] (412-426)
+2025-07-02 22:13:06,279 - DEBUG - Entity found: Gradient Boosting Machines [PER] (432-458)
+2025-07-02 22:13:06,279 - DEBUG - Found 11 entities
+2025-07-02 22:13:26,960 - DEBUG - Found 0 relations
+2025-07-02 22:13:53,361 - DEBUG - Profiled 11 entities
+2025-07-02 22:13:53,361 - DEBUG - Profiled 0 relations
+2025-07-02 22:13:53,476 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:13:53,476 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:13:53,476 - DEBUG - Chunk 1 processed successfully
+2025-07-02 22:13:53,476 - DEBUG - Processing chunk 2/8
+2025-07-02 22:13:53,477 - DEBUG - Extracting entities and relations
+2025-07-02 22:13:53,477 - DEBUG - Starting NER prediction...
+2025-07-02 22:13:53,495 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.4510351, 'word': 'Means Clustering', 'start': 81, 'end': 97}, {'entity_group': 'PER', 'score': 0.5539799, 'word': 'DBSCAN', 'start': 99, 'end': 105}, {'entity_group': 'PER', 'score': 0.62225467, 'word': 'Principal Component Analysis', 'start': 111, 'end': 139}, {'entity_group': 'ORG', 'score': 0.6573355, 'word': 'PCA', 'start': 141, 'end': 144}, {'entity_group': 'ORG', 'score': 0.75633514, 'word': 'RL', 'start': 219, 'end': 221}, {'entity_group': 'LOC', 'score': 0.4271172, 'word': 'Go', 'start': 386, 'end': 388}, {'entity_group': 'LOC', 'score': 0.82520086, 'word': 'OpenAI', 'start': 411, 'end': 417}]
+2025-07-02 22:13:53,496 - DEBUG - Entity found: Means Clustering [PER] (81-97)
+2025-07-02 22:13:53,496 - DEBUG - Entity found: DBSCAN [PER] (99-105)
+2025-07-02 22:13:53,496 - DEBUG - Entity found: Principal Component Analysis [PER] (111-139)
+2025-07-02 22:13:53,496 - DEBUG - Entity found: PCA [ORG] (141-144)
+2025-07-02 22:13:53,496 - DEBUG - Entity found: RL [ORG] (219-221)
+2025-07-02 22:13:53,496 - DEBUG - Entity found: Go [LOC] (386-388)
+2025-07-02 22:13:53,496 - DEBUG - Entity found: OpenAI [LOC] (411-417)
+2025-07-02 22:13:53,496 - DEBUG - Found 7 entities
+2025-07-02 22:14:03,384 - DEBUG - Found 1 relations
+2025-07-02 22:14:07,991 - ERROR - Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 52
+}
+]
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 118, in describe_entity
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 52
+}
+]
+2025-07-02 22:14:07,996 - ERROR - Error profiling entities: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 52
+}
+]
+2025-07-02 22:14:07,996 - ERROR - Error in document processing: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 52
+}
+]
+2025-07-02 22:14:07,996 - ERROR - ❌ Failed to process document: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 52
+}
+]
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 118, in describe_entity
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 52
+}
+]
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 100, in main
+    rag.process_document(document=document,
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 122, in process_document
+    profiled_entities = self._profile_entities(entities)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 254, in _profile_entities
+    description = self.llm.describe_entity(entity['text'], entity['type'])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 129, in describe_entity
+    raise RuntimeError(f"Entity description failed: {e}") from e
+RuntimeError: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 52
+}
+]
+2025-07-02 22:16:24,960 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 22:16:24,960 - DEBUG - Calling load_embedding_model()...
+2025-07-02 22:16:24,960 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 22:16:24,960 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 22:16:54,393 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 22:16:54,393 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 22:16:54,393 - DEBUG - NERModel device set to: cpu
+2025-07-02 22:16:54,393 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 22:16:58,532 - INFO - NERModel successfully loaded.
+2025-07-02 22:16:58,533 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 22:16:58,533 - INFO - LightRAG initialized successfully
+2025-07-02 22:16:58,533 - DEBUG - LightRAG instance created.
+2025-07-02 22:16:58,533 - INFO - 📄 Sample medical document prepared.
+2025-07-02 22:16:58,533 - DEBUG - Document content: Machine Learning (ML) is a field of artificial intelligence focused on building systems that learn f
+2025-07-02 22:16:58,533 - INFO - ⚙️ Processing document...
+2025-07-02 22:16:58,533 - INFO - Processing document (size: 3570 chars)
+2025-07-02 22:16:58,533 - DEBUG - Split document into 8 chunks
+2025-07-02 22:16:58,533 - INFO - Document split into 8 chunks
+2025-07-02 22:16:58,533 - DEBUG - Processing chunk 1/8
+2025-07-02 22:16:58,533 - DEBUG - Extracting entities and relations
+2025-07-02 22:16:58,533 - DEBUG - Starting NER prediction...
+2025-07-02 22:16:58,575 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.8496679, 'word': 'Machine Learning', 'start': 0, 'end': 16}, {'entity_group': 'ORG', 'score': 0.4979889, 'word': 'ML', 'start': 18, 'end': 20}, {'entity_group': 'LOC', 'score': 0.49249476, 'word': 'It', 'start': 110, 'end': 112}, {'entity_group': 'MISC', 'score': 0.36396173, 'word': 'In', 'start': 220, 'end': 222}, {'entity_group': 'MISC', 'score': 0.5179672, 'word': '##ed', 'start': 231, 'end': 233}, {'entity_group': 'PER', 'score': 0.90470964, 'word': 'Linear Regression', 'start': 341, 'end': 358}, {'entity_group': 'PER', 'score': 0.88711643, 'word': 'Logistic Regression', 'start': 360, 'end': 379}, {'entity_group': 'PER', 'score': 0.8490203, 'word': 'Support Vector Machines', 'start': 381, 'end': 404}, {'entity_group': 'ORG', 'score': 0.78376687, 'word': 'SVM', 'start': 406, 'end': 409}, {'entity_group': 'PER', 'score': 0.86748683, 'word': 'Random Forests', 'start': 412, 'end': 426}, {'entity_group': 'PER', 'score': 0.58062977, 'word': 'Gradient Boosting Machines', 'start': 432, 'end': 458}]
+2025-07-02 22:16:58,575 - DEBUG - Entity found: Machine Learning [PER] (0-16)
+2025-07-02 22:16:58,575 - DEBUG - Entity found: ML [ORG] (18-20)
+2025-07-02 22:16:58,575 - DEBUG - Entity found: It [LOC] (110-112)
+2025-07-02 22:16:58,575 - DEBUG - Entity found: In [MISC] (220-222)
+2025-07-02 22:16:58,575 - DEBUG - Entity found: ##ed [MISC] (231-233)
+2025-07-02 22:16:58,575 - DEBUG - Entity found: Linear Regression [PER] (341-358)
+2025-07-02 22:16:58,575 - DEBUG - Entity found: Logistic Regression [PER] (360-379)
+2025-07-02 22:16:58,575 - DEBUG - Entity found: Support Vector Machines [PER] (381-404)
+2025-07-02 22:16:58,575 - DEBUG - Entity found: SVM [ORG] (406-409)
+2025-07-02 22:16:58,575 - DEBUG - Entity found: Random Forests [PER] (412-426)
+2025-07-02 22:16:58,575 - DEBUG - Entity found: Gradient Boosting Machines [PER] (432-458)
+2025-07-02 22:16:58,575 - DEBUG - Found 11 entities
+2025-07-02 22:17:26,855 - DEBUG - Found 0 relations
+2025-07-02 22:17:57,964 - DEBUG - Profiled 11 entities
+2025-07-02 22:17:57,965 - DEBUG - Profiled 0 relations
+2025-07-02 22:17:58,084 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:17:58,084 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:17:58,085 - DEBUG - Chunk 1 processed successfully
+2025-07-02 22:17:58,085 - DEBUG - Processing chunk 2/8
+2025-07-02 22:17:58,085 - DEBUG - Extracting entities and relations
+2025-07-02 22:17:58,085 - DEBUG - Starting NER prediction...
+2025-07-02 22:17:58,110 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.4510351, 'word': 'Means Clustering', 'start': 81, 'end': 97}, {'entity_group': 'PER', 'score': 0.5539799, 'word': 'DBSCAN', 'start': 99, 'end': 105}, {'entity_group': 'PER', 'score': 0.62225467, 'word': 'Principal Component Analysis', 'start': 111, 'end': 139}, {'entity_group': 'ORG', 'score': 0.6573355, 'word': 'PCA', 'start': 141, 'end': 144}, {'entity_group': 'ORG', 'score': 0.75633514, 'word': 'RL', 'start': 219, 'end': 221}, {'entity_group': 'LOC', 'score': 0.4271172, 'word': 'Go', 'start': 386, 'end': 388}, {'entity_group': 'LOC', 'score': 0.82520086, 'word': 'OpenAI', 'start': 411, 'end': 417}]
+2025-07-02 22:17:58,111 - DEBUG - Entity found: Means Clustering [PER] (81-97)
+2025-07-02 22:17:58,111 - DEBUG - Entity found: DBSCAN [PER] (99-105)
+2025-07-02 22:17:58,111 - DEBUG - Entity found: Principal Component Analysis [PER] (111-139)
+2025-07-02 22:17:58,111 - DEBUG - Entity found: PCA [ORG] (141-144)
+2025-07-02 22:17:58,111 - DEBUG - Entity found: RL [ORG] (219-221)
+2025-07-02 22:17:58,111 - DEBUG - Entity found: Go [LOC] (386-388)
+2025-07-02 22:17:58,111 - DEBUG - Entity found: OpenAI [LOC] (411-417)
+2025-07-02 22:17:58,111 - DEBUG - Found 7 entities
+2025-07-02 22:17:59,338 - DEBUG - Found 1 relations
+2025-07-02 22:18:06,381 - ERROR - Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 54
+}
+]
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 118, in describe_entity
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 54
+}
+]
+2025-07-02 22:18:06,391 - ERROR - Error profiling entities: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 54
+}
+]
+2025-07-02 22:18:06,391 - ERROR - Error in document processing: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 54
+}
+]
+2025-07-02 22:18:06,391 - ERROR - ❌ Failed to process document: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 54
+}
+]
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 118, in describe_entity
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 54
+}
+]
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 100, in main
+    rag.process_document(document=document,
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 122, in process_document
+    profiled_entities = self._profile_entities(entities)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 254, in _profile_entities
+    description = self.llm.describe_entity(entity['text'], entity['type'])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 129, in describe_entity
+    raise RuntimeError(f"Entity description failed: {e}") from e
+RuntimeError: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 54
+}
+]
+2025-07-02 22:21:52,502 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 22:21:52,502 - DEBUG - Calling load_embedding_model()...
+2025-07-02 22:21:52,502 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 22:21:52,502 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 22:22:30,564 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 22:22:30,565 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 22:22:30,565 - DEBUG - NERModel device set to: cpu
+2025-07-02 22:22:30,565 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 22:22:40,364 - INFO - NERModel successfully loaded.
+2025-07-02 22:22:40,364 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 22:22:40,364 - INFO - LightRAG initialized successfully
+2025-07-02 22:22:40,364 - DEBUG - LightRAG instance created.
+2025-07-02 22:22:40,364 - INFO - 📄 Sample medical document prepared.
+2025-07-02 22:22:40,364 - DEBUG - Document content: Machine Learning (ML) is a field of artificial intelligence focused on building systems that learn f
+2025-07-02 22:22:40,364 - INFO - ⚙️ Processing document...
+2025-07-02 22:22:40,364 - INFO - Processing document (size: 3570 chars)
+2025-07-02 22:22:40,365 - DEBUG - Split document into 8 chunks
+2025-07-02 22:22:40,365 - INFO - Document split into 8 chunks
+2025-07-02 22:22:40,365 - DEBUG - Processing chunk 1/8
+2025-07-02 22:22:40,365 - DEBUG - Extracting entities and relations
+2025-07-02 22:22:40,365 - DEBUG - Starting NER prediction...
+2025-07-02 22:22:40,399 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.8496679, 'word': 'Machine Learning', 'start': 0, 'end': 16}, {'entity_group': 'ORG', 'score': 0.4979889, 'word': 'ML', 'start': 18, 'end': 20}, {'entity_group': 'LOC', 'score': 0.49249476, 'word': 'It', 'start': 110, 'end': 112}, {'entity_group': 'MISC', 'score': 0.36396173, 'word': 'In', 'start': 220, 'end': 222}, {'entity_group': 'MISC', 'score': 0.5179672, 'word': '##ed', 'start': 231, 'end': 233}, {'entity_group': 'PER', 'score': 0.90470964, 'word': 'Linear Regression', 'start': 341, 'end': 358}, {'entity_group': 'PER', 'score': 0.88711643, 'word': 'Logistic Regression', 'start': 360, 'end': 379}, {'entity_group': 'PER', 'score': 0.8490203, 'word': 'Support Vector Machines', 'start': 381, 'end': 404}, {'entity_group': 'ORG', 'score': 0.78376687, 'word': 'SVM', 'start': 406, 'end': 409}, {'entity_group': 'PER', 'score': 0.86748683, 'word': 'Random Forests', 'start': 412, 'end': 426}, {'entity_group': 'PER', 'score': 0.58062977, 'word': 'Gradient Boosting Machines', 'start': 432, 'end': 458}]
+2025-07-02 22:22:40,399 - DEBUG - Entity found: Machine Learning [PER] (0-16)
+2025-07-02 22:22:40,399 - DEBUG - Entity found: ML [ORG] (18-20)
+2025-07-02 22:22:40,399 - DEBUG - Entity found: It [LOC] (110-112)
+2025-07-02 22:22:40,399 - DEBUG - Entity found: In [MISC] (220-222)
+2025-07-02 22:22:40,399 - DEBUG - Entity found: ##ed [MISC] (231-233)
+2025-07-02 22:22:40,400 - DEBUG - Entity found: Linear Regression [PER] (341-358)
+2025-07-02 22:22:40,400 - DEBUG - Entity found: Logistic Regression [PER] (360-379)
+2025-07-02 22:22:40,400 - DEBUG - Entity found: Support Vector Machines [PER] (381-404)
+2025-07-02 22:22:40,400 - DEBUG - Entity found: SVM [ORG] (406-409)
+2025-07-02 22:22:40,400 - DEBUG - Entity found: Random Forests [PER] (412-426)
+2025-07-02 22:22:40,400 - DEBUG - Entity found: Gradient Boosting Machines [PER] (432-458)
+2025-07-02 22:22:40,400 - DEBUG - Found 11 entities
+2025-07-02 22:22:49,256 - DEBUG - Found 0 relations
+2025-07-02 22:23:07,177 - DEBUG - Profiled 11 entities
+2025-07-02 22:23:07,177 - DEBUG - Profiled 0 relations
+2025-07-02 22:23:07,265 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:23:07,265 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:23:07,265 - DEBUG - Chunk 1 processed successfully
+2025-07-02 22:23:07,265 - DEBUG - Processing chunk 2/8
+2025-07-02 22:23:07,265 - DEBUG - Extracting entities and relations
+2025-07-02 22:23:07,265 - DEBUG - Starting NER prediction...
+2025-07-02 22:23:07,276 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.4510351, 'word': 'Means Clustering', 'start': 81, 'end': 97}, {'entity_group': 'PER', 'score': 0.5539799, 'word': 'DBSCAN', 'start': 99, 'end': 105}, {'entity_group': 'PER', 'score': 0.62225467, 'word': 'Principal Component Analysis', 'start': 111, 'end': 139}, {'entity_group': 'ORG', 'score': 0.6573355, 'word': 'PCA', 'start': 141, 'end': 144}, {'entity_group': 'ORG', 'score': 0.75633514, 'word': 'RL', 'start': 219, 'end': 221}, {'entity_group': 'LOC', 'score': 0.4271172, 'word': 'Go', 'start': 386, 'end': 388}, {'entity_group': 'LOC', 'score': 0.82520086, 'word': 'OpenAI', 'start': 411, 'end': 417}]
+2025-07-02 22:23:07,276 - DEBUG - Entity found: Means Clustering [PER] (81-97)
+2025-07-02 22:23:07,276 - DEBUG - Entity found: DBSCAN [PER] (99-105)
+2025-07-02 22:23:07,276 - DEBUG - Entity found: Principal Component Analysis [PER] (111-139)
+2025-07-02 22:23:07,276 - DEBUG - Entity found: PCA [ORG] (141-144)
+2025-07-02 22:23:07,276 - DEBUG - Entity found: RL [ORG] (219-221)
+2025-07-02 22:23:07,276 - DEBUG - Entity found: Go [LOC] (386-388)
+2025-07-02 22:23:07,276 - DEBUG - Entity found: OpenAI [LOC] (411-417)
+2025-07-02 22:23:07,276 - DEBUG - Found 7 entities
+2025-07-02 22:23:09,634 - DEBUG - Found 1 relations
+2025-07-02 22:23:15,384 - ERROR - Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 45
+}
+]
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 118, in describe_entity
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 45
+}
+]
+2025-07-02 22:23:15,392 - ERROR - Error profiling entities: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 45
+}
+]
+2025-07-02 22:23:15,392 - ERROR - Error in document processing: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 45
+}
+]
+2025-07-02 22:23:15,392 - ERROR - ❌ Failed to process document: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 45
+}
+]
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 118, in describe_entity
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 45
+}
+]
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 100, in main
+    rag.process_document(document=document,
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 122, in process_document
+    profiled_entities = self._profile_entities(entities)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 254, in _profile_entities
+    description = self.llm.describe_entity(entity['text'], entity['type'])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 129, in describe_entity
+    raise RuntimeError(f"Entity description failed: {e}") from e
+RuntimeError: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 45
+}
+]
+2025-07-02 22:32:00,778 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 22:32:00,780 - DEBUG - Calling load_embedding_model()...
+2025-07-02 22:32:00,780 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 22:32:00,780 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 22:32:49,812 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 22:32:49,812 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 22:32:49,813 - DEBUG - NERModel device set to: cpu
+2025-07-02 22:32:49,813 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 22:33:04,256 - INFO - NERModel successfully loaded.
+2025-07-02 22:33:04,300 - INFO - Initialized Cohere LLM with model: command-r
+2025-07-02 22:33:04,300 - INFO - LightRAG initialized successfully
+2025-07-02 22:33:04,300 - DEBUG - LightRAG instance created.
+2025-07-02 22:33:04,300 - INFO - 📄 Sample medical document prepared.
+2025-07-02 22:33:04,300 - DEBUG - Document content: Machine Learning (ML) is a field of artificial intelligence focused on building systems that learn f
+2025-07-02 22:33:04,300 - INFO - ⚙️ Processing document...
+2025-07-02 22:33:04,300 - INFO - Processing document (size: 3570 chars)
+2025-07-02 22:33:04,301 - DEBUG - Split document into 8 chunks
+2025-07-02 22:33:04,301 - INFO - Document split into 8 chunks
+2025-07-02 22:33:04,301 - DEBUG - Processing chunk 1/8
+2025-07-02 22:33:04,301 - DEBUG - Extracting entities and relations
+2025-07-02 22:33:04,301 - DEBUG - Starting NER prediction...
+2025-07-02 22:33:04,360 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.8496679, 'word': 'Machine Learning', 'start': 0, 'end': 16}, {'entity_group': 'ORG', 'score': 0.4979889, 'word': 'ML', 'start': 18, 'end': 20}, {'entity_group': 'LOC', 'score': 0.49249476, 'word': 'It', 'start': 110, 'end': 112}, {'entity_group': 'MISC', 'score': 0.36396173, 'word': 'In', 'start': 220, 'end': 222}, {'entity_group': 'MISC', 'score': 0.5179672, 'word': '##ed', 'start': 231, 'end': 233}, {'entity_group': 'PER', 'score': 0.90470964, 'word': 'Linear Regression', 'start': 341, 'end': 358}, {'entity_group': 'PER', 'score': 0.88711643, 'word': 'Logistic Regression', 'start': 360, 'end': 379}, {'entity_group': 'PER', 'score': 0.8490203, 'word': 'Support Vector Machines', 'start': 381, 'end': 404}, {'entity_group': 'ORG', 'score': 0.78376687, 'word': 'SVM', 'start': 406, 'end': 409}, {'entity_group': 'PER', 'score': 0.86748683, 'word': 'Random Forests', 'start': 412, 'end': 426}, {'entity_group': 'PER', 'score': 0.58062977, 'word': 'Gradient Boosting Machines', 'start': 432, 'end': 458}]
+2025-07-02 22:33:04,361 - DEBUG - Entity found: Machine Learning [PER] (0-16)
+2025-07-02 22:33:04,361 - DEBUG - Entity found: ML [ORG] (18-20)
+2025-07-02 22:33:04,361 - DEBUG - Entity found: It [LOC] (110-112)
+2025-07-02 22:33:04,361 - DEBUG - Entity found: In [MISC] (220-222)
+2025-07-02 22:33:04,361 - DEBUG - Entity found: ##ed [MISC] (231-233)
+2025-07-02 22:33:04,361 - DEBUG - Entity found: Linear Regression [PER] (341-358)
+2025-07-02 22:33:04,361 - DEBUG - Entity found: Logistic Regression [PER] (360-379)
+2025-07-02 22:33:04,361 - DEBUG - Entity found: Support Vector Machines [PER] (381-404)
+2025-07-02 22:33:04,361 - DEBUG - Entity found: SVM [ORG] (406-409)
+2025-07-02 22:33:04,361 - DEBUG - Entity found: Random Forests [PER] (412-426)
+2025-07-02 22:33:04,361 - DEBUG - Entity found: Gradient Boosting Machines [PER] (432-458)
+2025-07-02 22:33:04,361 - DEBUG - Found 11 entities
+2025-07-02 22:33:09,466 - ERROR - Cohere generation failed: status_code: 400, body: {'id': 'a16f89cb-df90-4678-bef4-e0fb0a1d0c39', 'message': "invalid request: model 'command-r' is not supported by the generate API"}
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/cohere_llm.py", line 62, in _generate
+    response = self.client.generate(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/cohere/base_client.py", line 1602, in generate
+    raise BadRequestError(
+cohere.errors.bad_request_error.BadRequestError: status_code: 400, body: {'id': 'a16f89cb-df90-4678-bef4-e0fb0a1d0c39', 'message': "invalid request: model 'command-r' is not supported by the generate API"}
+2025-07-02 22:33:09,467 - ERROR - Error in entity/relation extraction: Cohere generation failed: status_code: 400, body: {'id': 'a16f89cb-df90-4678-bef4-e0fb0a1d0c39', 'message': "invalid request: model 'command-r' is not supported by the generate API"}
+2025-07-02 22:33:09,467 - ERROR - Error in document processing: Cohere generation failed: status_code: 400, body: {'id': 'a16f89cb-df90-4678-bef4-e0fb0a1d0c39', 'message': "invalid request: model 'command-r' is not supported by the generate API"}
+2025-07-02 22:33:09,467 - ERROR - ❌ Failed to process document: Cohere generation failed: status_code: 400, body: {'id': 'a16f89cb-df90-4678-bef4-e0fb0a1d0c39', 'message': "invalid request: model 'command-r' is not supported by the generate API"}
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/cohere_llm.py", line 62, in _generate
+    response = self.client.generate(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/cohere/base_client.py", line 1602, in generate
+    raise BadRequestError(
+cohere.errors.bad_request_error.BadRequestError: status_code: 400, body: {'id': 'a16f89cb-df90-4678-bef4-e0fb0a1d0c39', 'message': "invalid request: model 'command-r' is not supported by the generate API"}
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 100, in main
+    rag.process_document(document=document,
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 119, in process_document
+    entities, relations = self._extract_entities_relations(chunk)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 191, in _extract_entities_relations
+    llm_relations = self.llm.extract_relations(relation_prompt)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/cohere_llm.py", line 88, in extract_relations
+    output = self._generate(full_prompt, max_tokens=512, temperature=0.3)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/cohere_llm.py", line 71, in _generate
+    raise RuntimeError(f"Cohere generation failed: {e}") from e
+RuntimeError: Cohere generation failed: status_code: 400, body: {'id': 'a16f89cb-df90-4678-bef4-e0fb0a1d0c39', 'message': "invalid request: model 'command-r' is not supported by the generate API"}
+2025-07-02 22:34:19,106 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 22:34:19,108 - DEBUG - Calling load_embedding_model()...
+2025-07-02 22:34:19,108 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 22:34:19,108 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 22:34:53,047 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 22:34:53,047 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 22:34:53,048 - DEBUG - NERModel device set to: cpu
+2025-07-02 22:34:53,048 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 22:35:10,835 - INFO - NERModel successfully loaded.
+2025-07-02 22:35:10,883 - INFO - Initialized Cohere LLM with model: command-light
+2025-07-02 22:35:10,883 - INFO - LightRAG initialized successfully
+2025-07-02 22:35:10,883 - DEBUG - LightRAG instance created.
+2025-07-02 22:35:10,883 - INFO - 📄 Sample medical document prepared.
+2025-07-02 22:35:10,883 - DEBUG - Document content: Machine Learning (ML) is a field of artificial intelligence focused on building systems that learn f
+2025-07-02 22:35:10,883 - INFO - ⚙️ Processing document...
+2025-07-02 22:35:10,883 - INFO - Processing document (size: 3570 chars)
+2025-07-02 22:35:10,884 - DEBUG - Split document into 8 chunks
+2025-07-02 22:35:10,884 - INFO - Document split into 8 chunks
+2025-07-02 22:35:10,884 - DEBUG - Processing chunk 1/8
+2025-07-02 22:35:10,884 - DEBUG - Extracting entities and relations
+2025-07-02 22:35:10,884 - DEBUG - Starting NER prediction...
+2025-07-02 22:35:10,933 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.8496679, 'word': 'Machine Learning', 'start': 0, 'end': 16}, {'entity_group': 'ORG', 'score': 0.4979889, 'word': 'ML', 'start': 18, 'end': 20}, {'entity_group': 'LOC', 'score': 0.49249476, 'word': 'It', 'start': 110, 'end': 112}, {'entity_group': 'MISC', 'score': 0.36396173, 'word': 'In', 'start': 220, 'end': 222}, {'entity_group': 'MISC', 'score': 0.5179672, 'word': '##ed', 'start': 231, 'end': 233}, {'entity_group': 'PER', 'score': 0.90470964, 'word': 'Linear Regression', 'start': 341, 'end': 358}, {'entity_group': 'PER', 'score': 0.88711643, 'word': 'Logistic Regression', 'start': 360, 'end': 379}, {'entity_group': 'PER', 'score': 0.8490203, 'word': 'Support Vector Machines', 'start': 381, 'end': 404}, {'entity_group': 'ORG', 'score': 0.78376687, 'word': 'SVM', 'start': 406, 'end': 409}, {'entity_group': 'PER', 'score': 0.86748683, 'word': 'Random Forests', 'start': 412, 'end': 426}, {'entity_group': 'PER', 'score': 0.58062977, 'word': 'Gradient Boosting Machines', 'start': 432, 'end': 458}]
+2025-07-02 22:35:10,933 - DEBUG - Entity found: Machine Learning [PER] (0-16)
+2025-07-02 22:35:10,933 - DEBUG - Entity found: ML [ORG] (18-20)
+2025-07-02 22:35:10,933 - DEBUG - Entity found: It [LOC] (110-112)
+2025-07-02 22:35:10,933 - DEBUG - Entity found: In [MISC] (220-222)
+2025-07-02 22:35:10,933 - DEBUG - Entity found: ##ed [MISC] (231-233)
+2025-07-02 22:35:10,933 - DEBUG - Entity found: Linear Regression [PER] (341-358)
+2025-07-02 22:35:10,933 - DEBUG - Entity found: Logistic Regression [PER] (360-379)
+2025-07-02 22:35:10,933 - DEBUG - Entity found: Support Vector Machines [PER] (381-404)
+2025-07-02 22:35:10,933 - DEBUG - Entity found: SVM [ORG] (406-409)
+2025-07-02 22:35:10,933 - DEBUG - Entity found: Random Forests [PER] (412-426)
+2025-07-02 22:35:10,933 - DEBUG - Entity found: Gradient Boosting Machines [PER] (432-458)
+2025-07-02 22:35:10,933 - DEBUG - Found 11 entities
+2025-07-02 22:35:30,470 - DEBUG - Found 0 relations
+2025-07-02 22:35:46,965 - DEBUG - Profiled 11 entities
+2025-07-02 22:35:46,966 - DEBUG - Profiled 0 relations
+2025-07-02 22:35:47,079 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:35:47,079 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:35:47,079 - DEBUG - Chunk 1 processed successfully
+2025-07-02 22:35:47,079 - DEBUG - Processing chunk 2/8
+2025-07-02 22:35:47,079 - DEBUG - Extracting entities and relations
+2025-07-02 22:35:47,079 - DEBUG - Starting NER prediction...
+2025-07-02 22:35:47,093 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.4510351, 'word': 'Means Clustering', 'start': 81, 'end': 97}, {'entity_group': 'PER', 'score': 0.5539799, 'word': 'DBSCAN', 'start': 99, 'end': 105}, {'entity_group': 'PER', 'score': 0.62225467, 'word': 'Principal Component Analysis', 'start': 111, 'end': 139}, {'entity_group': 'ORG', 'score': 0.6573355, 'word': 'PCA', 'start': 141, 'end': 144}, {'entity_group': 'ORG', 'score': 0.75633514, 'word': 'RL', 'start': 219, 'end': 221}, {'entity_group': 'LOC', 'score': 0.4271172, 'word': 'Go', 'start': 386, 'end': 388}, {'entity_group': 'LOC', 'score': 0.82520086, 'word': 'OpenAI', 'start': 411, 'end': 417}]
+2025-07-02 22:35:47,093 - DEBUG - Entity found: Means Clustering [PER] (81-97)
+2025-07-02 22:35:47,093 - DEBUG - Entity found: DBSCAN [PER] (99-105)
+2025-07-02 22:35:47,093 - DEBUG - Entity found: Principal Component Analysis [PER] (111-139)
+2025-07-02 22:35:47,093 - DEBUG - Entity found: PCA [ORG] (141-144)
+2025-07-02 22:35:47,093 - DEBUG - Entity found: RL [ORG] (219-221)
+2025-07-02 22:35:47,093 - DEBUG - Entity found: Go [LOC] (386-388)
+2025-07-02 22:35:47,093 - DEBUG - Entity found: OpenAI [LOC] (411-417)
+2025-07-02 22:35:47,093 - DEBUG - Found 7 entities
+2025-07-02 22:35:48,281 - DEBUG - Found 0 relations
+2025-07-02 22:35:55,555 - DEBUG - Profiled 7 entities
+2025-07-02 22:35:55,555 - DEBUG - Profiled 0 relations
+2025-07-02 22:35:55,575 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:35:55,575 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:35:55,576 - DEBUG - Chunk 2 processed successfully
+2025-07-02 22:35:55,576 - DEBUG - Processing chunk 3/8
+2025-07-02 22:35:55,576 - DEBUG - Extracting entities and relations
+2025-07-02 22:35:55,576 - DEBUG - Starting NER prediction...
+2025-07-02 22:35:55,588 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.73284304, 'word': 'Deep Learning', 'start': 1, 'end': 14}, {'entity_group': 'LOC', 'score': 0.53868264, 'word': 'ML', 'start': 32, 'end': 34}, {'entity_group': 'ORG', 'score': 0.5244554, 'word': 'It', 'start': 106, 'end': 108}, {'entity_group': 'PER', 'score': 0.8257243, 'word': 'Convolutional Neural Networks', 'start': 196, 'end': 225}, {'entity_group': 'LOC', 'score': 0.6397385, 'word': 'CNNs', 'start': 227, 'end': 231}, {'entity_group': 'PER', 'score': 0.58495015, 'word': 'Recurrent Neural Networks', 'start': 275, 'end': 300}, {'entity_group': 'LOC', 'score': 0.6417063, 'word': 'RNNs', 'start': 302, 'end': 306}, {'entity_group': 'PER', 'score': 0.85073394, 'word': 'Long Short', 'start': 309, 'end': 319}, {'entity_group': 'PER', 'score': 0.75910765, 'word': 'Term Memory', 'start': 320, 'end': 331}, {'entity_group': 'LOC', 'score': 0.85576934, 'word': 'LSTM', 'start': 333, 'end': 337}, {'entity_group': 'PER', 'score': 0.85144454, 'word': 'Gated Recurrent Units', 'start': 344, 'end': 365}, {'entity_group': 'LOC', 'score': 0.61675185, 'word': 'GRUs', 'start': 367, 'end': 371}]
+2025-07-02 22:35:55,588 - DEBUG - Entity found: Deep Learning [PER] (1-14)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: ML [LOC] (32-34)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: It [ORG] (106-108)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: Convolutional Neural Networks [PER] (196-225)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: CNNs [LOC] (227-231)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: Recurrent Neural Networks [PER] (275-300)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: RNNs [LOC] (302-306)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: Long Short [PER] (309-319)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: Term Memory [PER] (320-331)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: LSTM [LOC] (333-337)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: Gated Recurrent Units [PER] (344-365)
+2025-07-02 22:35:55,588 - DEBUG - Entity found: GRUs [LOC] (367-371)
+2025-07-02 22:35:55,589 - DEBUG - Found 12 entities
+2025-07-02 22:35:57,399 - DEBUG - Found 0 relations
+2025-07-02 22:36:19,309 - DEBUG - Profiled 12 entities
+2025-07-02 22:36:19,311 - DEBUG - Profiled 0 relations
+2025-07-02 22:36:19,357 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:36:19,358 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:36:19,358 - DEBUG - Chunk 3 processed successfully
+2025-07-02 22:36:19,358 - DEBUG - Processing chunk 4/8
+2025-07-02 22:36:19,358 - DEBUG - Extracting entities and relations
+2025-07-02 22:36:19,358 - DEBUG - Starting NER prediction...
+2025-07-02 22:36:19,375 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.4326294, 'word': 'However', 'start': 2, 'end': 9}, {'entity_group': 'ORG', 'score': 0.29375038, 'word': 'Transformer', 'start': 54, 'end': 65}, {'entity_group': 'ORG', 'score': 0.5289898, 'word': 'The Transformer', 'start': 319, 'end': 334}, {'entity_group': 'MISC', 'score': 0.5608899, 'word': 'architecture', 'start': 335, 'end': 347}, {'entity_group': 'ORG', 'score': 0.65368885, 'word': 'modern Large Language Models', 'start': 376, 'end': 404}, {'entity_group': 'ORG', 'score': 0.8183979, 'word': 'LLMs', 'start': 406, 'end': 410}, {'entity_group': 'ORG', 'score': 0.59740865, 'word': 'BERT', 'start': 423, 'end': 427}, {'entity_group': 'ORG', 'score': 0.4962759, 'word': 'GPT', 'start': 429, 'end': 432}, {'entity_group': 'ORG', 'score': 0.47128606, 'word': 'T5', 'start': 434, 'end': 436}, {'entity_group': 'ORG', 'score': 0.7630005, 'word': 'LLaMA', 'start': 442, 'end': 447}]
+2025-07-02 22:36:19,375 - DEBUG - Entity found: However [PER] (2-9)
+2025-07-02 22:36:19,375 - DEBUG - Entity found: Transformer [ORG] (54-65)
+2025-07-02 22:36:19,375 - DEBUG - Entity found: The Transformer [ORG] (319-334)
+2025-07-02 22:36:19,375 - DEBUG - Entity found: architecture [MISC] (335-347)
+2025-07-02 22:36:19,375 - DEBUG - Entity found: modern Large Language Models [ORG] (376-404)
+2025-07-02 22:36:19,375 - DEBUG - Entity found: LLMs [ORG] (406-410)
+2025-07-02 22:36:19,375 - DEBUG - Entity found: BERT [ORG] (423-427)
+2025-07-02 22:36:19,375 - DEBUG - Entity found: GPT [ORG] (429-432)
+2025-07-02 22:36:19,375 - DEBUG - Entity found: T5 [ORG] (434-436)
+2025-07-02 22:36:19,375 - DEBUG - Entity found: LLaMA [ORG] (442-447)
+2025-07-02 22:36:19,375 - DEBUG - Found 10 entities
+2025-07-02 22:36:20,845 - DEBUG - Found 0 relations
+2025-07-02 22:36:39,686 - DEBUG - Profiled 10 entities
+2025-07-02 22:36:39,686 - DEBUG - Profiled 0 relations
+2025-07-02 22:36:39,707 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:36:39,708 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:36:39,708 - DEBUG - Chunk 4 processed successfully
+2025-07-02 22:36:39,708 - DEBUG - Processing chunk 5/8
+2025-07-02 22:36:39,708 - DEBUG - Extracting entities and relations
+2025-07-02 22:36:39,708 - DEBUG - Starting NER prediction...
+2025-07-02 22:36:39,722 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.4364932, 'word': 'BERT', 'start': 2, 'end': 6}, {'entity_group': 'PER', 'score': 0.41936657, 'word': 'GPT', 'start': 126, 'end': 129}, {'entity_group': 'PER', 'score': 0.749446, 'word': 'Large Language Models', 'start': 192, 'end': 213}, {'entity_group': 'ORG', 'score': 0.535974, 'word': 'LLMs', 'start': 215, 'end': 219}, {'entity_group': 'ORG', 'score': 0.42836958, 'word': 'They', 'start': 320, 'end': 324}]
+2025-07-02 22:36:39,722 - DEBUG - Entity found: BERT [PER] (2-6)
+2025-07-02 22:36:39,722 - DEBUG - Entity found: GPT [PER] (126-129)
+2025-07-02 22:36:39,722 - DEBUG - Entity found: Large Language Models [PER] (192-213)
+2025-07-02 22:36:39,722 - DEBUG - Entity found: LLMs [ORG] (215-219)
+2025-07-02 22:36:39,722 - DEBUG - Entity found: They [ORG] (320-324)
+2025-07-02 22:36:39,722 - DEBUG - Found 5 entities
+2025-07-02 22:36:41,427 - DEBUG - Found 0 relations
+2025-07-02 22:36:52,896 - DEBUG - Profiled 5 entities
+2025-07-02 22:36:52,896 - DEBUG - Profiled 0 relations
+2025-07-02 22:36:52,908 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:36:52,909 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:36:52,909 - DEBUG - Chunk 5 processed successfully
+2025-07-02 22:36:52,909 - DEBUG - Processing chunk 6/8
+2025-07-02 22:36:52,909 - DEBUG - Extracting entities and relations
+2025-07-02 22:36:52,909 - DEBUG - Starting NER prediction...
+2025-07-02 22:36:52,929 - DEBUG - NER raw output: [{'entity_group': 'MISC', 'score': 0.48715892, 'word': 'Applications', 'start': 2, 'end': 14}, {'entity_group': 'ORG', 'score': 0.5586301, 'word': 'of LLMs', 'start': 15, 'end': 22}, {'entity_group': 'MISC', 'score': 0.37096074, 'word': 'Popular', 'start': 135, 'end': 142}, {'entity_group': 'ORG', 'score': 0.8078179, 'word': 'LLMs', 'start': 143, 'end': 147}, {'entity_group': 'ORG', 'score': 0.5448763, 'word': "OpenAI '", 'start': 156, 'end': 163}, {'entity_group': 'ORG', 'score': 0.50601166, 'word': 'GPT', 'start': 165, 'end': 168}, {'entity_group': 'ORG', 'score': 0.70523965, 'word': "Google '", 'start': 172, 'end': 179}, {'entity_group': 'ORG', 'score': 0.37664583, 'word': 'Gemini', 'start': 181, 'end': 187}, {'entity_group': 'ORG', 'score': 0.6143199, 'word': "Meta '", 'start': 189, 'end': 194}, {'entity_group': 'ORG', 'score': 0.336168, 'word': 'LLaMA', 'start': 196, 'end': 201}, {'entity_group': 'ORG', 'score': 0.55640405, 'word': "Anthropic '", 'start': 203, 'end': 213}, {'entity_group': 'ORG', 'score': 0.4135159, 'word': 'Claude', 'start': 215, 'end': 221}, {'entity_group': 'ORG', 'score': 0.570718, 'word': "Cohere '", 'start': 227, 'end': 234}, {'entity_group': 'ORG', 'score': 0.69965565, 'word': 'R +', 'start': 244, 'end': 246}, {'entity_group': 'ORG', 'score': 0.49120027, 'word': 'Fine', 'start': 248, 'end': 252}, {'entity_group': 'ORG', 'score': 0.30864584, 'word': 'Retrieval', 'start': 378, 'end': 387}, {'entity_group': 'LOC', 'score': 0.29979828, 'word': 'Augmented', 'start': 388, 'end': 397}, {'entity_group': 'ORG', 'score': 0.7214841, 'word': 'Generation', 'start': 398, 'end': 408}, {'entity_group': 'ORG', 'score': 0.72614884, 'word': 'RAG', 'start': 410, 'end': 413}, {'entity_group': 'ORG', 'score': 0.65898335, 'word': 'LLM', 'start': 481, 'end': 484}]
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Applications [MISC] (2-14)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: of LLMs [ORG] (15-22)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Popular [MISC] (135-142)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: LLMs [ORG] (143-147)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: OpenAI ' [ORG] (156-163)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: GPT [ORG] (165-168)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Google ' [ORG] (172-179)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Gemini [ORG] (181-187)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Meta ' [ORG] (189-194)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: LLaMA [ORG] (196-201)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Anthropic ' [ORG] (203-213)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Claude [ORG] (215-221)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Cohere ' [ORG] (227-234)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: R + [ORG] (244-246)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Fine [ORG] (248-252)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Retrieval [ORG] (378-387)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Augmented [LOC] (388-397)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: Generation [ORG] (398-408)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: RAG [ORG] (410-413)
+2025-07-02 22:36:52,929 - DEBUG - Entity found: LLM [ORG] (481-484)
+2025-07-02 22:36:52,930 - DEBUG - Found 20 entities
+2025-07-02 22:36:56,991 - DEBUG - Found 0 relations
+2025-07-02 22:37:22,899 - DEBUG - Profiled 20 entities
+2025-07-02 22:37:22,899 - DEBUG - Profiled 0 relations
+2025-07-02 22:37:22,941 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:37:22,942 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:37:22,942 - DEBUG - Chunk 6 processed successfully
+2025-07-02 22:37:22,942 - DEBUG - Processing chunk 7/8
+2025-07-02 22:37:22,942 - DEBUG - Extracting entities and relations
+2025-07-02 22:37:22,942 - DEBUG - Starting NER prediction...
+2025-07-02 22:37:22,959 - DEBUG - NER raw output: [{'entity_group': 'MISC', 'score': 0.3673914, 'word': "'", 'start': 40, 'end': 41}, {'entity_group': 'ORG', 'score': 0.462406, 'word': 'RAG', 'start': 63, 'end': 66}, {'entity_group': 'MISC', 'score': 0.3421205, 'word': 'FAISS', 'start': 147, 'end': 152}, {'entity_group': 'LOC', 'score': 0.3283686, 'word': 'Chroma', 'start': 156, 'end': 162}, {'entity_group': 'ORG', 'score': 0.41680267, 'word': 'LLM', 'start': 239, 'end': 242}, {'entity_group': 'MISC', 'score': 0.41218907, 'word': 'This make', 'start': 296, 'end': 305}]
+2025-07-02 22:37:22,959 - DEBUG - Entity found: ' [MISC] (40-41)
+2025-07-02 22:37:22,959 - DEBUG - Entity found: RAG [ORG] (63-66)
+2025-07-02 22:37:22,959 - DEBUG - Entity found: FAISS [MISC] (147-152)
+2025-07-02 22:37:22,959 - DEBUG - Entity found: Chroma [LOC] (156-162)
+2025-07-02 22:37:22,959 - DEBUG - Entity found: LLM [ORG] (239-242)
+2025-07-02 22:37:22,959 - DEBUG - Entity found: This make [MISC] (296-305)
+2025-07-02 22:37:22,960 - DEBUG - Found 6 entities
+2025-07-02 22:37:24,743 - DEBUG - Found 0 relations
+2025-07-02 22:37:32,230 - DEBUG - Profiled 6 entities
+2025-07-02 22:37:32,230 - DEBUG - Profiled 0 relations
+2025-07-02 22:37:32,245 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:37:32,245 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:37:32,245 - DEBUG - Chunk 7 processed successfully
+2025-07-02 22:37:32,245 - DEBUG - Processing chunk 8/8
+2025-07-02 22:37:32,245 - DEBUG - Extracting entities and relations
+2025-07-02 22:37:32,245 - DEBUG - Starting NER prediction...
+2025-07-02 22:37:32,269 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.91741925, 'word': 'Lightweight RAG', 'start': 1, 'end': 16}, {'entity_group': 'ORG', 'score': 0.5332247, 'word': 'LightRAG', 'start': 18, 'end': 26}, {'entity_group': 'LOC', 'score': 0.67562836, 'word': 'RAG', 'start': 71, 'end': 74}, {'entity_group': 'ORG', 'score': 0.69574744, 'word': 'LightRAG', 'start': 297, 'end': 305}, {'entity_group': 'ORG', 'score': 0.42959496, 'word': 'LLMs', 'start': 417, 'end': 421}]
+2025-07-02 22:37:32,269 - DEBUG - Entity found: Lightweight RAG [PER] (1-16)
+2025-07-02 22:37:32,269 - DEBUG - Entity found: LightRAG [ORG] (18-26)
+2025-07-02 22:37:32,269 - DEBUG - Entity found: RAG [LOC] (71-74)
+2025-07-02 22:37:32,269 - DEBUG - Entity found: LightRAG [ORG] (297-305)
+2025-07-02 22:37:32,269 - DEBUG - Entity found: LLMs [ORG] (417-421)
+2025-07-02 22:37:32,269 - DEBUG - Found 5 entities
+2025-07-02 22:37:34,418 - DEBUG - Found 0 relations
+2025-07-02 22:37:51,979 - DEBUG - Profiled 5 entities
+2025-07-02 22:37:51,979 - DEBUG - Profiled 0 relations
+2025-07-02 22:37:52,014 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 22:37:52,015 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 22:37:52,015 - DEBUG - Chunk 8 processed successfully
+2025-07-02 22:37:52,015 - INFO - Document processing completed
+2025-07-02 22:37:52,015 - INFO - ✅ Document processed successfully.
+2025-07-02 22:37:52,015 - INFO - 🔍 Starting query loop...
+2025-07-02 22:37:52,015 - DEBUG - Sending query: What is the difference between supervised and unsupervised learning?
+2025-07-02 22:37:52,015 - INFO - Processing query: What is the difference between supervised and unsupervised learning?
+2025-07-02 22:37:53,450 - DEBUG - FAISS search completed: top_k=5, avg_similarity=0.247
+2025-07-02 22:37:53,451 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 22:37:54,744 - INFO - Query processed successfully
+2025-07-02 22:37:54,745 - INFO - ✅ Query processed: What is the difference between supervised and unsupervised learning?
+2025-07-02 22:37:54,745 - DEBUG - Sending query: How do Transformers work in deep learning?
+2025-07-02 22:37:54,745 - INFO - Processing query: How do Transformers work in deep learning?
+2025-07-02 22:37:56,701 - DEBUG - FAISS search completed: top_k=5, avg_similarity=0.485
+2025-07-02 22:37:56,701 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 22:37:59,251 - INFO - Query processed successfully
+2025-07-02 22:37:59,251 - INFO - ✅ Query processed: How do Transformers work in deep learning?
+2025-07-02 22:37:59,251 - DEBUG - Sending query: Explain the role of self-attention in LLMs.
+2025-07-02 22:37:59,251 - INFO - Processing query: Explain the role of self-attention in LLMs.
+2025-07-02 22:38:01,717 - DEBUG - FAISS search completed: top_k=5, avg_similarity=0.384
+2025-07-02 22:38:01,717 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 22:38:03,551 - INFO - Query processed successfully
+2025-07-02 22:38:03,551 - INFO - ✅ Query processed: Explain the role of self-attention in LLMs.
+2025-07-02 22:38:03,551 - DEBUG - Sending query: What is Retrieval-Augmented Generation and why is it useful?
+2025-07-02 22:38:03,551 - INFO - Processing query: What is Retrieval-Augmented Generation and why is it useful?
+2025-07-02 22:38:05,611 - DEBUG - FAISS search completed: top_k=5, avg_similarity=0.412
+2025-07-02 22:38:05,611 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 22:38:07,442 - INFO - Query processed successfully
+2025-07-02 22:38:07,442 - INFO - ✅ Query processed: What is Retrieval-Augmented Generation and why is it useful?
+2025-07-02 22:38:07,443 - DEBUG - Sending query: How does LightRAG differ from traditional RAG?
+2025-07-02 22:38:07,443 - INFO - Processing query: How does LightRAG differ from traditional RAG?
+2025-07-02 22:38:09,193 - DEBUG - FAISS search completed: top_k=5, avg_similarity=0.515
+2025-07-02 22:38:09,193 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 22:38:10,944 - INFO - Query processed successfully
+2025-07-02 22:38:10,945 - INFO - ✅ Query processed: How does LightRAG differ from traditional RAG?
+2025-07-02 22:38:10,945 - DEBUG - Sending query: Name popular large language models and their use cases.
+2025-07-02 22:38:10,945 - INFO - Processing query: Name popular large language models and their use cases.
+2025-07-02 22:38:14,006 - DEBUG - FAISS search completed: top_k=5, avg_similarity=0.714
+2025-07-02 22:38:14,007 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 22:38:15,429 - INFO - Query processed successfully
+2025-07-02 22:38:15,429 - INFO - ✅ Query processed: Name popular large language models and their use cases.
+2025-07-02 22:38:15,429 - DEBUG - Sending query: What are CNNs and where are they applied?
+2025-07-02 22:38:15,429 - INFO - Processing query: What are CNNs and where are they applied?
+2025-07-02 22:38:18,307 - DEBUG - FAISS search completed: top_k=5, avg_similarity=0.472
+2025-07-02 22:38:18,307 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 22:38:19,935 - INFO - Query processed successfully
+2025-07-02 22:38:19,935 - INFO - ✅ Query processed: What are CNNs and where are they applied?
+2025-07-02 22:38:19,935 - DEBUG - Sending query: How does reinforcement learning train agents?
+2025-07-02 22:38:19,935 - INFO - Processing query: How does reinforcement learning train agents?
+2025-07-02 22:38:22,099 - DEBUG - FAISS search completed: top_k=5, avg_similarity=0.224
+2025-07-02 22:38:22,099 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 22:38:25,465 - INFO - Query processed successfully
+2025-07-02 22:38:25,465 - INFO - ✅ Query processed: How does reinforcement learning train agents?

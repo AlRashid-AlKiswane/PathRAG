@@ -42,7 +42,7 @@ except (ImportError, OSError) as e:
 from sentence_transformers import SentenceTransformer
 
 from src.rag import LightRAG
-from src.llmsprovider import NERModel, GeminiLLM
+from src.llmsprovider import NERModel, CohereLLM
 from src.utils import setup_logging
 
 logger = setup_logging()
@@ -86,7 +86,7 @@ def main():
         rag = LightRAG(
             embedding_model=embedding_model,
             ner_model=NERModel(),
-            llm_model=GeminiLLM()
+            llm_model=CohereLLM()
         )
         logger.debug("LightRAG instance created.")
         from src.rag import document
