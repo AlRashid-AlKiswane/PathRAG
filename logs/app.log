@@ -3078,3 +3078,767 @@
 2025-07-01 16:05:11,494 - DEBUG - Path scoring complete. Top path: [1, 51] with score 0.414
 2025-07-01 16:05:11,494 - INFO - Generated prompt with 15 paths (total length: 2959 chars)
 2025-07-02 17:51:53,515 - INFO - Loading models from Hugging Face...
+2025-07-02 18:32:23,273 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 18:32:24,737 - ERROR - Relation extraction failed: 403 Received http2 header with status: 403
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_genmi.py", line 84, in extract_relations
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.PermissionDenied: 403 Received http2 header with status: 403
+2025-07-02 18:34:55,646 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 19:35:37,309 - INFO - Running NERModel test with example input...
+2025-07-02 19:35:37,312 - DEBUG - NERModel device set to: cpu
+2025-07-02 19:35:37,312 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 19:35:40,900 - INFO - NERModel successfully loaded.
+2025-07-02 19:35:40,900 - DEBUG - Starting NER prediction...
+2025-07-02 19:35:40,930 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.31005523, 'word': 'Musk', 'start': 5, 'end': 9}, {'entity_group': 'LOC', 'score': 0.34193277, 'word': 'SpaceX', 'start': 18, 'end': 24}, {'entity_group': 'LOC', 'score': 0.57022697, 'word': 'OpenAI', 'start': 40, 'end': 46}, {'entity_group': 'LOC', 'score': 0.7730624, 'word': 'United States', 'start': 54, 'end': 67}]
+2025-07-02 19:35:40,930 - DEBUG - Entity found: Musk [PER] (5-9)
+2025-07-02 19:35:40,930 - DEBUG - Entity found: SpaceX [LOC] (18-24)
+2025-07-02 19:35:40,930 - DEBUG - Entity found: OpenAI [LOC] (40-46)
+2025-07-02 19:35:40,930 - DEBUG - Entity found: United States [LOC] (54-67)
+2025-07-02 19:37:38,239 - INFO - Running NERModel test with example input...
+2025-07-02 19:37:38,239 - DEBUG - NERModel device set to: cpu
+2025-07-02 19:37:38,239 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 19:37:41,082 - ERROR - Failed to load NER model: TokenClassificationPipeline._sanitize_parameters() got an unexpected keyword argument 'truncation'
+2025-07-02 19:37:52,661 - INFO - Running NERModel test with example input...
+2025-07-02 19:37:52,661 - DEBUG - NERModel device set to: cpu
+2025-07-02 19:37:52,661 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 19:37:55,004 - ERROR - Failed to load NER model: TokenClassificationPipeline._sanitize_parameters() got an unexpected keyword argument 'truncation'
+2025-07-02 19:39:00,305 - INFO - Running NERModel test with example input...
+2025-07-02 19:39:00,305 - DEBUG - NERModel device set to: cpu
+2025-07-02 19:39:00,306 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 19:39:50,214 - INFO - NERModel successfully loaded.
+2025-07-02 19:39:50,214 - DEBUG - Starting NER prediction...
+2025-07-02 19:39:50,224 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.31005523, 'word': 'Musk', 'start': 5, 'end': 9}, {'entity_group': 'LOC', 'score': 0.34193277, 'word': 'SpaceX', 'start': 18, 'end': 24}, {'entity_group': 'LOC', 'score': 0.57022697, 'word': 'OpenAI', 'start': 40, 'end': 46}, {'entity_group': 'LOC', 'score': 0.7730624, 'word': 'United States', 'start': 54, 'end': 67}]
+2025-07-02 19:39:50,224 - DEBUG - Entity found: Musk [PER] (5-9)
+2025-07-02 19:39:50,225 - DEBUG - Entity found: SpaceX [LOC] (18-24)
+2025-07-02 19:39:50,225 - DEBUG - Entity found: OpenAI [LOC] (40-46)
+2025-07-02 19:39:50,225 - DEBUG - Entity found: United States [LOC] (54-67)
+2025-07-02 19:40:10,956 - INFO - Running NERModel test with example input...
+2025-07-02 19:40:10,956 - DEBUG - NERModel device set to: cpu
+2025-07-02 19:40:10,956 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 20:31:35,293 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 20:31:35,295 - DEBUG - Calling load_models()...
+2025-07-02 20:31:35,295 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 20:31:35,295 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 20:35:11,355 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 20:35:11,355 - DEBUG - Calling load_models()...
+2025-07-02 20:35:11,355 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 20:35:11,355 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 20:40:38,977 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 20:40:38,977 - DEBUG - Calling load_models()...
+2025-07-02 20:40:38,977 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 20:40:38,977 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 20:42:07,695 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 20:42:07,695 - DEBUG - Calling load_models()...
+2025-07-02 20:42:07,695 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 20:42:07,695 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 20:50:04,233 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 20:50:04,234 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 20:50:04,234 - DEBUG - NERModel device set to: cpu
+2025-07-02 20:50:04,235 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 20:56:50,056 - INFO - NERModel successfully loaded.
+2025-07-02 20:56:50,059 - CRITICAL - 💥 Fatal error in main: Can't instantiate abstract class GeminiLLM with abstract method generate_response
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 92, in main
+    llm_model=GeminiLLM()
+              ^^^^^^^^^^^
+TypeError: Can't instantiate abstract class GeminiLLM with abstract method generate_response
+2025-07-02 21:03:51,381 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 21:03:51,381 - DEBUG - Calling load_models()...
+2025-07-02 21:03:51,381 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 21:03:51,381 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 21:04:02,888 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 21:04:02,889 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 21:04:02,889 - DEBUG - NERModel device set to: cpu
+2025-07-02 21:04:02,889 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 21:04:06,314 - INFO - NERModel successfully loaded.
+2025-07-02 21:04:06,318 - CRITICAL - 💥 Fatal error in main: Can't instantiate abstract class GeminiLLM with abstract method generate_response
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 92, in main
+    llm_model=GeminiLLM()
+              ^^^^^^^^^^^
+TypeError: Can't instantiate abstract class GeminiLLM with abstract method generate_response
+2025-07-02 21:07:59,140 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 21:07:59,143 - DEBUG - Calling load_models()...
+2025-07-02 21:07:59,143 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 21:07:59,143 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 21:08:13,659 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 21:08:13,659 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 21:08:13,660 - DEBUG - NERModel device set to: cpu
+2025-07-02 21:08:13,660 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 21:08:19,358 - INFO - NERModel successfully loaded.
+2025-07-02 21:08:19,358 - ERROR - Gemini API key not found in environment variables
+2025-07-02 21:08:19,362 - CRITICAL - 💥 Fatal error in main: GEMINI_API_KEY environment variable required
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 92, in main
+    llm_model=GeminiLLM()
+              ^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 54, in __init__
+    raise ValueError("GEMINI_API_KEY environment variable required")
+ValueError: GEMINI_API_KEY environment variable required
+2025-07-02 21:09:11,353 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 21:09:11,353 - DEBUG - Calling load_models()...
+2025-07-02 21:09:11,353 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 21:09:11,354 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 21:09:24,824 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 21:09:24,825 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 21:09:24,825 - DEBUG - NERModel device set to: cpu
+2025-07-02 21:09:24,825 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 21:09:26,440 - INFO - NERModel successfully loaded.
+2025-07-02 21:09:26,440 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 21:09:26,440 - INFO - LightRAG initialized successfully
+2025-07-02 21:09:26,440 - DEBUG - LightRAG instance created.
+2025-07-02 21:09:26,440 - INFO - 📄 Sample medical document prepared.
+2025-07-02 21:09:26,440 - DEBUG - Document content: Cardiology is the study of heart disorders. A cardiologist treats conditions like arrhythmia and heart failure. The heart pumps blood through arteries and veins.
+2025-07-02 21:09:26,440 - INFO - ⚙️ Processing document...
+2025-07-02 21:09:26,440 - INFO - Processing document (size: 161 chars)
+2025-07-02 21:09:26,441 - DEBUG - Split document into 1 chunks
+2025-07-02 21:09:26,441 - INFO - Document split into 1 chunks
+2025-07-02 21:09:26,441 - DEBUG - Processing chunk 1/1
+2025-07-02 21:09:26,441 - DEBUG - Extracting entities and relations
+2025-07-02 21:09:26,441 - DEBUG - Starting NER prediction...
+2025-07-02 21:09:26,471 - DEBUG - NER raw output: [{'entity_group': 'MISC', 'score': 0.7102507, 'word': 'A cardiologist treats', 'start': 44, 'end': 65}, {'entity_group': 'MISC', 'score': 0.657661, 'word': 'The heart pum', 'start': 112, 'end': 125}]
+2025-07-02 21:09:26,471 - DEBUG - Entity found: A cardiologist treats [MISC] (44-65)
+2025-07-02 21:09:26,471 - DEBUG - Entity found: The heart pum [MISC] (112-125)
+2025-07-02 21:09:26,471 - DEBUG - Found 2 entities
+2025-07-02 21:09:27,348 - ERROR - Relation extraction failed: 403 Received http2 header with status: 403
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 75, in extract_relations
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.PermissionDenied: 403 Received http2 header with status: 403
+2025-07-02 21:09:27,351 - ERROR - Error in entity/relation extraction: Relation extraction failed: 403 Received http2 header with status: 403
+2025-07-02 21:09:27,351 - ERROR - Error in document processing: Relation extraction failed: 403 Received http2 header with status: 403
+2025-07-02 21:09:27,351 - ERROR - ❌ Failed to process document: Relation extraction failed: 403 Received http2 header with status: 403
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 75, in extract_relations
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.PermissionDenied: 403 Received http2 header with status: 403
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 108, in main
+    rag.process_document(document)
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 119, in process_document
+    entities, relations = self._extract_entities_relations(chunk)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 191, in _extract_entities_relations
+    llm_relations = self.llm.extract_relations(relation_prompt)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 99, in extract_relations
+    raise RuntimeError(f"Relation extraction failed: {e}") from e
+RuntimeError: Relation extraction failed: 403 Received http2 header with status: 403
+2025-07-02 21:12:13,827 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 21:12:13,827 - DEBUG - Calling load_models()...
+2025-07-02 21:12:13,827 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 21:12:13,827 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 21:12:25,150 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 21:12:25,150 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 21:12:25,150 - DEBUG - NERModel device set to: cpu
+2025-07-02 21:12:25,150 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 21:12:31,458 - INFO - NERModel successfully loaded.
+2025-07-02 21:12:31,459 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 21:12:31,459 - INFO - LightRAG initialized successfully
+2025-07-02 21:12:31,459 - DEBUG - LightRAG instance created.
+2025-07-02 21:12:31,459 - INFO - 📄 Sample medical document prepared.
+2025-07-02 21:12:31,459 - DEBUG - Document content: Cardiology is the study of heart disorders. A cardiologist treats conditions like arrhythmia and heart failure. The heart pumps blood through arteries and veins.
+2025-07-02 21:12:31,459 - INFO - ⚙️ Processing document...
+2025-07-02 21:12:31,459 - INFO - Processing document (size: 161 chars)
+2025-07-02 21:12:31,459 - DEBUG - Split document into 1 chunks
+2025-07-02 21:12:31,459 - INFO - Document split into 1 chunks
+2025-07-02 21:12:31,459 - DEBUG - Processing chunk 1/1
+2025-07-02 21:12:31,459 - DEBUG - Extracting entities and relations
+2025-07-02 21:12:31,459 - DEBUG - Starting NER prediction...
+2025-07-02 21:12:31,469 - DEBUG - NER raw output: [{'entity_group': 'MISC', 'score': 0.7102507, 'word': 'A cardiologist treats', 'start': 44, 'end': 65}, {'entity_group': 'MISC', 'score': 0.657661, 'word': 'The heart pum', 'start': 112, 'end': 125}]
+2025-07-02 21:12:31,469 - DEBUG - Entity found: A cardiologist treats [MISC] (44-65)
+2025-07-02 21:12:31,469 - DEBUG - Entity found: The heart pum [MISC] (112-125)
+2025-07-02 21:12:31,469 - DEBUG - Found 2 entities
+2025-07-02 21:12:50,299 - DEBUG - Found 0 relations
+2025-07-02 21:12:57,075 - DEBUG - Profiled 2 entities
+2025-07-02 21:12:57,076 - DEBUG - Profiled 0 relations
+2025-07-02 21:12:57,076 - ERROR - Error generating embeddings: 'BertModel' object has no attribute 'encode'
+2025-07-02 21:12:57,076 - ERROR - Error in document processing: 'BertModel' object has no attribute 'encode'
+2025-07-02 21:12:57,076 - ERROR - ❌ Failed to process document: 'BertModel' object has no attribute 'encode'
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 108, in main
+    rag.process_document(document)
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 126, in process_document
+    self._generate_embeddings(profiled_entities, profiled_relations)
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 320, in _generate_embeddings
+    entity_embeddings = self.embedding_model.encode(entity_texts)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1940, in __getattr__
+    raise AttributeError(
+AttributeError: 'BertModel' object has no attribute 'encode'
+2025-07-02 21:17:53,320 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 21:17:53,322 - DEBUG - Calling load_models()...
+2025-07-02 21:17:53,322 - CRITICAL - 💥 Fatal error in main: name 'load_models' is not defined
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 83, in main
+    _, embedding_model = load_models()
+                         ^^^^^^^^^^^
+NameError: name 'load_models' is not defined
+2025-07-02 21:18:54,607 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 21:18:54,607 - DEBUG - Calling load_embedding_model()...
+2025-07-02 21:18:54,607 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 21:18:54,607 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 21:19:24,318 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 21:19:24,318 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 21:19:24,318 - DEBUG - NERModel device set to: cpu
+2025-07-02 21:19:24,319 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 21:19:31,030 - INFO - NERModel successfully loaded.
+2025-07-02 21:19:31,030 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 21:19:31,031 - INFO - LightRAG initialized successfully
+2025-07-02 21:19:31,031 - DEBUG - LightRAG instance created.
+2025-07-02 21:19:31,031 - INFO - 📄 Sample medical document prepared.
+2025-07-02 21:19:31,031 - DEBUG - Document content: Cardiology is the study of heart disorders. A cardiologist treats conditions like arrhythmia and heart failure. The heart pumps blood through arteries and veins.
+2025-07-02 21:19:31,031 - INFO - ⚙️ Processing document...
+2025-07-02 21:19:31,031 - INFO - Processing document (size: 161 chars)
+2025-07-02 21:19:31,031 - DEBUG - Split document into 1 chunks
+2025-07-02 21:19:31,031 - INFO - Document split into 1 chunks
+2025-07-02 21:19:31,031 - DEBUG - Processing chunk 1/1
+2025-07-02 21:19:31,031 - DEBUG - Extracting entities and relations
+2025-07-02 21:19:31,031 - DEBUG - Starting NER prediction...
+2025-07-02 21:19:31,068 - DEBUG - NER raw output: [{'entity_group': 'MISC', 'score': 0.7102507, 'word': 'A cardiologist treats', 'start': 44, 'end': 65}, {'entity_group': 'MISC', 'score': 0.657661, 'word': 'The heart pum', 'start': 112, 'end': 125}]
+2025-07-02 21:19:31,068 - DEBUG - Entity found: A cardiologist treats [MISC] (44-65)
+2025-07-02 21:19:31,068 - DEBUG - Entity found: The heart pum [MISC] (112-125)
+2025-07-02 21:19:31,068 - DEBUG - Found 2 entities
+2025-07-02 21:19:44,441 - DEBUG - Found 0 relations
+2025-07-02 21:19:47,265 - DEBUG - Profiled 2 entities
+2025-07-02 21:19:47,265 - DEBUG - Profiled 0 relations
+2025-07-02 21:19:47,321 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 21:19:47,321 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 21:19:47,321 - DEBUG - Chunk 1 processed successfully
+2025-07-02 21:19:47,321 - INFO - Document processing completed
+2025-07-02 21:19:47,321 - INFO - ✅ Document processed successfully.
+2025-07-02 21:19:47,321 - INFO - 🔍 Starting query loop...
+2025-07-02 21:19:47,321 - DEBUG - Sending query: What does a cardiologist do?
+2025-07-02 21:19:47,321 - INFO - Processing query: What does a cardiologist do?
+2025-07-02 21:19:48,750 - DEBUG - FAISS search completed: top_k=2, avg_similarity=0.622
+2025-07-02 21:19:48,750 - ERROR - Embedding retrieval failed for top_k=5 with 2 embeddings: list index out of range
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in _retrieve_by_embedding
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in <setcomp>
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+            ~~~^^^
+IndexError: list index out of range
+2025-07-02 21:19:48,750 - ERROR - Error in dual-level retrieval: Embedding retrieval failed: list index out of range
+2025-07-02 21:19:48,750 - ERROR - Error processing query: Embedding retrieval failed: list index out of range
+2025-07-02 21:19:48,750 - WARNING - ⚠️ Failed to process query 'What does a cardiologist do?': Embedding retrieval failed: list index out of range
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in _retrieve_by_embedding
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in <setcomp>
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+            ~~~^^^
+IndexError: list index out of range
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 122, in main
+    response = rag.query(query)
+               ^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 445, in query
+    retrieved = self._dual_level_retrieval(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 489, in _dual_level_retrieval
+    entity_results.update(self._retrieve_by_embedding(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 636, in _retrieve_by_embedding
+    raise RuntimeError(f"Embedding retrieval failed: {str(e)}") from e
+RuntimeError: Embedding retrieval failed: list index out of range
+2025-07-02 21:19:48,751 - DEBUG - Sending query: Name some heart conditions
+2025-07-02 21:19:48,751 - INFO - Processing query: Name some heart conditions
+2025-07-02 21:19:50,689 - DEBUG - FAISS search completed: top_k=2, avg_similarity=0.577
+2025-07-02 21:19:50,690 - ERROR - Embedding retrieval failed for top_k=5 with 2 embeddings: list index out of range
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in _retrieve_by_embedding
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in <setcomp>
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+            ~~~^^^
+IndexError: list index out of range
+2025-07-02 21:19:50,690 - ERROR - Error in dual-level retrieval: Embedding retrieval failed: list index out of range
+2025-07-02 21:19:50,690 - ERROR - Error processing query: Embedding retrieval failed: list index out of range
+2025-07-02 21:19:50,690 - WARNING - ⚠️ Failed to process query 'Name some heart conditions': Embedding retrieval failed: list index out of range
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in _retrieve_by_embedding
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in <setcomp>
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+            ~~~^^^
+IndexError: list index out of range
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 122, in main
+    response = rag.query(query)
+               ^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 445, in query
+    retrieved = self._dual_level_retrieval(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 489, in _dual_level_retrieval
+    entity_results.update(self._retrieve_by_embedding(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 636, in _retrieve_by_embedding
+    raise RuntimeError(f"Embedding retrieval failed: {str(e)}") from e
+RuntimeError: Embedding retrieval failed: list index out of range
+2025-07-02 21:19:50,690 - DEBUG - Sending query: How does the heart work?
+2025-07-02 21:19:50,690 - INFO - Processing query: How does the heart work?
+2025-07-02 21:19:53,034 - DEBUG - FAISS search completed: top_k=2, avg_similarity=0.561
+2025-07-02 21:19:53,034 - ERROR - Embedding retrieval failed for top_k=5 with 2 embeddings: list index out of range
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in _retrieve_by_embedding
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in <setcomp>
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+            ~~~^^^
+IndexError: list index out of range
+2025-07-02 21:19:53,035 - ERROR - Error in dual-level retrieval: Embedding retrieval failed: list index out of range
+2025-07-02 21:19:53,035 - ERROR - Error processing query: Embedding retrieval failed: list index out of range
+2025-07-02 21:19:53,035 - WARNING - ⚠️ Failed to process query 'How does the heart work?': Embedding retrieval failed: list index out of range
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in _retrieve_by_embedding
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 626, in <setcomp>
+    return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+            ~~~^^^
+IndexError: list index out of range
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 122, in main
+    response = rag.query(query)
+               ^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 445, in query
+    retrieved = self._dual_level_retrieval(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 489, in _dual_level_retrieval
+    entity_results.update(self._retrieve_by_embedding(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 636, in _retrieve_by_embedding
+    raise RuntimeError(f"Embedding retrieval failed: {str(e)}") from e
+RuntimeError: Embedding retrieval failed: list index out of range
+2025-07-02 21:33:34,311 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 21:33:34,311 - DEBUG - Calling load_embedding_model()...
+2025-07-02 21:33:34,311 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 21:33:34,311 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 21:34:05,205 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 21:34:05,205 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 21:34:05,205 - DEBUG - NERModel device set to: cpu
+2025-07-02 21:34:05,205 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 21:34:10,643 - INFO - NERModel successfully loaded.
+2025-07-02 21:34:10,643 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 21:34:10,644 - INFO - LightRAG initialized successfully
+2025-07-02 21:34:10,644 - DEBUG - LightRAG instance created.
+2025-07-02 21:34:10,644 - INFO - 📄 Sample medical document prepared.
+2025-07-02 21:34:10,644 - DEBUG - Document content: Cardiology is the study of heart disorders. A cardiologist treats conditions like arrhythmia and heart failure. The heart pumps blood through arteries and veins.
+2025-07-02 21:34:10,644 - INFO - ⚙️ Processing document...
+2025-07-02 21:34:10,644 - INFO - Processing document (size: 161 chars)
+2025-07-02 21:34:10,644 - DEBUG - Split document into 1 chunks
+2025-07-02 21:34:10,644 - INFO - Document split into 1 chunks
+2025-07-02 21:34:10,644 - DEBUG - Processing chunk 1/1
+2025-07-02 21:34:10,644 - DEBUG - Extracting entities and relations
+2025-07-02 21:34:10,644 - DEBUG - Starting NER prediction...
+2025-07-02 21:34:10,680 - DEBUG - NER raw output: [{'entity_group': 'MISC', 'score': 0.7102507, 'word': 'A cardiologist treats', 'start': 44, 'end': 65}, {'entity_group': 'MISC', 'score': 0.657661, 'word': 'The heart pum', 'start': 112, 'end': 125}]
+2025-07-02 21:34:10,680 - DEBUG - Entity found: A cardiologist treats [MISC] (44-65)
+2025-07-02 21:34:10,680 - DEBUG - Entity found: The heart pum [MISC] (112-125)
+2025-07-02 21:34:10,681 - DEBUG - Found 2 entities
+2025-07-02 21:34:14,013 - DEBUG - Found 0 relations
+2025-07-02 21:34:16,985 - DEBUG - Profiled 2 entities
+2025-07-02 21:34:16,986 - DEBUG - Profiled 0 relations
+2025-07-02 21:34:17,041 - DEBUG - Generated embeddings for entities and relations
+2025-07-02 21:34:17,042 - DEBUG - Merged entities and relations into knowledge graph
+2025-07-02 21:34:17,042 - DEBUG - Chunk 1 processed successfully
+2025-07-02 21:34:17,042 - INFO - Document processing completed
+2025-07-02 21:34:17,042 - INFO - ✅ Document processed successfully.
+2025-07-02 21:34:17,042 - INFO - 🔍 Starting query loop...
+2025-07-02 21:34:17,042 - DEBUG - Sending query: What does a cardiologist do?
+2025-07-02 21:34:17,042 - INFO - Processing query: What does a cardiologist do?
+2025-07-02 21:34:18,127 - DEBUG - FAISS search completed: top_k=2, avg_similarity=0.622
+2025-07-02 21:34:18,128 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 21:34:19,903 - INFO - Query processed successfully
+2025-07-02 21:34:19,903 - INFO - ✅ Query processed: What does a cardiologist do?
+2025-07-02 21:34:19,903 - DEBUG - Sending query: Name some heart conditions
+2025-07-02 21:34:19,903 - INFO - Processing query: Name some heart conditions
+2025-07-02 21:34:27,969 - DEBUG - FAISS search completed: top_k=2, avg_similarity=0.577
+2025-07-02 21:34:27,970 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 21:34:29,589 - INFO - Query processed successfully
+2025-07-02 21:34:29,589 - INFO - ✅ Query processed: Name some heart conditions
+2025-07-02 21:34:29,590 - DEBUG - Sending query: How does the heart work?
+2025-07-02 21:34:29,590 - INFO - Processing query: How does the heart work?
+2025-07-02 21:34:32,262 - DEBUG - FAISS search completed: top_k=2, avg_similarity=0.561
+2025-07-02 21:34:32,262 - DEBUG - Empty embedding_dict provided, returning empty set
+2025-07-02 21:34:34,301 - INFO - Query processed successfully
+2025-07-02 21:34:34,301 - INFO - ✅ Query processed: How does the heart work?
+2025-07-02 21:46:14,271 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 21:46:14,273 - DEBUG - Calling load_embedding_model()...
+2025-07-02 21:46:14,273 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 21:46:14,273 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 21:46:33,460 - INFO - ✅ Embedding model loaded successfully.
+2025-07-02 21:46:33,460 - INFO - 🧠 Initializing LightRAG...
+2025-07-02 21:46:33,460 - DEBUG - NERModel device set to: cpu
+2025-07-02 21:46:33,460 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-02 21:46:41,309 - INFO - NERModel successfully loaded.
+2025-07-02 21:46:41,309 - INFO - Initialized Gemini LLM with model: gemini-1.5-flash
+2025-07-02 21:46:41,309 - INFO - LightRAG initialized successfully
+2025-07-02 21:46:41,309 - DEBUG - LightRAG instance created.
+2025-07-02 21:46:41,309 - INFO - 📄 Sample medical document prepared.
+2025-07-02 21:46:41,310 - DEBUG - Document content: Machine Learning (ML) is a field of artificial intelligence focused on building systems that learn f
+2025-07-02 21:46:41,310 - INFO - ⚙️ Processing document...
+2025-07-02 21:46:41,310 - INFO - Processing document (size: 3570 chars)
+2025-07-02 21:46:41,310 - DEBUG - Split document into 4 chunks
+2025-07-02 21:46:41,310 - INFO - Document split into 4 chunks
+2025-07-02 21:46:41,310 - DEBUG - Processing chunk 1/4
+2025-07-02 21:46:41,310 - DEBUG - Extracting entities and relations
+2025-07-02 21:46:41,310 - DEBUG - Starting NER prediction...
+2025-07-02 21:46:41,368 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.75041187, 'word': 'Machine Learning', 'start': 0, 'end': 16}, {'entity_group': 'ORG', 'score': 0.5091342, 'word': 'ML', 'start': 18, 'end': 20}, {'entity_group': 'LOC', 'score': 0.36674133, 'word': 'It', 'start': 110, 'end': 112}, {'entity_group': 'ORG', 'score': 0.28745452, 'word': 'In', 'start': 220, 'end': 222}, {'entity_group': 'ORG', 'score': 0.35662064, 'word': 'Common', 'start': 315, 'end': 321}, {'entity_group': 'PER', 'score': 0.8989135, 'word': 'Linear Regression', 'start': 341, 'end': 358}, {'entity_group': 'PER', 'score': 0.8556818, 'word': 'Logistic Regression', 'start': 360, 'end': 379}, {'entity_group': 'PER', 'score': 0.8042137, 'word': 'Support Vector Machines', 'start': 381, 'end': 404}, {'entity_group': 'ORG', 'score': 0.699506, 'word': 'SVM', 'start': 406, 'end': 409}, {'entity_group': 'PER', 'score': 0.8862007, 'word': 'Random Forests', 'start': 412, 'end': 426}, {'entity_group': 'PER', 'score': 0.47820947, 'word': 'Gradient', 'start': 432, 'end': 440}, {'entity_group': 'ORG', 'score': 0.73314047, 'word': 'Boosting Machines', 'start': 441, 'end': 458}, {'entity_group': 'ORG', 'score': 0.77471054, 'word': 'Unsupervised lear', 'start': 460, 'end': 477}, {'entity_group': 'ORG', 'score': 0.6320405, 'word': 'Algorithms', 'start': 521, 'end': 531}, {'entity_group': 'ORG', 'score': 0.40920997, 'word': 'K', 'start': 537, 'end': 538}, {'entity_group': 'ORG', 'score': 0.50391084, 'word': 'Means', 'start': 539, 'end': 544}, {'entity_group': 'LOC', 'score': 0.5137959, 'word': 'Clustering', 'start': 545, 'end': 555}, {'entity_group': 'ORG', 'score': 0.50792027, 'word': 'DBSCAN', 'start': 557, 'end': 563}, {'entity_group': 'ORG', 'score': 0.36428168, 'word': 'Principal', 'start': 569, 'end': 578}, {'entity_group': 'LOC', 'score': 0.33221543, 'word': 'Component', 'start': 579, 'end': 588}, {'entity_group': 'ORG', 'score': 0.48677427, 'word': 'Analysis', 'start': 589, 'end': 597}, {'entity_group': 'ORG', 'score': 0.3510311, 'word': 'PCA', 'start': 599, 'end': 602}, {'entity_group': 'LOC', 'score': 0.37099943, 'word': 'Reinforcement', 'start': 653, 'end': 666}, {'entity_group': 'ORG', 'score': 0.6744548, 'word': 'RL', 'start': 677, 'end': 679}, {'entity_group': 'ORG', 'score': 0.53626657, 'word': 'RL', 'start': 795, 'end': 797}, {'entity_group': 'ORG', 'score': 0.4808475, 'word': 'Go', 'start': 844, 'end': 846}, {'entity_group': 'ORG', 'score': 0.5303796, 'word': 'OpenAI', 'start': 869, 'end': 875}, {'entity_group': 'ORG', 'score': 0.2683663, 'word': 'Gym', 'start': 876, 'end': 879}, {'entity_group': 'ORG', 'score': 0.40750775, 'word': 'Deep', 'start': 880, 'end': 884}, {'entity_group': 'ORG', 'score': 0.6336067, 'word': 'Learning', 'start': 885, 'end': 893}, {'entity_group': 'ORG', 'score': 0.41033295, 'word': 'ML', 'start': 911, 'end': 913}]
+2025-07-02 21:46:41,368 - DEBUG - Entity found: Machine Learning [PER] (0-16)
+2025-07-02 21:46:41,368 - DEBUG - Entity found: ML [ORG] (18-20)
+2025-07-02 21:46:41,368 - DEBUG - Entity found: It [LOC] (110-112)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: In [ORG] (220-222)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Common [ORG] (315-321)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Linear Regression [PER] (341-358)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Logistic Regression [PER] (360-379)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Support Vector Machines [PER] (381-404)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: SVM [ORG] (406-409)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Random Forests [PER] (412-426)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Gradient [PER] (432-440)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Boosting Machines [ORG] (441-458)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Unsupervised lear [ORG] (460-477)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Algorithms [ORG] (521-531)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: K [ORG] (537-538)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Means [ORG] (539-544)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Clustering [LOC] (545-555)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: DBSCAN [ORG] (557-563)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Principal [ORG] (569-578)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Component [LOC] (579-588)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Analysis [ORG] (589-597)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: PCA [ORG] (599-602)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Reinforcement [LOC] (653-666)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: RL [ORG] (677-679)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: RL [ORG] (795-797)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Go [ORG] (844-846)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: OpenAI [ORG] (869-875)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Gym [ORG] (876-879)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Deep [ORG] (880-884)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: Learning [ORG] (885-893)
+2025-07-02 21:46:41,369 - DEBUG - Entity found: ML [ORG] (911-913)
+2025-07-02 21:46:41,369 - DEBUG - Found 31 entities
+2025-07-02 21:46:51,861 - DEBUG - Found 1 relations
+2025-07-02 21:47:33,436 - ERROR - Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 27
+}
+]
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 118, in describe_entity
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 27
+}
+]
+2025-07-02 21:47:33,442 - ERROR - Error profiling entities: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 27
+}
+]
+2025-07-02 21:47:33,442 - ERROR - Error in document processing: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 27
+}
+]
+2025-07-02 21:47:33,442 - ERROR - ❌ Failed to process document: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 27
+}
+]
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 118, in describe_entity
+    response = self.client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/generativeai/generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/ai/generativelanguage_v1beta/services/generative_service/client.py", line 835, in generate_content
+    response = rpc(
+               ^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/gapic_v1/method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/google/api_core/grpc_helpers.py", line 78, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 27
+}
+]
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 100, in main
+    rag.process_document(document=document,
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 122, in process_document
+    profiled_entities = self._profile_entities(entities)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 254, in _profile_entities
+    description = self.llm.describe_entity(entity['text'], entity['type'])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/llm_model.py", line 129, in describe_entity
+    raise RuntimeError(f"Entity description failed: {e}") from e
+RuntimeError: Entity description failed: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 27
+}
+]
+2025-07-02 21:54:23,175 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 21:54:23,176 - DEBUG - Calling load_embedding_model()...
+2025-07-02 21:54:23,177 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 21:54:23,177 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-02 21:55:55,426 - INFO - 🚀 Starting LightRAG demo...
+2025-07-02 21:55:55,427 - DEBUG - Calling load_embedding_model()...
+2025-07-02 21:55:55,427 - INFO - 🔄 Starting embedding model loading...
+2025-07-02 21:55:55,427 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2

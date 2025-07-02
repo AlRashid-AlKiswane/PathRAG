@@ -58,11 +58,11 @@ def setup_logging(
     Returns:
         logging.Logger: Configured logger instance.
     """
-    # pylint: disable=global-statement
     global _logger_initialized
 
     logger__ = logging.getLogger("app_logger")
     logger__.setLevel(logging.DEBUG)
+    logger__.propagate = False  # Prevent propagation to root logger to avoid duplicates
 
     if _logger_initialized:
         return logger__
@@ -72,14 +72,16 @@ def setup_logging(
     log_path = Path(log_dir) / log_file
 
     # Console handler (colored output)
-    if not any(isinstance(h, logging.StreamHandler) for h in logger__.handlers):
+    console_handler_exists = any(isinstance(h, logging.StreamHandler) for h in logger__.handlers)
+    if not console_handler_exists:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(console_level)
         console_handler.setFormatter(ColoredFormatter("%(asctime)s - %(levelname)s - %(message)s"))
         logger__.addHandler(console_handler)
 
     # File handler (rotating)
-    if not any(isinstance(h, RotatingFileHandler) for h in logger__.handlers):
+    file_handler_exists = any(isinstance(h, RotatingFileHandler) for h in logger__.handlers)
+    if not file_handler_exists:
         file_handler = RotatingFileHandler(log_path, maxBytes=1_048_576, backupCount=5)
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
@@ -87,6 +89,7 @@ def setup_logging(
 
     _logger_initialized = True
     return logger__
+
 
 # Initialize the logger once at module import
 logger = setup_logging()

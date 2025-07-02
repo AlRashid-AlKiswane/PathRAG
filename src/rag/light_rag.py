@@ -623,7 +623,8 @@ class LightRAG:
                     f"avg_similarity={avg_distance:.3f}"
                 )
 
-            return {ids[i] for i in indices[0] if i >= 0}  # Filter invalid indices
+            # Filter invalid indices
+            return {ids[i] for i in indices[0] if 0 <= i < len(ids)} 
 
         except Exception as e:
             logger.error(
