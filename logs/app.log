@@ -3077,3 +3077,4 @@
 2025-07-01 16:05:11,494 - INFO - Found 15 paths with 2 hops
 2025-07-01 16:05:11,494 - DEBUG - Path scoring complete. Top path: [1, 51] with score 0.414
 2025-07-01 16:05:11,494 - INFO - Generated prompt with 15 paths (total length: 2959 chars)
+2025-07-02 17:51:53,515 - INFO - Loading models from Hugging Face...

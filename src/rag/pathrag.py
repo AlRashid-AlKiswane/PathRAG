@@ -24,13 +24,29 @@ Typical usage:
     scored = rag.score_paths(paths)
     prompt = rag.generate_prompt("What is AI?", scored)
 """
-
+import os
+import sys
+import logging
 from typing import List, Dict, Any
 import networkx as nx
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
-from utils import setup_logging
+
+# Setup project base path
+try:
+    MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    sys.path.append(MAIN_DIR)
+    logging.debug("Project base path set to: %s", MAIN_DIR)
+except (ImportError, OSError) as e:
+    logging.critical(
+        "[Startup Critical] Failed to set up project base path. "
+        "Error: %s. System paths: %s", e,
+        exc_info=True
+    )
+    sys.exit(1)
+
+from src.utils import setup_logging
 
 logger = setup_logging()
 
