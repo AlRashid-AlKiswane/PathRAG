@@ -5388,3 +5388,1254 @@ RuntimeError: Cohere generation failed: status_code: 400, body: {'id': 'a16f89cb
 2025-07-02 22:49:53,011 - DEBUG - Found 25 entities
 2025-07-02 22:49:54,624 - DEBUG - Found 0 relations
 2025-07-02 22:50:05,579 - ERROR - Cohere generation failed: status_code: 429, body: {'id': '556bcffd-5691-471a-9886-e3f46ef7e050', 'message': "You are using a Trial key, which is limited to 40 API calls / minute. You can continue to use the Trial key for free or upgrade to a Production key with higher rate limits at 'https://dashboard.cohere.com/api-keys'. Contact us on 'https://discord.gg/XW44jPfYJu' or email us at support@cohere.com with any questions"}
+2025-07-03 00:34:07,110 - INFO - 🚀 Starting LightRAG demo...
+2025-07-03 00:34:07,110 - DEBUG - Calling load_embedding_model()...
+2025-07-03 00:34:07,110 - INFO - 🔄 Starting embedding model loading...
+2025-07-03 00:34:07,110 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-03 00:34:07,635 - ERROR - ❌ Failed to load embedding model: (MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=False&expand=False (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x72a54152c710>: Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 480d85aa-9703-449c-8f8f-9c47bc3ee825)')
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connection.py", line 198, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/.pyenv/versions/3.11.0/lib/python3.11/socket.py", line 961, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -3] Temporary failure in name resolution
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connectionpool.py", line 488, in _make_request
+    raise new_e
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connectionpool.py", line 464, in _make_request
+    self._validate_conn(conn)
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1093, in _validate_conn
+    conn.connect()
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connection.py", line 704, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connection.py", line 205, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x72a54152c710>: Failed to resolve 'huggingface.co' ([Errno -3] Temporary failure in name resolution)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='huggingface.co', port=443): Max retries exceeded with url: /api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=False&expand=False (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x72a54152c710>: Failed to resolve 'huggingface.co' ([Errno -3] Temporary failure in name resolution)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 63, in load_embedding_model
+    model = SentenceTransformer(model_name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/sentence_transformers/SentenceTransformer.py", line 309, in __init__
+    modules, self.module_kwargs = self._load_sbert_model(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/sentence_transformers/SentenceTransformer.py", line 1808, in _load_sbert_model
+    module = module_class(model_name_or_path, cache_dir=cache_folder, backend=self.backend, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/sentence_transformers/models/Transformer.py", line 85, in __init__
+    self.tokenizer = AutoTokenizer.from_pretrained(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/models/auto/tokenization_auto.py", line 1013, in from_pretrained
+    return tokenizer_class.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 1968, in from_pretrained
+    for template in list_repo_templates(
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 161, in list_repo_templates
+    return [
+           ^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 161, in <listcomp>
+    return [
+           ^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/hf_api.py", line 3168, in list_repo_tree
+    for path_info in paginate(path=tree_url, headers=headers, params={"recursive": recursive, "expand": expand}):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_pagination.py", line 36, in paginate
+    r = session.get(path, params=params, headers=headers)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/sessions.py", line 602, in get
+    return self.request("GET", url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 96, in send
+    return super().send(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: (MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=False&expand=False (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x72a54152c710>: Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 480d85aa-9703-449c-8f8f-9c47bc3ee825)')
+2025-07-03 00:34:07,642 - CRITICAL - 💥 Fatal error in main: (MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=False&expand=False (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x72a54152c710>: Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 480d85aa-9703-449c-8f8f-9c47bc3ee825)')
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connection.py", line 198, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/.pyenv/versions/3.11.0/lib/python3.11/socket.py", line 961, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -3] Temporary failure in name resolution
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connectionpool.py", line 488, in _make_request
+    raise new_e
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connectionpool.py", line 464, in _make_request
+    self._validate_conn(conn)
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1093, in _validate_conn
+    conn.connect()
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connection.py", line 704, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connection.py", line 205, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x72a54152c710>: Failed to resolve 'huggingface.co' ([Errno -3] Temporary failure in name resolution)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='huggingface.co', port=443): Max retries exceeded with url: /api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=False&expand=False (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x72a54152c710>: Failed to resolve 'huggingface.co' ([Errno -3] Temporary failure in name resolution)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 83, in main
+    embedding_model = load_embedding_model()
+                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 63, in load_embedding_model
+    model = SentenceTransformer(model_name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/sentence_transformers/SentenceTransformer.py", line 309, in __init__
+    modules, self.module_kwargs = self._load_sbert_model(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/sentence_transformers/SentenceTransformer.py", line 1808, in _load_sbert_model
+    module = module_class(model_name_or_path, cache_dir=cache_folder, backend=self.backend, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/sentence_transformers/models/Transformer.py", line 85, in __init__
+    self.tokenizer = AutoTokenizer.from_pretrained(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/models/auto/tokenization_auto.py", line 1013, in from_pretrained
+    return tokenizer_class.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 1968, in from_pretrained
+    for template in list_repo_templates(
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 161, in list_repo_templates
+    return [
+           ^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 161, in <listcomp>
+    return [
+           ^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/hf_api.py", line 3168, in list_repo_tree
+    for path_info in paginate(path=tree_url, headers=headers, params={"recursive": recursive, "expand": expand}):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_pagination.py", line 36, in paginate
+    r = session.get(path, params=params, headers=headers)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/sessions.py", line 602, in get
+    return self.request("GET", url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 96, in send
+    return super().send(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: (MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=False&expand=False (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x72a54152c710>: Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 480d85aa-9703-449c-8f8f-9c47bc3ee825)')
+2025-07-03 00:55:47,752 - INFO - Started chunking ...
+2025-07-03 00:55:47,752 - ERROR - Unexpected error in document chunking - Error: 'str' object has no attribute 'page_content'
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/lgitrag/controllers/chunking_documant.py", line 36, in chunk_document
+    chunks = text_splitter.split_documents(text)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/langchain_text_splitters/base.py", line 94, in split_documents
+    texts.append(doc.page_content)
+                 ^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'page_content'
+2025-07-03 00:55:47,753 - ERROR - Unexpected error in document chunking - Error: 'str' object has no attribute 'page_content'
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/lgitrag/controllers/chunking_documant.py", line 49, in <module>
+    chunks = chunk_document(text=document)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/lgitrag/controllers/chunking_documant.py", line 36, in chunk_document
+    chunks = text_splitter.split_documents(text)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/langchain_text_splitters/base.py", line 94, in split_documents
+    texts.append(doc.page_content)
+                 ^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'page_content'
+2025-07-03 00:56:10,394 - INFO - Started chunking ...
+2025-07-03 00:56:10,394 - ERROR - Unexpected error in document chunking - Error: 'str' object has no attribute 'page_content'
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/lgitrag/controllers/chunking_documant.py", line 36, in chunk_document
+    chunks = text_splitter.split_documents(text)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/langchain_text_splitters/base.py", line 94, in split_documents
+    texts.append(doc.page_content)
+                 ^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'page_content'
+2025-07-03 00:56:10,395 - ERROR - Unexpected error in document chunking - Error: 'str' object has no attribute 'page_content'
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/lgitrag/controllers/chunking_documant.py", line 49, in <module>
+    chunks = chunk_document(text=document)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/lgitrag/controllers/chunking_documant.py", line 36, in chunk_document
+    chunks = text_splitter.split_documents(text)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/langchain_text_splitters/base.py", line 94, in split_documents
+    texts.append(doc.page_content)
+                 ^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'page_content'
+2025-07-03 14:36:17,947 - DEBUG - Finding one-hop neighbors for 1 entities and 0 relations
+2025-07-03 14:36:17,947 - INFO - Found 1 neighbor entities and 1 neighbor relations
+2025-07-03 14:43:42,266 - DEBUG - Finding one-hop neighbors for 1 entities and 0 relations
+2025-07-03 14:43:42,267 - INFO - Found 1 neighbor entities and 1 neighbor relations
+2025-07-03 23:06:37,785 - INFO - Starting embedding retrieval module test
+2025-07-03 23:06:37,785 - DEBUG - Embedding dictionary validation passed
+2025-07-03 23:06:37,785 - INFO - Sample embeddings validation passed
+2025-07-03 23:06:37,785 - INFO - Starting embedding retrieval with top_k=2 for 4 embeddings
+2025-07-03 23:06:37,785 - DEBUG - Processing 4 embeddings, retrieving top 2
+2025-07-03 23:06:37,785 - DEBUG - Embedding matrix shape: (4, 3), query shape: (3,)
+2025-07-03 23:06:37,785 - DEBUG - Normalizing embeddings for cosine similarity
+2025-07-03 23:06:37,786 - DEBUG - Building FAISS IndexFlatIP with dimension 3
+2025-07-03 23:06:37,787 - DEBUG - Added 4 embeddings to FAISS index
+2025-07-03 23:06:37,787 - DEBUG - Performing FAISS search for top 2 items
+2025-07-03 23:06:37,788 - DEBUG - FAISS search completed: top_k=2, avg_similarity=1.000, min_similarity=1.000, max_similarity=1.000
+2025-07-03 23:06:37,788 - INFO - Embedding retrieval completed successfully. Retrieved 2 items
+2025-07-03 23:06:37,788 - INFO - Test retrieval successful. Results: {'doc2', 'doc3'}
+2025-07-03 23:06:37,788 - INFO - Embedding retrieval module test completed
+2025-07-03 23:09:43,789 - INFO - Starting knowledge graph neighbor expansion module test
+2025-07-03 23:09:43,790 - DEBUG - Knowledge graph validation passed
+2025-07-03 23:09:43,790 - INFO - Sample knowledge graph validation passed
+2025-07-03 23:09:43,790 - DEBUG - Knowledge graph statistics calculated: {'total_entities': 5, 'total_relations': 5, 'entity_types': defaultdict(<class 'int'>, {'PERSON': 2, 'ORG': 2, 'LOCATION': 1}), 'relation_types': defaultdict(<class 'int'>, {'WORKS_FOR': 2, 'LOCATED_IN': 2, 'KNOWS': 1})}
+2025-07-03 23:09:43,790 - INFO - Knowledge graph statistics: {'total_entities': 5, 'total_relations': 5, 'entity_types': defaultdict(<class 'int'>, {'PERSON': 2, 'ORG': 2, 'LOCATION': 1}), 'relation_types': defaultdict(<class 'int'>, {'WORKS_FOR': 2, 'LOCATED_IN': 2, 'KNOWS': 1})}
+2025-07-03 23:09:43,790 - INFO - Starting one-hop neighbor expansion for 1 entities and 0 relations
+2025-07-03 23:09:43,790 - DEBUG - Knowledge graph validation passed
+2025-07-03 23:09:43,790 - DEBUG - Input validation passed. Processing 1 entities: ['E1'], 0 relations: []
+2025-07-03 23:09:43,790 - DEBUG - Knowledge graph statistics calculated: {'total_entities': 5, 'total_relations': 5, 'entity_types': defaultdict(<class 'int'>, {'PERSON': 2, 'ORG': 2, 'LOCATION': 1}), 'relation_types': defaultdict(<class 'int'>, {'WORKS_FOR': 2, 'LOCATED_IN': 2, 'KNOWS': 1})}
+2025-07-03 23:09:43,790 - DEBUG - Knowledge graph stats: {'total_entities': 5, 'total_relations': 5, 'entity_types': defaultdict(<class 'int'>, {'PERSON': 2, 'ORG': 2, 'LOCATION': 1}), 'relation_types': defaultdict(<class 'int'>, {'WORKS_FOR': 2, 'LOCATED_IN': 2, 'KNOWS': 1})}
+2025-07-03 23:09:43,790 - DEBUG - Finding relations connected to input entities
+2025-07-03 23:09:43,790 - DEBUG - Entity processing complete: 1 entities processed, 2 relations found, 2 entities found
+2025-07-03 23:09:43,790 - DEBUG - Finding entities connected to input relations
+2025-07-03 23:09:43,790 - DEBUG - Relation processing complete: 0 relations processed, 0 new entities found
+2025-07-03 23:09:43,790 - DEBUG - Removed 0 original entities and 0 original relations
+2025-07-03 23:09:43,790 - INFO - One-hop neighbor expansion completed successfully. Found 2 neighbor entities and 2 neighbor relations
+2025-07-03 23:09:43,790 - INFO - Starting multi-hop neighbor expansion for 1 entities and 0 relations with max_hops=2
+2025-07-03 23:09:43,790 - DEBUG - Processing hop 1/2
+2025-07-03 23:09:43,790 - INFO - Starting one-hop neighbor expansion for 1 entities and 0 relations
+2025-07-03 23:09:43,790 - DEBUG - Knowledge graph validation passed
+2025-07-03 23:09:43,790 - DEBUG - Input validation passed. Processing 1 entities: ['E1'], 0 relations: []
+2025-07-03 23:09:43,790 - DEBUG - Knowledge graph statistics calculated: {'total_entities': 5, 'total_relations': 5, 'entity_types': defaultdict(<class 'int'>, {'PERSON': 2, 'ORG': 2, 'LOCATION': 1}), 'relation_types': defaultdict(<class 'int'>, {'WORKS_FOR': 2, 'LOCATED_IN': 2, 'KNOWS': 1})}
+2025-07-03 23:09:43,791 - DEBUG - Knowledge graph stats: {'total_entities': 5, 'total_relations': 5, 'entity_types': defaultdict(<class 'int'>, {'PERSON': 2, 'ORG': 2, 'LOCATION': 1}), 'relation_types': defaultdict(<class 'int'>, {'WORKS_FOR': 2, 'LOCATED_IN': 2, 'KNOWS': 1})}
+2025-07-03 23:09:43,791 - DEBUG - Finding relations connected to input entities
+2025-07-03 23:09:43,791 - DEBUG - Entity processing complete: 1 entities processed, 2 relations found, 2 entities found
+2025-07-03 23:09:43,791 - DEBUG - Finding entities connected to input relations
+2025-07-03 23:09:43,791 - DEBUG - Relation processing complete: 0 relations processed, 0 new entities found
+2025-07-03 23:09:43,791 - DEBUG - Removed 0 original entities and 0 original relations
+2025-07-03 23:09:43,791 - INFO - One-hop neighbor expansion completed successfully. Found 2 neighbor entities and 2 neighbor relations
+2025-07-03 23:09:43,791 - DEBUG - Hop 1: Found 2 new entities, 2 new relations
+2025-07-03 23:09:43,791 - DEBUG - Processing hop 2/2
+2025-07-03 23:09:43,791 - INFO - Starting one-hop neighbor expansion for 2 entities and 2 relations
+2025-07-03 23:09:43,791 - DEBUG - Knowledge graph validation passed
+2025-07-03 23:09:43,791 - DEBUG - Input validation passed. Processing 2 entities: ['E4', 'E2'], 2 relations: ['R1', 'R4']
+2025-07-03 23:09:43,791 - DEBUG - Knowledge graph statistics calculated: {'total_entities': 5, 'total_relations': 5, 'entity_types': defaultdict(<class 'int'>, {'PERSON': 2, 'ORG': 2, 'LOCATION': 1}), 'relation_types': defaultdict(<class 'int'>, {'WORKS_FOR': 2, 'LOCATED_IN': 2, 'KNOWS': 1})}
+2025-07-03 23:09:43,791 - DEBUG - Knowledge graph stats: {'total_entities': 5, 'total_relations': 5, 'entity_types': defaultdict(<class 'int'>, {'PERSON': 2, 'ORG': 2, 'LOCATION': 1}), 'relation_types': defaultdict(<class 'int'>, {'WORKS_FOR': 2, 'LOCATED_IN': 2, 'KNOWS': 1})}
+2025-07-03 23:09:43,791 - DEBUG - Finding relations connected to input entities
+2025-07-03 23:09:43,791 - DEBUG - Entity processing complete: 2 entities processed, 3 relations found, 5 entities found
+2025-07-03 23:09:43,791 - DEBUG - Finding entities connected to input relations
+2025-07-03 23:09:43,791 - DEBUG - Relation processing complete: 2 relations processed, 2 new entities found
+2025-07-03 23:09:43,791 - DEBUG - Removed 2 original entities and 0 original relations
+2025-07-03 23:09:43,791 - INFO - One-hop neighbor expansion completed successfully. Found 2 neighbor entities and 2 neighbor relations
+2025-07-03 23:09:43,791 - DEBUG - Hop 2: Found 1 new entities, 2 new relations
+2025-07-03 23:09:43,791 - INFO - Multi-hop expansion completed. Total: 3 entities, 4 relations
+2025-07-03 23:09:43,791 - INFO - Knowledge graph neighbor expansion module test completed
+2025-07-03 23:20:36,268 - INFO - 🚀 Starting LightRAG demo...
+2025-07-03 23:20:36,270 - DEBUG - Calling load_embedding_model()...
+2025-07-03 23:20:36,270 - INFO - 🔄 Starting embedding model loading...
+2025-07-03 23:20:36,270 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-03 23:20:54,124 - INFO - ✅ Embedding model loaded successfully.
+2025-07-03 23:20:54,124 - INFO - 🧠 Initializing LightRAG...
+2025-07-03 23:20:54,125 - DEBUG - NERModel device set to: cpu
+2025-07-03 23:20:54,125 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-03 23:20:56,114 - INFO - NERModel successfully loaded.
+2025-07-03 23:20:56,114 - ERROR - Cohere API key not found in environment variables
+2025-07-03 23:20:56,120 - CRITICAL - 💥 Fatal error in main: COHERE_API_KEY environment variable required
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 89, in main
+    llm_model=CohereLLM()
+              ^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/cohere_llm.py", line 55, in __init__
+    raise ValueError("COHERE_API_KEY environment variable required")
+ValueError: COHERE_API_KEY environment variable required
+2025-07-03 23:22:04,753 - INFO - 🚀 Starting LightRAG demo...
+2025-07-03 23:22:04,755 - DEBUG - Calling load_embedding_model()...
+2025-07-03 23:22:04,755 - INFO - 🔄 Starting embedding model loading...
+2025-07-03 23:22:04,755 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-03 23:22:09,146 - INFO - ✅ Embedding model loaded successfully.
+2025-07-03 23:22:09,146 - INFO - 🧠 Initializing LightRAG...
+2025-07-03 23:22:09,147 - DEBUG - NERModel device set to: cpu
+2025-07-03 23:22:09,147 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-03 23:22:11,359 - INFO - NERModel successfully loaded.
+2025-07-03 23:22:11,428 - INFO - Initialized Cohere LLM with model: command-light
+2025-07-03 23:22:11,429 - INFO - LightRAG initialized successfully
+2025-07-03 23:22:11,429 - DEBUG - LightRAG instance created.
+2025-07-03 23:22:11,429 - INFO - 📄 Sample medical document prepared.
+2025-07-03 23:22:11,429 - DEBUG - Document content: Machine Learning (ML) is a field of artificial intelligence focused on building systems that learn f
+2025-07-03 23:22:11,429 - INFO - ⚙️ Processing document...
+2025-07-03 23:22:11,429 - INFO - Processing document (size: 3570 chars)
+2025-07-03 23:22:11,429 - DEBUG - Split document into 4 chunks
+2025-07-03 23:22:11,429 - INFO - Document split into 4 chunks
+2025-07-03 23:22:11,429 - DEBUG - Processing chunk 1/4
+2025-07-03 23:22:11,429 - DEBUG - Extracting entities and relations
+2025-07-03 23:22:11,429 - DEBUG - Starting NER prediction...
+2025-07-03 23:22:11,580 - DEBUG - NER raw output: [{'entity_group': 'PER', 'score': 0.75041187, 'word': 'Machine Learning', 'start': 0, 'end': 16}, {'entity_group': 'ORG', 'score': 0.5091342, 'word': 'ML', 'start': 18, 'end': 20}, {'entity_group': 'LOC', 'score': 0.36674133, 'word': 'It', 'start': 110, 'end': 112}, {'entity_group': 'ORG', 'score': 0.28745452, 'word': 'In', 'start': 220, 'end': 222}, {'entity_group': 'ORG', 'score': 0.35662064, 'word': 'Common', 'start': 315, 'end': 321}, {'entity_group': 'PER', 'score': 0.8989135, 'word': 'Linear Regression', 'start': 341, 'end': 358}, {'entity_group': 'PER', 'score': 0.8556818, 'word': 'Logistic Regression', 'start': 360, 'end': 379}, {'entity_group': 'PER', 'score': 0.8042137, 'word': 'Support Vector Machines', 'start': 381, 'end': 404}, {'entity_group': 'ORG', 'score': 0.699506, 'word': 'SVM', 'start': 406, 'end': 409}, {'entity_group': 'PER', 'score': 0.8862007, 'word': 'Random Forests', 'start': 412, 'end': 426}, {'entity_group': 'PER', 'score': 0.47820947, 'word': 'Gradient', 'start': 432, 'end': 440}, {'entity_group': 'ORG', 'score': 0.73314047, 'word': 'Boosting Machines', 'start': 441, 'end': 458}, {'entity_group': 'ORG', 'score': 0.77471054, 'word': 'Unsupervised lear', 'start': 460, 'end': 477}, {'entity_group': 'ORG', 'score': 0.6320405, 'word': 'Algorithms', 'start': 521, 'end': 531}, {'entity_group': 'ORG', 'score': 0.40920997, 'word': 'K', 'start': 537, 'end': 538}, {'entity_group': 'ORG', 'score': 0.50391084, 'word': 'Means', 'start': 539, 'end': 544}, {'entity_group': 'LOC', 'score': 0.5137959, 'word': 'Clustering', 'start': 545, 'end': 555}, {'entity_group': 'ORG', 'score': 0.50792027, 'word': 'DBSCAN', 'start': 557, 'end': 563}, {'entity_group': 'ORG', 'score': 0.36428168, 'word': 'Principal', 'start': 569, 'end': 578}, {'entity_group': 'LOC', 'score': 0.33221543, 'word': 'Component', 'start': 579, 'end': 588}, {'entity_group': 'ORG', 'score': 0.48677427, 'word': 'Analysis', 'start': 589, 'end': 597}, {'entity_group': 'ORG', 'score': 0.3510311, 'word': 'PCA', 'start': 599, 'end': 602}, {'entity_group': 'LOC', 'score': 0.37099943, 'word': 'Reinforcement', 'start': 653, 'end': 666}, {'entity_group': 'ORG', 'score': 0.6744548, 'word': 'RL', 'start': 677, 'end': 679}, {'entity_group': 'ORG', 'score': 0.53626657, 'word': 'RL', 'start': 795, 'end': 797}, {'entity_group': 'ORG', 'score': 0.4808475, 'word': 'Go', 'start': 844, 'end': 846}, {'entity_group': 'ORG', 'score': 0.5303796, 'word': 'OpenAI', 'start': 869, 'end': 875}, {'entity_group': 'ORG', 'score': 0.2683663, 'word': 'Gym', 'start': 876, 'end': 879}, {'entity_group': 'ORG', 'score': 0.40750775, 'word': 'Deep', 'start': 880, 'end': 884}, {'entity_group': 'ORG', 'score': 0.6336067, 'word': 'Learning', 'start': 885, 'end': 893}, {'entity_group': 'ORG', 'score': 0.41033295, 'word': 'ML', 'start': 911, 'end': 913}]
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Machine Learning [PER] (0-16)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: ML [ORG] (18-20)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: It [LOC] (110-112)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: In [ORG] (220-222)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Common [ORG] (315-321)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Linear Regression [PER] (341-358)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Logistic Regression [PER] (360-379)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Support Vector Machines [PER] (381-404)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: SVM [ORG] (406-409)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Random Forests [PER] (412-426)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Gradient [PER] (432-440)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Boosting Machines [ORG] (441-458)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Unsupervised lear [ORG] (460-477)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Algorithms [ORG] (521-531)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: K [ORG] (537-538)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Means [ORG] (539-544)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Clustering [LOC] (545-555)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: DBSCAN [ORG] (557-563)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Principal [ORG] (569-578)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Component [LOC] (579-588)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Analysis [ORG] (589-597)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: PCA [ORG] (599-602)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Reinforcement [LOC] (653-666)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: RL [ORG] (677-679)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: RL [ORG] (795-797)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Go [ORG] (844-846)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: OpenAI [ORG] (869-875)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Gym [ORG] (876-879)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Deep [ORG] (880-884)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: Learning [ORG] (885-893)
+2025-07-03 23:22:11,581 - DEBUG - Entity found: ML [ORG] (911-913)
+2025-07-03 23:22:11,581 - DEBUG - Found 31 entities
+2025-07-03 23:22:12,555 - ERROR - Cohere generation failed: status_code: 403, body: 
+<html><head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<title>403 Forbidden</title>
+</head>
+<body text=#000000 bgcolor=#ffffff>
+<h1>Error: Forbidden</h1>
+<h2>Your client does not have permission to get URL <code>/v1/generate</code> from this server.</h2>
+<h2></h2>
+</body></html>
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/cohere/base_client.py", line 1627, in generate
+    object_=_response.json(),
+            ^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/httpx/_models.py", line 832, in json
+    return jsonlib.loads(self.content, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/.pyenv/versions/3.11.0/lib/python3.11/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/.pyenv/versions/3.11.0/lib/python3.11/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/.pyenv/versions/3.11.0/lib/python3.11/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 2 column 1 (char 1)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/cohere_llm.py", line 62, in _generate
+    response = self.client.generate(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/cohere/base_client.py", line 1723, in generate
+    raise ApiError(status_code=_response.status_code, body=_response.text)
+cohere.core.api_error.ApiError: status_code: 403, body: 
+<html><head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<title>403 Forbidden</title>
+</head>
+<body text=#000000 bgcolor=#ffffff>
+<h1>Error: Forbidden</h1>
+<h2>Your client does not have permission to get URL <code>/v1/generate</code> from this server.</h2>
+<h2></h2>
+</body></html>
+
+2025-07-03 23:22:12,560 - ERROR - Error in entity/relation extraction: Cohere generation failed: status_code: 403, body: 
+<html><head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<title>403 Forbidden</title>
+</head>
+<body text=#000000 bgcolor=#ffffff>
+<h1>Error: Forbidden</h1>
+<h2>Your client does not have permission to get URL <code>/v1/generate</code> from this server.</h2>
+<h2></h2>
+</body></html>
+
+2025-07-03 23:22:12,560 - ERROR - Error in document processing: Cohere generation failed: status_code: 403, body: 
+<html><head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<title>403 Forbidden</title>
+</head>
+<body text=#000000 bgcolor=#ffffff>
+<h1>Error: Forbidden</h1>
+<h2>Your client does not have permission to get URL <code>/v1/generate</code> from this server.</h2>
+<h2></h2>
+</body></html>
+
+2025-07-03 23:22:12,560 - ERROR - ❌ Failed to process document: Cohere generation failed: status_code: 403, body: 
+<html><head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<title>403 Forbidden</title>
+</head>
+<body text=#000000 bgcolor=#ffffff>
+<h1>Error: Forbidden</h1>
+<h2>Your client does not have permission to get URL <code>/v1/generate</code> from this server.</h2>
+<h2></h2>
+</body></html>
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/cohere/base_client.py", line 1627, in generate
+    object_=_response.json(),
+            ^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/httpx/_models.py", line 832, in json
+    return jsonlib.loads(self.content, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/.pyenv/versions/3.11.0/lib/python3.11/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/.pyenv/versions/3.11.0/lib/python3.11/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/.pyenv/versions/3.11.0/lib/python3.11/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 2 column 1 (char 1)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/cohere_llm.py", line 62, in _generate
+    response = self.client.generate(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/cohere/base_client.py", line 1723, in generate
+    raise ApiError(status_code=_response.status_code, body=_response.text)
+cohere.core.api_error.ApiError: status_code: 403, body: 
+<html><head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<title>403 Forbidden</title>
+</head>
+<body text=#000000 bgcolor=#ffffff>
+<h1>Error: Forbidden</h1>
+<h2>Your client does not have permission to get URL <code>/v1/generate</code> from this server.</h2>
+<h2></h2>
+</body></html>
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 100, in main
+    rag.process_document(document=document,
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 119, in process_document
+    entities, relations = self._extract_entities_relations(chunk)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag.py", line 191, in _extract_entities_relations
+    llm_relations = self.llm.extract_relations(relation_prompt)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/cohere_llm.py", line 88, in extract_relations
+    output = self._generate(full_prompt, max_tokens=512, temperature=0.3)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/cohere_llm.py", line 71, in _generate
+    raise RuntimeError(f"Cohere generation failed: {e}") from e
+RuntimeError: Cohere generation failed: status_code: 403, body: 
+<html><head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<title>403 Forbidden</title>
+</head>
+<body text=#000000 bgcolor=#ffffff>
+<h1>Error: Forbidden</h1>
+<h2>Your client does not have permission to get URL <code>/v1/generate</code> from this server.</h2>
+<h2></h2>
+</body></html>
+
+2025-07-04 00:22:49,858 - ERROR - Failed to initialize HuggingFace model: You are trying to access a gated repo.
+Make sure to have access to it at https://huggingface.co/google/gemma-3-1b-pt.
+401 Client Error. (Request ID: Root=1-6866f4a9-1cd7cf9a75a7fe6d1b2fd692;257537a3-bff4-4616-a1d2-0210493eca39)
+
+Cannot access gated repo for url https://huggingface.co/google/gemma-3-1b-pt/resolve/main/config.json.
+Access to model google/gemma-3-1b-pt is restricted. You must have access to it and be authenticated to access it. Please log in.
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 409, in hf_raise_for_status
+    response.raise_for_status()
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 401 Client Error: Unauthorized for url: https://huggingface.co/google/gemma-3-1b-pt/resolve/main/config.json
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 470, in cached_files
+    hf_hub_download(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1008, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1115, in _hf_hub_download_to_cache_dir
+    _raise_on_head_call_error(head_call_error, force_download, local_files_only)
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1645, in _raise_on_head_call_error
+    raise head_call_error
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1533, in _get_metadata_or_catch_error
+    metadata = get_hf_file_metadata(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1450, in get_hf_file_metadata
+    r = _request_wrapper(
+        ^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 286, in _request_wrapper
+    response = _request_wrapper(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 310, in _request_wrapper
+    hf_raise_for_status(response)
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 426, in hf_raise_for_status
+    raise _format(GatedRepoError, message, response) from e
+huggingface_hub.errors.GatedRepoError: 401 Client Error. (Request ID: Root=1-6866f4a9-1cd7cf9a75a7fe6d1b2fd692;257537a3-bff4-4616-a1d2-0210493eca39)
+
+Cannot access gated repo for url https://huggingface.co/google/gemma-3-1b-pt/resolve/main/config.json.
+Access to model google/gemma-3-1b-pt is restricted. You must have access to it and be authenticated to access it. Please log in.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/hf_model.py", line 55, in _initialize_model
+    self.tokenizer = AutoTokenizer.from_pretrained(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/models/auto/tokenization_auto.py", line 970, in from_pretrained
+    config = AutoConfig.from_pretrained(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/models/auto/configuration_auto.py", line 1153, in from_pretrained
+    config_dict, unused_kwargs = PretrainedConfig.get_config_dict(pretrained_model_name_or_path, **kwargs)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/configuration_utils.py", line 595, in get_config_dict
+    config_dict, kwargs = cls._get_config_dict(pretrained_model_name_or_path, **kwargs)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/configuration_utils.py", line 654, in _get_config_dict
+    resolved_config_file = cached_file(
+                           ^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 312, in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 533, in cached_files
+    raise OSError(
+OSError: You are trying to access a gated repo.
+Make sure to have access to it at https://huggingface.co/google/gemma-3-1b-pt.
+401 Client Error. (Request ID: Root=1-6866f4a9-1cd7cf9a75a7fe6d1b2fd692;257537a3-bff4-4616-a1d2-0210493eca39)
+
+Cannot access gated repo for url https://huggingface.co/google/gemma-3-1b-pt/resolve/main/config.json.
+Access to model google/gemma-3-1b-pt is restricted. You must have access to it and be authenticated to access it. Please log in.
+2025-07-04 00:22:50,406 - INFO - HuggingFace LLM destructor called
+2025-07-04 00:22:50,406 - INFO - Clearing HuggingFace model from memory
+2025-07-04 00:22:50,406 - INFO - HuggingFace model cleared successfully
+2025-07-04 00:23:59,091 - ERROR - Failed to initialize HuggingFace model: You are trying to access a gated repo.
+Make sure to have access to it at https://huggingface.co/google/gemma-3-1b-pt.
+401 Client Error. (Request ID: Root=1-6866f4ee-1d3d5c4b0fc11af8551270bd;dd3ac663-2e78-4c00-b8e4-b04632aaba3d)
+
+Cannot access gated repo for url https://huggingface.co/google/gemma-3-1b-pt/resolve/main/config.json.
+Access to model google/gemma-3-1b-pt is restricted. You must have access to it and be authenticated to access it. Please log in.
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 409, in hf_raise_for_status
+    response.raise_for_status()
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 401 Client Error: Unauthorized for url: https://huggingface.co/google/gemma-3-1b-pt/resolve/main/config.json
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 470, in cached_files
+    hf_hub_download(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1008, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1115, in _hf_hub_download_to_cache_dir
+    _raise_on_head_call_error(head_call_error, force_download, local_files_only)
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1645, in _raise_on_head_call_error
+    raise head_call_error
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1533, in _get_metadata_or_catch_error
+    metadata = get_hf_file_metadata(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1450, in get_hf_file_metadata
+    r = _request_wrapper(
+        ^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 286, in _request_wrapper
+    response = _request_wrapper(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 310, in _request_wrapper
+    hf_raise_for_status(response)
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 426, in hf_raise_for_status
+    raise _format(GatedRepoError, message, response) from e
+huggingface_hub.errors.GatedRepoError: 401 Client Error. (Request ID: Root=1-6866f4ee-1d3d5c4b0fc11af8551270bd;dd3ac663-2e78-4c00-b8e4-b04632aaba3d)
+
+Cannot access gated repo for url https://huggingface.co/google/gemma-3-1b-pt/resolve/main/config.json.
+Access to model google/gemma-3-1b-pt is restricted. You must have access to it and be authenticated to access it. Please log in.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/hf_model.py", line 55, in _initialize_model
+    self.tokenizer = AutoTokenizer.from_pretrained(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/models/auto/tokenization_auto.py", line 970, in from_pretrained
+    config = AutoConfig.from_pretrained(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/models/auto/configuration_auto.py", line 1153, in from_pretrained
+    config_dict, unused_kwargs = PretrainedConfig.get_config_dict(pretrained_model_name_or_path, **kwargs)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/configuration_utils.py", line 595, in get_config_dict
+    config_dict, kwargs = cls._get_config_dict(pretrained_model_name_or_path, **kwargs)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/configuration_utils.py", line 654, in _get_config_dict
+    resolved_config_file = cached_file(
+                           ^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 312, in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 533, in cached_files
+    raise OSError(
+OSError: You are trying to access a gated repo.
+Make sure to have access to it at https://huggingface.co/google/gemma-3-1b-pt.
+401 Client Error. (Request ID: Root=1-6866f4ee-1d3d5c4b0fc11af8551270bd;dd3ac663-2e78-4c00-b8e4-b04632aaba3d)
+
+Cannot access gated repo for url https://huggingface.co/google/gemma-3-1b-pt/resolve/main/config.json.
+Access to model google/gemma-3-1b-pt is restricted. You must have access to it and be authenticated to access it. Please log in.
+2025-07-04 00:23:59,429 - INFO - HuggingFace LLM destructor called
+2025-07-04 00:23:59,429 - INFO - Clearing HuggingFace model from memory
+2025-07-04 00:23:59,429 - INFO - HuggingFace model cleared successfully
+2025-07-04 00:43:10,507 - INFO - HuggingFace LLM destructor called
+2025-07-04 00:43:10,507 - INFO - Clearing HuggingFace model from memory
+2025-07-04 00:43:10,739 - INFO - HuggingFace model cleared successfully
+2025-07-04 00:48:11,243 - ERROR - Failed to initialize HuggingFace model: Can't load the model for 'google/gemma-3-1b-pt'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a local directory with the same name. Otherwise, make sure 'google/gemma-3-1b-pt' is the correct path to a directory containing a file named pytorch_model.bin, tf_model.h5, model.ckpt or flax_model.msgpack.
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 1024, in _get_resolved_checkpoint_files
+    resolved_archive_file = cached_file(pretrained_model_name_or_path, filename, **cached_file_kwargs)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 312, in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 557, in cached_files
+    raise e
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 470, in cached_files
+    hf_hub_download(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1008, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1161, in _hf_hub_download_to_cache_dir
+    _download_to_tmp_and_move(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1710, in _download_to_tmp_and_move
+    xet_get(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 627, in xet_get
+    download_files(
+RuntimeError: Data processing error: CAS service error : Error : single flight error: Real call failed: ReqwestMiddlewareError(Middleware(error sending request for url (https://transfer.xethub.hf.co/xorbs/default/3a4cc8217cf5424b1e0cd5a6eaff8a55901295029fe9cce3f3a5bfa30d5a8f5e?X-Xet-Signed-Range=bytes%3D0-64306233&Expires=1751582849&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmFuc2Zlci54ZXRodWIuaGYuY28veG9yYnMvZGVmYXVsdC8zYTRjYzgyMTdjZjU0MjRiMWUwY2Q1YTZlYWZmOGE1NTkwMTI5NTAyOWZlOWNjZTNmM2E1YmZhMzBkNWE4ZjVlP1gtWGV0LVNpZ25lZC1SYW5nZT1ieXRlcyUzRDAtNjQzMDYyMzMiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NTE1ODI4NDl9fX1dfQ__&Signature=Wx9g7G7aiIk4hIgw5jhWfMap1U2OSc5Yb3P8D1sgWlFT1rnl41-luY-ww7CSg3Ga4TwCwVkLwoqpxeECPuf1D5vezKstVH2CTNayb2TyrId6d5Z2dcZLVFmDFvm2R3GoXgy4OC1anrrfsvvdLaEDJfxgxIVsJtsamzKsK8sfgptDQ6Oep9wLrVbhHNbGdEhfiupcexCL49Y3LhYFFG5e6JDT4Vrox7xxyCSOj0By9j~lBhku3mxaWN6TP6l2JF6fdRhmc7k9oAzWLlKQfja11Kl94Wj5fLMUE3JGf5-nXv3WShQ7YVIGoAM9uOLyJzMU6uoptnB2IfEBtTErkPSeQA__&Key-Pair-Id=K2L8F4GPSG1IFC)
+
+Caused by:
+    0: client error (SendRequest)
+    1: channel closed))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/hf_model.py", line 65, in _initialize_model
+    self.model = AutoModelForCausalLM.from_pretrained(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/models/auto/auto_factory.py", line 571, in from_pretrained
+    return model_class.from_pretrained(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 309, in _wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 4422, in from_pretrained
+    checkpoint_files, sharded_metadata = _get_resolved_checkpoint_files(
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 1139, in _get_resolved_checkpoint_files
+    raise EnvironmentError(
+OSError: Can't load the model for 'google/gemma-3-1b-pt'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a local directory with the same name. Otherwise, make sure 'google/gemma-3-1b-pt' is the correct path to a directory containing a file named pytorch_model.bin, tf_model.h5, model.ckpt or flax_model.msgpack.
+2025-07-04 00:48:11,434 - INFO - HuggingFace LLM destructor called
+2025-07-04 00:48:11,434 - INFO - Clearing HuggingFace model from memory
+2025-07-04 00:48:11,722 - INFO - HuggingFace model cleared successfully
+2025-07-04 00:51:12,534 - ERROR - Failed to initialize HuggingFace model: Can't load the model for 'google/gemma-3-1b-pt'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a local directory with the same name. Otherwise, make sure 'google/gemma-3-1b-pt' is the correct path to a directory containing a file named pytorch_model.bin, tf_model.h5, model.ckpt or flax_model.msgpack.
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 1024, in _get_resolved_checkpoint_files
+    resolved_archive_file = cached_file(pretrained_model_name_or_path, filename, **cached_file_kwargs)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 312, in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 557, in cached_files
+    raise e
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 470, in cached_files
+    hf_hub_download(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1008, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1161, in _hf_hub_download_to_cache_dir
+    _download_to_tmp_and_move(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1710, in _download_to_tmp_and_move
+    xet_get(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 627, in xet_get
+    download_files(
+RuntimeError: Data processing error: CAS service error : Error : single flight error: Real call failed: ReqwestMiddlewareError(Middleware(error sending request for url (https://transfer.xethub.hf.co/xorbs/default/cc0d5e3e146379f059184c6b4d3cb721917058585c98bae53a04c8d2d53d65eb?X-Xet-Signed-Range=bytes%3D0-58529594&Expires=1751583030&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmFuc2Zlci54ZXRodWIuaGYuY28veG9yYnMvZGVmYXVsdC9jYzBkNWUzZTE0NjM3OWYwNTkxODRjNmI0ZDNjYjcyMTkxNzA1ODU4NWM5OGJhZTUzYTA0YzhkMmQ1M2Q2NWViP1gtWGV0LVNpZ25lZC1SYW5nZT1ieXRlcyUzRDAtNTg1Mjk1OTQiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NTE1ODMwMzB9fX1dfQ__&Signature=awlrwGAuSiPV6c-xIoLjgt~F2TAQrnq0s6LE7ccV5g~KNHCvvHvl4FEa6POP4NJDEl-tjoEUtDOWQIarZ9SsguzD1NsRlgADqxao8kvvZAkoan67uuSjev7Fc96cauN3bSU~Mz1hzpDsSgcVwiXq6JfBqPIYj7LAB3pO5IBQrcHHJMYBG9OwlUzTcPRfeDHGF77wIa0HnfjKUOqjMxmN0aVBb5~m~qiGfN3YegkIxhZwsZuEEewEiuulNOh9g0sAnrEW-EAYxNTrsAYlNcOTrIP7~sAjdOvFIeJdMqm7HbulWXsAuy5okJf6yz6a8k2mHlm4HRnaDpSvesQzrmyhBw__&Key-Pair-Id=K2L8F4GPSG1IFC)
+
+Caused by:
+    0: client error (SendRequest)
+    1: channel closed))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/hf_model.py", line 65, in _initialize_model
+    self.model = AutoModelForCausalLM.from_pretrained(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/models/auto/auto_factory.py", line 571, in from_pretrained
+    return model_class.from_pretrained(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 309, in _wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 4422, in from_pretrained
+    checkpoint_files, sharded_metadata = _get_resolved_checkpoint_files(
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 1139, in _get_resolved_checkpoint_files
+    raise EnvironmentError(
+OSError: Can't load the model for 'google/gemma-3-1b-pt'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a local directory with the same name. Otherwise, make sure 'google/gemma-3-1b-pt' is the correct path to a directory containing a file named pytorch_model.bin, tf_model.h5, model.ckpt or flax_model.msgpack.
+2025-07-04 00:51:12,685 - INFO - HuggingFace LLM destructor called
+2025-07-04 00:51:12,685 - INFO - Clearing HuggingFace model from memory
+2025-07-04 00:51:12,905 - INFO - HuggingFace model cleared successfully
+2025-07-04 01:06:10,339 - INFO - HuggingFace LLM destructor called
+2025-07-04 01:06:10,340 - INFO - Clearing HuggingFace model from memory
+2025-07-04 01:06:10,549 - INFO - HuggingFace model cleared successfully
+2025-07-04 01:27:06,627 - INFO - HuggingFace LLM destructor called
+2025-07-04 01:27:06,628 - INFO - Clearing HuggingFace model from memory
+2025-07-04 01:27:06,829 - INFO - HuggingFace model cleared successfully
+2025-07-04 01:31:46,318 - INFO - HuggingFace LLM destructor called
+2025-07-04 01:31:46,318 - INFO - Clearing HuggingFace model from memory
+2025-07-04 01:32:45,935 - ERROR - Failed to initialize HuggingFace model: Can't load the model for 'google/gemma-3-1b-pt'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a local directory with the same name. Otherwise, make sure 'google/gemma-3-1b-pt' is the correct path to a directory containing a file named pytorch_model.bin, tf_model.h5, model.ckpt or flax_model.msgpack.
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 1024, in _get_resolved_checkpoint_files
+    resolved_archive_file = cached_file(pretrained_model_name_or_path, filename, **cached_file_kwargs)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 312, in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 557, in cached_files
+    raise e
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/utils/hub.py", line 470, in cached_files
+    hf_hub_download(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1008, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1161, in _hf_hub_download_to_cache_dir
+    _download_to_tmp_and_move(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1710, in _download_to_tmp_and_move
+    xet_get(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 627, in xet_get
+    download_files(
+RuntimeError: Data processing error: CAS service error : Error : single flight error: Real call failed: ReqwestMiddlewareError(Middleware(error sending request for url (https://transfer.xethub.hf.co/xorbs/default/35af924124bc61895028b7862579d27966590ca637c820114283b979f4facc8e?X-Xet-Signed-Range=bytes%3D0-63669672&Expires=1751585530&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmFuc2Zlci54ZXRodWIuaGYuY28veG9yYnMvZGVmYXVsdC8zNWFmOTI0MTI0YmM2MTg5NTAyOGI3ODYyNTc5ZDI3OTY2NTkwY2E2MzdjODIwMTE0MjgzYjk3OWY0ZmFjYzhlP1gtWGV0LVNpZ25lZC1SYW5nZT1ieXRlcyUzRDAtNjM2Njk2NzIiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3NTE1ODU1MzB9fX1dfQ__&Signature=bOSffxA~Rb3GxFQafcCzvCD8ncY21UhH0nO8sXrVce9YrsNK2hu3kVLOQJ~zUc9VtfLxHOXFKmMUaEASGq8cO23yFvpE9exm94oFaDoKIdqVr8ee~UHpmwI8eUl39ZaS4m-XRVLUskfDNCOJgVqrveyFlZO6t-dccZVHiEpM3M~JWbnjbEYkRF9f01a5pYE0BBY7W~3eEuQer6-sCuRVbKvgs6Ikv-fhrZF-ySx8JrI1ddlzdGBki5YKImHDqTncQK69RwhEbGhwIpnCdcQ3XD57XkjlxjQ4IPyhHh3CcwMjU7g8CsYrfaj5TK3Ukv-cUd0mv5~O37WnMF5uxTeDjg__&Key-Pair-Id=K2L8F4GPSG1IFC)
+
+Caused by:
+    0: client error (SendRequest)
+    1: channel closed))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/hf_model.py", line 65, in _initialize_model
+    self.model = AutoModelForCausalLM.from_pretrained(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/models/auto/auto_factory.py", line 571, in from_pretrained
+    return model_class.from_pretrained(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 309, in _wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 4422, in from_pretrained
+    checkpoint_files, sharded_metadata = _get_resolved_checkpoint_files(
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/modeling_utils.py", line 1139, in _get_resolved_checkpoint_files
+    raise EnvironmentError(
+OSError: Can't load the model for 'google/gemma-3-1b-pt'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a local directory with the same name. Otherwise, make sure 'google/gemma-3-1b-pt' is the correct path to a directory containing a file named pytorch_model.bin, tf_model.h5, model.ckpt or flax_model.msgpack.
+2025-07-04 01:32:46,083 - INFO - HuggingFace LLM destructor called
+2025-07-04 01:32:46,083 - INFO - Clearing HuggingFace model from memory
+2025-07-04 01:32:46,286 - INFO - HuggingFace model cleared successfully
+2025-07-04 01:35:38,902 - INFO - 🚀 Starting LightRAG demo...
+2025-07-04 01:35:38,903 - DEBUG - Calling load_embedding_model()...
+2025-07-04 01:35:38,903 - INFO - 🔄 Starting embedding model loading...
+2025-07-04 01:35:38,903 - DEBUG - Model name set to: sentence-transformers/all-MiniLM-L6-v2
+2025-07-04 01:36:01,177 - INFO - ✅ Embedding model loaded successfully.
+2025-07-04 01:36:01,178 - INFO - 🧠 Initializing LightRAG...
+2025-07-04 01:36:01,178 - DEBUG - NERModel device set to: cpu
+2025-07-04 01:36:01,178 - INFO - Loading tokenizer and model from Hugging Face: mrm8488/TinyBERT-spanish-uncased-finetuned-ner
+2025-07-04 01:36:03,683 - INFO - NERModel successfully loaded.
+2025-07-04 01:36:03,683 - ERROR - Cohere API key not found in environment variables
+2025-07-04 01:36:03,687 - CRITICAL - 💥 Fatal error in main: COHERE_API_KEY environment variable required
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/rag/light_rag_demo.py", line 89, in main
+    llm_model=CohereLLM()
+              ^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/cohere_llm.py", line 55, in __init__
+    raise ValueError("COHERE_API_KEY environment variable required")
+ValueError: COHERE_API_KEY environment variable required
+2025-07-04 01:39:36,028 - INFO - HuggingFace LLM destructor called
+2025-07-04 01:39:36,028 - INFO - Clearing HuggingFace model from memory
+2025-07-04 01:41:49,950 - ERROR - Failed to initialize HuggingFace model: Unrecognized configuration class <class 'transformers.models.deberta_v2.configuration_deberta_v2.DebertaV2Config'> for this kind of AutoModel: AutoModelForCausalLM.
+Model type should be one of AriaTextConfig, BambaConfig, BartConfig, BertConfig, BertGenerationConfig, BigBirdConfig, BigBirdPegasusConfig, BioGptConfig, BitNetConfig, BlenderbotConfig, BlenderbotSmallConfig, BloomConfig, CamembertConfig, LlamaConfig, CodeGenConfig, CohereConfig, Cohere2Config, CpmAntConfig, CTRLConfig, Data2VecTextConfig, DbrxConfig, DeepseekV3Config, DiffLlamaConfig, ElectraConfig, Emu3Config, ErnieConfig, FalconConfig, FalconMambaConfig, FuyuConfig, GemmaConfig, Gemma2Config, Gemma3Config, Gemma3TextConfig, GitConfig, GlmConfig, Glm4Config, GotOcr2Config, GPT2Config, GPT2Config, GPTBigCodeConfig, GPTNeoConfig, GPTNeoXConfig, GPTNeoXJapaneseConfig, GPTJConfig, GraniteConfig, GraniteMoeConfig, GraniteMoeHybridConfig, GraniteMoeSharedConfig, HeliumConfig, JambaConfig, JetMoeConfig, LlamaConfig, Llama4Config, Llama4TextConfig, MambaConfig, Mamba2Config, MarianConfig, MBartConfig, MegaConfig, MegatronBertConfig, MistralConfig, MixtralConfig, MllamaConfig, MoshiConfig, MptConfig, MusicgenConfig, MusicgenMelodyConfig, MvpConfig, NemotronConfig, OlmoConfig, Olmo2Config, OlmoeConfig, OpenLlamaConfig, OpenAIGPTConfig, OPTConfig, PegasusConfig, PersimmonConfig, PhiConfig, Phi3Config, Phi4MultimodalConfig, PhimoeConfig, PLBartConfig, ProphetNetConfig, QDQBertConfig, Qwen2Config, Qwen2MoeConfig, Qwen3Config, Qwen3MoeConfig, RecurrentGemmaConfig, ReformerConfig, RemBertConfig, RobertaConfig, RobertaPreLayerNormConfig, RoCBertConfig, RoFormerConfig, RwkvConfig, Speech2Text2Config, StableLmConfig, Starcoder2Config, TransfoXLConfig, TrOCRConfig, WhisperConfig, XGLMConfig, XLMConfig, XLMProphetNetConfig, XLMRobertaConfig, XLMRobertaXLConfig, XLNetConfig, XmodConfig, ZambaConfig, Zamba2Config.
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/hf_model.py", line 65, in _initialize_model
+    self.model = AutoModelForCausalLM.from_pretrained(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/transformers/models/auto/auto_factory.py", line 574, in from_pretrained
+    raise ValueError(
+ValueError: Unrecognized configuration class <class 'transformers.models.deberta_v2.configuration_deberta_v2.DebertaV2Config'> for this kind of AutoModel: AutoModelForCausalLM.
+Model type should be one of AriaTextConfig, BambaConfig, BartConfig, BertConfig, BertGenerationConfig, BigBirdConfig, BigBirdPegasusConfig, BioGptConfig, BitNetConfig, BlenderbotConfig, BlenderbotSmallConfig, BloomConfig, CamembertConfig, LlamaConfig, CodeGenConfig, CohereConfig, Cohere2Config, CpmAntConfig, CTRLConfig, Data2VecTextConfig, DbrxConfig, DeepseekV3Config, DiffLlamaConfig, ElectraConfig, Emu3Config, ErnieConfig, FalconConfig, FalconMambaConfig, FuyuConfig, GemmaConfig, Gemma2Config, Gemma3Config, Gemma3TextConfig, GitConfig, GlmConfig, Glm4Config, GotOcr2Config, GPT2Config, GPT2Config, GPTBigCodeConfig, GPTNeoConfig, GPTNeoXConfig, GPTNeoXJapaneseConfig, GPTJConfig, GraniteConfig, GraniteMoeConfig, GraniteMoeHybridConfig, GraniteMoeSharedConfig, HeliumConfig, JambaConfig, JetMoeConfig, LlamaConfig, Llama4Config, Llama4TextConfig, MambaConfig, Mamba2Config, MarianConfig, MBartConfig, MegaConfig, MegatronBertConfig, MistralConfig, MixtralConfig, MllamaConfig, MoshiConfig, MptConfig, MusicgenConfig, MusicgenMelodyConfig, MvpConfig, NemotronConfig, OlmoConfig, Olmo2Config, OlmoeConfig, OpenLlamaConfig, OpenAIGPTConfig, OPTConfig, PegasusConfig, PersimmonConfig, PhiConfig, Phi3Config, Phi4MultimodalConfig, PhimoeConfig, PLBartConfig, ProphetNetConfig, QDQBertConfig, Qwen2Config, Qwen2MoeConfig, Qwen3Config, Qwen3MoeConfig, RecurrentGemmaConfig, ReformerConfig, RemBertConfig, RobertaConfig, RobertaPreLayerNormConfig, RoCBertConfig, RoFormerConfig, RwkvConfig, Speech2Text2Config, StableLmConfig, Starcoder2Config, TransfoXLConfig, TrOCRConfig, WhisperConfig, XGLMConfig, XLMConfig, XLMProphetNetConfig, XLMRobertaConfig, XLMRobertaXLConfig, XLNetConfig, XmodConfig, ZambaConfig, Zamba2Config.
+2025-07-04 01:41:50,098 - INFO - HuggingFace LLM destructor called
+2025-07-04 01:41:50,098 - INFO - Clearing HuggingFace model from memory
+2025-07-04 01:41:50,340 - INFO - HuggingFace model cleared successfully
+2025-07-04 03:21:34,066 - ERROR - ❌ Error during manual test: object.__init__() takes exactly one argument (the instance to initialize)
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 246, in <module>
+    llm = OllamaLLM(model_name="gemma3:1b")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 43, in __init__
+    super().__init__(model_name, device)
+TypeError: object.__init__() takes exactly one argument (the instance to initialize)
+2025-07-04 03:21:34,068 - INFO - 🧼 [Destructor] OllamaLLM is being destroyed.
+2025-07-04 03:21:34,068 - INFO - 🧹 [Cleanup] Releasing resources...
+2025-07-04 03:21:34,223 - INFO - ✅ [Cleanup] Resources released.
+2025-07-04 03:22:33,903 - ERROR - ❌ Error during manual test: object.__init__() takes exactly one argument (the instance to initialize)
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 246, in <module>
+    llm = OllamaLLM(model_name="gemma3:1b")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 43, in __init__
+    super().__init__(model_name, device)
+TypeError: object.__init__() takes exactly one argument (the instance to initialize)
+2025-07-04 03:22:33,903 - INFO - 🧼 [Destructor] OllamaLLM is being destroyed.
+2025-07-04 03:22:33,903 - INFO - 🧹 [Cleanup] Releasing resources...
+2025-07-04 03:22:34,058 - INFO - ✅ [Cleanup] Resources released.
+2025-07-04 03:24:36,854 - INFO - 🚀 Initialized OllamaLLM with model: gemma3:1b on device: cpu
+2025-07-04 03:24:36,854 - INFO - 🔍 [Relation Extraction] Starting extraction from text...
+2025-07-04 03:24:36,855 - INFO - 🔄 [Text Generation] Generating response from Ollama...
+2025-07-04 03:24:36,855 - DEBUG - 📝 Prompt:
+Extract relationships in this format:
+- [Entity1] [Relationship] [Entity2]
+Only return one relationship per line.Make sure each line follows exactly this format.
+
+Text:
+Vitamin D plays a crucial role in bone health by regulating calcium absorption. Recent studies show that Vitamin D deficiency is linked to osteoporosis. Calcium is essential for bone mineralization and strength.
+2025-07-04 03:24:36,857 - ERROR - ❌ [Text Generation] Failed to generate response: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 55, in _generate
+    response = ollama.chat(
+               ^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 342, in chat
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 180, in _request
+    return cls(**self._request_raw(*args, **kwargs).json())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 126, in _request_raw
+    raise ConnectionError(CONNECTION_ERROR_MESSAGE) from None
+ConnectionError: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+2025-07-04 03:24:36,857 - ERROR - ❌ Error during manual test: Text generation failed: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 55, in _generate
+    response = ollama.chat(
+               ^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 342, in chat
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 180, in _request
+    return cls(**self._request_raw(*args, **kwargs).json())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 126, in _request_raw
+    raise ConnectionError(CONNECTION_ERROR_MESSAGE) from None
+ConnectionError: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 255, in <module>
+    relations = llm.extract_relations(sample)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 90, in extract_relations
+    output = self._generate(full_prompt, max_tokens=512, temperature=0.3)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 74, in _generate
+    raise RuntimeError(f"Text generation failed: {e}") from e
+RuntimeError: Text generation failed: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+2025-07-04 03:24:36,858 - INFO - 🧹 [Cleanup] Releasing resources...
+2025-07-04 03:24:36,997 - INFO - ✅ [Cleanup] Resources released.
+2025-07-04 03:28:47,123 - ERROR - ❌ Model gemma3:1b not found. Please pull it first.
+2025-07-04 03:28:47,123 - INFO - 💡 Run: ollama pull gemma3:1b
+2025-07-04 03:28:47,123 - ERROR - ❌ Error during manual test: Model gemma3:1b not available
+2025-07-04 03:31:41,027 - ERROR - ❌ Model gemma3:1b not found. Please pull it first.
+2025-07-04 03:31:41,027 - INFO - 💡 Run: ollama pull gemma3:1b
+2025-07-04 03:31:41,027 - ERROR - ❌ Error during manual test: Model gemma3:1b not available
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 88, in __init__
+    ollama.show(model_name)
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 609, in show
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 180, in _request
+    return cls(**self._request_raw(*args, **kwargs).json())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 126, in _request_raw
+    raise ConnectionError(CONNECTION_ERROR_MESSAGE) from None
+ConnectionError: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 295, in <module>
+    llm = OllamaLLM(model_name="gemma3:1b")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 92, in __init__
+    raise RuntimeError(f"Model {model_name} not available") from e
+RuntimeError: Model gemma3:1b not available
+2025-07-04 03:31:41,029 - INFO - 🧼 [Destructor] OllamaLLM is being destroyed.
+2025-07-04 03:31:41,029 - INFO - 🧹 [Cleanup] Releasing resources...
+2025-07-04 03:31:41,166 - INFO - ✅ [Cleanup] Resources released.
+2025-07-04 03:39:37,679 - ERROR - ❌ Model gemma3:1b not found. Please pull it first.
+2025-07-04 03:39:37,679 - INFO - 💡 Run: ollama pull gemma3:1b
+2025-07-04 03:39:37,679 - ERROR - ❌ Error during test: Model gemma3:1b not available
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 109, in _verify_model
+    ollama.show(self.model_name)
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 609, in show
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 180, in _request
+    return cls(**self._request_raw(*args, **kwargs).json())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 126, in _request_raw
+    raise ConnectionError(CONNECTION_ERROR_MESSAGE) from None
+ConnectionError: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 337, in <module>
+    with OllamaLLM(model_name="gemma3:1b") as llm:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 91, in __init__
+    self._verify_model()
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 113, in _verify_model
+    raise RuntimeError(f"Model {self.model_name} not available") from e
+RuntimeError: Model gemma3:1b not available
+2025-07-04 03:40:50,921 - ERROR - ❌ Model gemma3:1b not found. Please pull it first.
+2025-07-04 03:40:50,922 - INFO - 💡 Run: ollama pull gemma3:1b
+2025-07-04 03:40:50,922 - ERROR - ❌ Error during test: Model gemma3:1b not available
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 109, in _verify_model
+    ollama.show(self.model_name)
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 609, in show
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 180, in _request
+    return cls(**self._request_raw(*args, **kwargs).json())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/ollama/_client.py", line 126, in _request_raw
+    raise ConnectionError(CONNECTION_ERROR_MESSAGE) from None
+ConnectionError: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 337, in <module>
+    with OllamaLLM(model_name="gemma3:1b") as llm:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 91, in __init__
+    self._verify_model()
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/llmsprovider/ollama_llm.py", line 113, in _verify_model
+    raise RuntimeError(f"Model {self.model_name} not available") from e
+RuntimeError: Model gemma3:1b not available
+2025-07-04 03:50:30,673 - DEBUG - Ollama service check failed: Server disconnected without sending a response.
+2025-07-04 03:50:30,673 - WARNING - ⚠️ Ollama server not running. Starting it...
+2025-07-04 03:50:30,687 - DEBUG - Ollama service check failed: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+2025-07-04 03:50:30,687 - INFO - 🚀 Starting Ollama server...
+2025-07-04 03:50:30,688 - DEBUG - Ollama service check failed: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+2025-07-04 03:50:31,691 - INFO - ✅ Ollama server started successfully
+2025-07-04 03:50:31,692 - ERROR - ❌ Failed to ensure model gemma3:1b is available: 'name'
+2025-07-04 03:50:31,693 - ERROR - ❌ Test failed: Model gemma3:1b is not available and could not be pulled
+2025-07-04 03:51:45,302 - DEBUG - Ollama service check failed: Server disconnected without sending a response.
+2025-07-04 03:51:45,303 - WARNING - ⚠️ Ollama server not running. Starting it...
+2025-07-04 03:51:45,313 - DEBUG - Ollama service check failed: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+2025-07-04 03:51:45,313 - INFO - 🚀 Starting Ollama server...
+2025-07-04 03:51:45,315 - DEBUG - Ollama service check failed: Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible. https://ollama.com/download
+2025-07-04 03:51:46,322 - INFO - ✅ Ollama server started successfully
+2025-07-04 03:51:46,325 - ERROR - ❌ Failed to ensure model gemma3:1b is available: 'name'
+2025-07-04 03:51:46,325 - ERROR - ❌ Test failed: Model gemma3:1b is not available and could not be pulled
+2025-07-04 04:31:52,321 - INFO - === 🚀 Starting Ollama Manager ===
+2025-07-04 04:31:52,324 - INFO - 🎯 Target model: gemma3:1b
+2025-07-04 04:31:52,326 - DEBUG - 🟢 All dependencies are available
+2025-07-04 04:31:52,337 - INFO - ℹ️ Ollama server is already running 🟢
+2025-07-04 04:31:52,337 - INFO - ⏳ Waiting for server to be ready...
+2025-07-04 04:31:55,337 - INFO - 🩺 Performing health check...
+2025-07-04 04:31:55,353 - INFO - 🟢 Health check passed
+2025-07-04 04:31:55,354 - INFO - 📥 Pulling model: gemma3:1b
+2025-07-04 04:31:55,354 - DEBUG - 🐛 Running command: ollama pull gemma3:1b
+2025-07-04 04:31:56,490 - INFO - 🎉 Successfully pulled model: gemma3:1b
+2025-07-04 04:31:56,490 - INFO - 🚀 Running model: gemma3:1b
+2025-07-04 04:31:56,491 - INFO - 💬 Interactive session started with gemma3:1b. Press Ctrl+C to exit.
+2025-07-04 04:32:41,046 - INFO - 🛑 Session terminated by user
+2025-07-04 04:32:41,049 - INFO - === 🎉 Ollama Manager completed successfully ===
+2025-07-04 04:43:57,582 - INFO - === 🚀 Starting Ollama Manager ===
+2025-07-04 04:43:57,583 - INFO - 🎯 Target model: gemma3:1b
+2025-07-04 04:43:57,584 - DEBUG - 🟢 All dependencies are available
+2025-07-04 04:43:57,596 - INFO - ℹ️ Ollama server is already running 🟢
+2025-07-04 04:43:57,596 - INFO - ⏳ Waiting for server to be ready...
+2025-07-04 04:44:00,596 - INFO - 🩺 Performing health check...
+2025-07-04 04:44:00,620 - INFO - 🟢 Health check passed
+2025-07-04 04:44:00,620 - INFO - 📥 Pulling model: gemma3:1b
+2025-07-04 04:44:00,620 - DEBUG - 🐛 Running command: ollama pull gemma3:1b
+2025-07-04 04:44:01,680 - INFO - 🎉 Successfully pulled model: gemma3:1b
+2025-07-04 04:44:01,680 - INFO - 🚀 Running model: gemma3:1b
+2025-07-04 04:44:01,680 - INFO - 💬 Interactive session started with gemma3:1b. Press Ctrl+C to exit.
+2025-07-04 04:52:28,848 - INFO - 🛑 Session terminated by user
+2025-07-04 04:52:28,849 - INFO - === 🎉 Ollama Manager completed successfully ===
+2025-07-04 04:52:28,850 - INFO - 🔄 Running complete text processing pipeline
+2025-07-04 04:52:28,850 - INFO - 🔍 Extracting relations from text
+2025-07-04 04:52:28,850 - ERROR - ❌ Relation extraction failed: OllamaLLM._generate() got an unexpected keyword argument 'max_tokens'
+2025-07-04 04:52:28,850 - INFO - 🧠 Extracting keywords
+2025-07-04 04:52:28,850 - ERROR - ❌ Keyword extraction failed: OllamaLLM._generate() got an unexpected keyword argument 'max_tokens'
+2025-07-04 04:52:28,851 - INFO - ✅ Pipeline completed: 0 entities, 0 relations, 0 keywords
+2025-07-04 04:52:28,851 - INFO - 💬 Generating answer for query: How does Vitamin D affect bone health?
+2025-07-04 04:52:28,851 - ERROR - ❌ Answer generation failed: OllamaLLM._generate() got an unexpected keyword argument 'max_tokens'
+2025-07-04 04:52:28,851 - ERROR - ❌ Failed to get model info: 'OllamaLLM' object has no attribute 'model_name'
+2025-07-04 04:52:28,852 - DEBUG - 🧹 Clearing resources
+2025-07-04 04:52:28,921 - ERROR - ⚠️ Context exited with exception: 'model_name'
+2025-07-04 04:52:28,922 - ERROR - ❌ Test failed: 'model_name'
+2025-07-04 10:21:58,677 - INFO - ✅ Ollama model workflow executed successfully.
+2025-07-04 10:21:58,678 - INFO - 🔄 Running complete text processing pipeline
+2025-07-04 10:21:58,679 - INFO - 🔍 Extracting relations from text
+2025-07-04 10:21:58,679 - DEBUG - 📝 Generating response (prompt length: 984)
+2025-07-04 10:22:08,994 - WARNING - ⚠️ JSON parsing failed, using regex fallback
+2025-07-04 10:22:08,994 - INFO - ✅ Extracted 5 relations (regex fallback)
+2025-07-04 10:22:08,994 - INFO - 📘 Describing entity: Vitamin
+2025-07-04 10:22:08,994 - DEBUG - 📝 Generating response (prompt length: 102)
+2025-07-04 10:22:11,212 - INFO - 📘 Describing entity: deficiency
+2025-07-04 10:22:11,212 - DEBUG - 📝 Generating response (prompt length: 105)
+2025-07-04 10:22:13,354 - INFO - 📘 Describing entity: is
+2025-07-04 10:22:13,354 - DEBUG - 📝 Generating response (prompt length: 97)
+2025-07-04 10:22:14,437 - INFO - 📘 Describing entity: to
+2025-07-04 10:22:14,437 - DEBUG - 📝 Generating response (prompt length: 97)
+2025-07-04 10:22:15,594 - INFO - 📘 Describing entity: increased risk
+2025-07-04 10:22:15,594 - DEBUG - 📝 Generating response (prompt length: 109)
+2025-07-04 10:22:17,182 - INFO - 📘 Describing entity: fractures
+2025-07-04 10:22:17,182 - DEBUG - 📝 Generating response (prompt length: 104)
+2025-07-04 10:22:18,691 - INFO - 📘 Describing entity: helps the
+2025-07-04 10:22:18,691 - DEBUG - 📝 Generating response (prompt length: 104)
+2025-07-04 10:22:20,153 - INFO - 📘 Describing entity: produce
+2025-07-04 10:22:20,153 - DEBUG - 📝 Generating response (prompt length: 102)
+2025-07-04 10:22:21,970 - INFO - 📘 Describing entity: is a
+2025-07-04 10:22:21,971 - DEBUG - 📝 Generating response (prompt length: 99)
+2025-07-04 10:22:22,616 - INFO - 📘 Describing entity: process
+2025-07-04 10:22:22,619 - DEBUG - 📝 Generating response (prompt length: 102)
+2025-07-04 10:22:23,337 - INFO - 🔗 Describing relation: Vitamin --D--> deficiency
+2025-07-04 10:22:23,337 - DEBUG - 📝 Generating response (prompt length: 130)
+2025-07-04 10:22:28,490 - INFO - 🔗 Describing relation: is --linked--> to
+2025-07-04 10:22:28,490 - DEBUG - 📝 Generating response (prompt length: 122)
+2025-07-04 10:22:34,236 - INFO - 🔗 Describing relation: increased risk --of--> fractures
+2025-07-04 10:22:34,237 - DEBUG - 📝 Generating response (prompt length: 137)
+2025-07-04 10:22:38,649 - INFO - 🔗 Describing relation: helps the --body--> produce
+2025-07-04 10:22:38,649 - DEBUG - 📝 Generating response (prompt length: 132)
+2025-07-04 10:22:43,336 - INFO - 🔗 Describing relation: is a --natural--> process
+2025-07-04 10:22:43,336 - DEBUG - 📝 Generating response (prompt length: 130)
+2025-07-04 10:22:49,296 - INFO - 🧠 Extracting keywords
+2025-07-04 10:22:49,296 - DEBUG - 📝 Generating response (prompt length: 838)
+2025-07-04 10:22:53,205 - INFO - ✅ Extracted 8 local, 9 global keywords
+2025-07-04 10:22:53,205 - INFO - ✅ Pipeline completed: 10 entities, 5 relations, 17 keywords
+2025-07-04 10:22:53,206 - INFO - 💬 Generating answer for query: How does Vitamin D affect bone health?
+2025-07-04 10:22:53,232 - DEBUG - 📝 Generating response (prompt length: 6183)
+2025-07-04 10:23:12,374 - DEBUG - 🧹 Clearing resources
+2025-07-04 10:59:24,765 - INFO - ✅ Ollama model workflow executed successfully.
+2025-07-04 10:59:24,766 - INFO - 🔄 Running complete text processing pipeline
+2025-07-04 10:59:24,766 - INFO - 🔍 Extracting relations from text
+2025-07-04 10:59:24,766 - DEBUG - 📝 Generating response (prompt length: 984)
+2025-07-04 10:59:41,699 - WARNING - ⚠️ JSON parsing failed, using regex fallback
+2025-07-04 10:59:41,699 - INFO - ✅ Extracted 8 relations (regex fallback)
+2025-07-04 10:59:41,700 - INFO - 📘 Describing entity: is
+2025-07-04 10:59:41,700 - DEBUG - 📝 Generating response (prompt length: 145)
+2025-07-04 10:59:43,413 - INFO - 📘 Describing entity: for
+2025-07-04 10:59:43,413 - DEBUG - 📝 Generating response (prompt length: 146)
+2025-07-04 10:59:45,457 - INFO - 📘 Describing entity: maintaining
+2025-07-04 10:59:45,458 - DEBUG - 📝 Generating response (prompt length: 154)
+2025-07-04 10:59:46,555 - INFO - 📘 Describing entity: health
+2025-07-04 10:59:46,556 - DEBUG - 📝 Generating response (prompt length: 149)
+2025-07-04 10:59:48,859 - INFO - 📘 Describing entity: Vitamin
+2025-07-04 10:59:48,859 - DEBUG - 📝 Generating response (prompt length: 150)
+2025-07-04 10:59:51,218 - INFO - 📘 Describing entity: deficiency
+2025-07-04 10:59:51,218 - DEBUG - 📝 Generating response (prompt length: 153)
+2025-07-04 10:59:54,118 - INFO - 📘 Describing entity: is directly
+2025-07-04 10:59:54,118 - DEBUG - 📝 Generating response (prompt length: 154)
+2025-07-04 10:59:55,231 - INFO - 📘 Describing entity: to
+2025-07-04 10:59:55,231 - DEBUG - 📝 Generating response (prompt length: 145)
+2025-07-04 10:59:56,492 - INFO - 📘 Describing entity: increased risk
+2025-07-04 10:59:56,492 - DEBUG - 📝 Generating response (prompt length: 157)
+2025-07-04 10:59:58,720 - INFO - 📘 Describing entity: fractures
+2025-07-04 10:59:58,721 - DEBUG - 📝 Generating response (prompt length: 152)
+2025-07-04 11:00:01,626 - INFO - 📘 Describing entity: helps
+2025-07-04 11:00:01,626 - DEBUG - 📝 Generating response (prompt length: 148)
+2025-07-04 11:00:03,205 - INFO - 📘 Describing entity: body
+2025-07-04 11:00:03,206 - DEBUG - 📝 Generating response (prompt length: 147)
+2025-07-04 11:00:04,208 - INFO - 📘 Describing entity: produce
+2025-07-04 11:00:04,208 - DEBUG - 📝 Generating response (prompt length: 150)
+2025-07-04 11:00:05,878 - INFO - 📘 Describing entity: D
+2025-07-04 11:00:05,879 - DEBUG - 📝 Generating response (prompt length: 144)
+2025-07-04 11:00:07,148 - INFO - 📘 Describing entity: production
+2025-07-04 11:00:07,148 - DEBUG - 📝 Generating response (prompt length: 153)
+2025-07-04 11:00:08,977 - INFO - 🔗 Describing relation: is --essential--> for
+2025-07-04 11:00:08,977 - DEBUG - 📝 Generating response (prompt length: 158)
+2025-07-04 11:00:14,029 - INFO - 🔗 Describing relation: maintaining --bone--> health
+2025-07-04 11:00:14,030 - DEBUG - 📝 Generating response (prompt length: 165)
+2025-07-04 11:00:16,461 - INFO - 🔗 Describing relation: Vitamin --D--> deficiency
+2025-07-04 11:00:16,461 - DEBUG - 📝 Generating response (prompt length: 162)
+2025-07-04 11:00:18,674 - INFO - 🔗 Describing relation: is directly --linked--> to
+2025-07-04 11:00:18,674 - DEBUG - 📝 Generating response (prompt length: 163)
+2025-07-04 11:00:22,913 - INFO - 🔗 Describing relation: increased risk --of--> fractures
+2025-07-04 11:00:22,913 - DEBUG - 📝 Generating response (prompt length: 169)
+2025-07-04 11:00:26,502 - INFO - 🔗 Describing relation: helps --the--> body
+2025-07-04 11:00:26,502 - DEBUG - 📝 Generating response (prompt length: 156)
+2025-07-04 11:00:30,397 - INFO - 🔗 Describing relation: produce --Vitamin--> D
+2025-07-04 11:00:30,397 - DEBUG - 📝 Generating response (prompt length: 159)
+2025-07-04 11:00:34,015 - INFO - 🔗 Describing relation: Vitamin --D--> production
+2025-07-04 11:00:34,015 - DEBUG - 📝 Generating response (prompt length: 162)
+2025-07-04 11:00:37,070 - INFO - 🧠 Extracting keywords
+2025-07-04 11:00:37,071 - DEBUG - 📝 Generating response (prompt length: 886)
+2025-07-04 11:00:41,883 - INFO - ✅ Extracted 8 local, 8 global keywords
+2025-07-04 11:00:41,883 - INFO - ✅ Pipeline completed: 15 entities, 8 relations, 16 keywords
+2025-07-04 11:00:41,883 - INFO - 💬 Generating answer for query: How does Vitamin D affect bone health?
+2025-07-04 11:00:41,884 - DEBUG - 📝 Generating response (prompt length: 6436)
+2025-07-04 11:01:03,590 - DEBUG - 🧹 Clearing resources
+2025-07-04 11:08:28,264 - INFO - ✅ Ollama model workflow executed successfully.
+2025-07-04 11:08:28,265 - INFO - 🔄 Running complete text processing pipeline
+2025-07-04 11:08:28,265 - INFO - 🔍 Extracting relations from text
+2025-07-04 11:08:28,265 - DEBUG - 📝 Generating response (prompt length: 1114)
+2025-07-04 11:08:43,057 - INFO - ✅ Extracted 9 relations from JSON
+2025-07-04 11:08:43,058 - INFO - 📘 Describing entity: Vitamin D
+2025-07-04 11:08:43,058 - DEBUG - 📝 Generating response (prompt length: 152)
+2025-07-04 11:08:45,082 - INFO - 📘 Describing entity: crucial nutrient
+2025-07-04 11:08:45,082 - DEBUG - 📝 Generating response (prompt length: 159)
+2025-07-04 11:08:46,680 - INFO - 📘 Describing entity: calcium absorption
+2025-07-04 11:08:46,681 - DEBUG - 📝 Generating response (prompt length: 161)
+2025-07-04 11:08:48,208 - INFO - 📘 Describing entity: This process
+2025-07-04 11:08:48,208 - DEBUG - 📝 Generating response (prompt length: 155)
+2025-07-04 11:08:49,239 - INFO - 📘 Describing entity: maintaining bone health
+2025-07-04 11:08:49,239 - DEBUG - 📝 Generating response (prompt length: 166)
+2025-07-04 11:08:50,979 - INFO - 📘 Describing entity: preventing osteoporosis
+2025-07-04 11:08:50,979 - DEBUG - 📝 Generating response (prompt length: 166)
+2025-07-04 11:08:52,619 - INFO - 📘 Describing entity: Calcium
+2025-07-04 11:08:52,619 - DEBUG - 📝 Generating response (prompt length: 150)
+2025-07-04 11:08:54,560 - INFO - 📘 Describing entity: bone mineralization
+2025-07-04 11:08:54,560 - DEBUG - 📝 Generating response (prompt length: 162)
+2025-07-04 11:08:56,315 - INFO - 📘 Describing entity: skeletal strength
+2025-07-04 11:08:56,315 - DEBUG - 📝 Generating response (prompt length: 160)
+2025-07-04 11:08:58,297 - INFO - 📘 Describing entity: Research studies
+2025-07-04 11:08:58,297 - DEBUG - 📝 Generating response (prompt length: 159)
+2025-07-04 11:09:00,630 - INFO - 📘 Describing entity: Vitamin D deficiency is directly linked to increased risk of fractures
+2025-07-04 11:09:00,630 - DEBUG - 📝 Generating response (prompt length: 213)
+2025-07-04 11:09:02,590 - INFO - 📘 Describing entity: The sun exposure
+2025-07-04 11:09:02,590 - DEBUG - 📝 Generating response (prompt length: 159)
+2025-07-04 11:09:04,577 - INFO - 📘 Describing entity: produce Vitamin D naturally
+2025-07-04 11:09:04,577 - DEBUG - 📝 Generating response (prompt length: 170)
+2025-07-04 11:09:06,815 - INFO - 📘 Describing entity: skin synthesis
+2025-07-04 11:09:06,815 - DEBUG - 📝 Generating response (prompt length: 157)
+2025-07-04 11:09:08,628 - INFO - 📘 Describing entity: produce Vitamin D
+2025-07-04 11:09:08,628 - DEBUG - 📝 Generating response (prompt length: 160)
+2025-07-04 11:09:10,922 - INFO - 🔗 Describing relation: Vitamin D --is a--> crucial nutrient
+2025-07-04 11:09:10,922 - DEBUG - 📝 Generating response (prompt length: 173)
+2025-07-04 11:09:13,736 - INFO - 🔗 Describing relation: Vitamin D --regulates--> calcium absorption
+2025-07-04 11:09:13,736 - DEBUG - 📝 Generating response (prompt length: 180)
+2025-07-04 11:09:16,898 - INFO - 🔗 Describing relation: This process --is essential for--> maintaining bone health
+2025-07-04 11:09:16,899 - DEBUG - 📝 Generating response (prompt length: 195)
+2025-07-04 11:09:21,142 - INFO - 🔗 Describing relation: This process --is essential for--> preventing osteoporosis
+2025-07-04 11:09:21,142 - DEBUG - 📝 Generating response (prompt length: 195)
+2025-07-04 11:09:23,744 - INFO - 🔗 Describing relation: Calcium --contributes to--> bone mineralization
+2025-07-04 11:09:23,744 - DEBUG - 📝 Generating response (prompt length: 184)
+2025-07-04 11:09:26,971 - INFO - 🔗 Describing relation: Calcium --contributes to--> skeletal strength
+2025-07-04 11:09:26,972 - DEBUG - 📝 Generating response (prompt length: 182)
+2025-07-04 11:09:30,062 - INFO - 🔗 Describing relation: Research studies --have shown--> Vitamin D deficiency is directly linked to increased risk of fractures
+2025-07-04 11:09:30,062 - DEBUG - 📝 Generating response (prompt length: 240)
+2025-07-04 11:09:32,802 - INFO - 🔗 Describing relation: The sun exposure --helps the body--> produce Vitamin D naturally
+2025-07-04 11:09:32,802 - DEBUG - 📝 Generating response (prompt length: 201)
+2025-07-04 11:09:39,354 - INFO - 🔗 Describing relation: skin synthesis --helps the body--> produce Vitamin D
+2025-07-04 11:09:39,354 - DEBUG - 📝 Generating response (prompt length: 189)
+2025-07-04 11:09:42,841 - INFO - 🧠 Extracting keywords
+2025-07-04 11:09:42,841 - DEBUG - 📝 Generating response (prompt length: 886)
+2025-07-04 11:09:47,184 - INFO - ✅ Extracted 6 local, 8 global keywords
+2025-07-04 11:09:47,184 - INFO - ✅ Pipeline completed: 15 entities, 9 relations, 14 keywords
+2025-07-04 11:09:47,184 - INFO - 💬 Generating answer for query: How does Vitamin D affect bone health?
+2025-07-04 11:09:47,184 - DEBUG - 📝 Generating response (prompt length: 9371)
+2025-07-04 11:10:11,364 - DEBUG - 🧹 Clearing resources
