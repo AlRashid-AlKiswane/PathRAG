@@ -21,12 +21,12 @@ Modules Required:
 - src.utils.setup_logging
 """
 
-
 import logging
 import os
 import sys
 
 # Setup project base path
+# pylint: disable=logging-too-few-args
 try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     sys.path.append(MAIN_DIR)

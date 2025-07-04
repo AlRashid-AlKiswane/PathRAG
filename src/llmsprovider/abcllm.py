@@ -10,7 +10,7 @@ with required methods for generating responses and providing model metadata.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 
 
 # pylint: disable=unnecessary-pass
@@ -27,46 +27,78 @@ class BaseLLM(ABC):
     """
 
     @abstractmethod
-    def generate_response(
-        self,
-        prompt: str,
-        **kwargs: Any
-    ) -> str:
+    def _generate(self, prompt: str, max_tokens: int = 512, temperature: float = 0.5) -> str:
         """
-        Generate a response from the language model.
-
-        Args:
-            prompt: The user input prompt to generate a response for.
-            **kwargs: Additional model-specific parameters that may include:
-                     - temperature: Controls randomness
-                     - max_tokens: Maximum length of response
-                     - top_p: Nucleus sampling parameter
-                     - etc.
-
-        Returns:
-            The generated response as a string.
-
-        Raises:
-            NotImplementedError: If not implemented by subclass
-            RuntimeError: For model-specific errors during generation
+        
         """
         pass
 
-    @abstractmethod
-    def get_model_info(self) -> Dict[str, Any]:
+    def extract_relations(self, prompt: str) -> List[Dict[str, str]]:
         """
-        Return metadata about the model implementation.
+        Extract relationships between entities from the text.
 
-        The returned dictionary should typically include:
-        - model_name: Identifier for the model
-        - provider: Service or framework providing the model
-        - capabilities: Dictionary of supported features
-        - parameters: Available configuration options
+        Args:
+            prompt: Text containing entities and potential relations.
 
         Returns:
-            Dictionary containing model metadata and capabilities.
-
-        Raises:
-            NotImplementedError: If not implemented by subclass
+            List of dictionaries with keys: 'source', 'type', 'target'.
         """
+        pass
+
+    def describe_entity(self, entity_text: str, entity_type: str) -> str:
+        """
+        Generate a description of an entity.
+
+        Args:
+            entity_text: Name/text of the entity.
+            entity_type: Type/category of the entity.
+
+        Returns:
+            Description string.
+        """
+        pass
+
+    def describe_relation(self, source: str, relation_type: str, target: str) -> str:
+        """
+        Generate a description of a relationship between two entities.
+
+        Args:
+            source: Source entity.
+            relation_type: Type of relation.
+            target: Target entity.
+
+        Returns:
+            Description string.
+        """
+        pass
+
+    def extract_keywords(self, text: str) -> Tuple[List[str], List[str]]:
+        """
+        Extract local and global keywords from the text.
+
+        Args:
+            text: Input text.
+
+        Returns:
+            Tuple containing (local_keywords, global_keywords).
+        """
+
+    def generate_answer(self, query: str,
+                        entities: List[Dict[str, Any]],
+                        relations: List[Dict[str, Any]]) -> str:
+        """
+        Generate a context-aware answer using entities and relations.
+
+        Args:
+            query: Original question.
+            entities: List of entity dictionaries.
+            relations: List of relation dictionaries.
+
+        Returns:
+            Answer string.
+        """
+        pass
+
+    def get_model_info(self) -> Dict[str, Any]:
+        """Return model metadata and capabilities."""
         pass
