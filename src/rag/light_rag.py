@@ -12,6 +12,7 @@ A modular system for building and querying a knowledge graph from documents, com
 import logging
 import os
 import sys
+from dataclasses import asdict
 from typing import List, Dict, Union,Tuple, Any
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
@@ -142,16 +143,19 @@ class LightRAG:
                 # Extract entities using NER model
                 try:
                     ner_results = self.ner_model.predict(text=text)
-                    for ent in ner_results:
+                    # Get the entities list from the results dictionary
+                    entity_list = ner_results.get("entities", [])
+                    
+                    for ent in entity_list:
                         # Create normalized entity ID
-                        entity_text = ent["word"].lower().replace(" ", "_")
+                        entity_text = ent["text"].lower().replace(" ", "_")
                         entity_id = f"{entity_text}_{ent['start']}"
                         
                         if entity_id not in seen_entities:
                             entities.append(Entity(
                                 id=entity_id,
-                                name=ent["word"],
-                                type=ent["entity_group"],
+                                name=ent["text"],
+                                type=ent["type"],
                                 description=text[max(0, ent['start']-50):ent['end']+50],
                                 metadata={
                                     "source_text": text,
@@ -162,11 +166,13 @@ class LightRAG:
                                 }
                             ))
                             seen_entities.add(entity_id)
-                            logger.debug("Extracted entity: %s (%s)", ent["word"], ent["entity_group"])
+                            logger.debug(
+                                "Extracted entity: %s (%s)",
+                                ent["text"], ent["type"])
                 except Exception as e:
                     logger.warning("NER failed for chunk %s: %s", chunk_id, str(e))
                     continue
-                
+
                 # Extract relations (simplified example - replace with actual relation extraction)
                 if len(entities) >= 2:
                     last_two = entities[-2:]
@@ -184,32 +190,32 @@ class LightRAG:
                     ))
                     logger.debug("Created relation between %s and %s", 
                             last_two[0].name, last_two[1].name)
-            
+
             logger.info("Extracted %d entities and %d relations", len(entities), len(relations))
             return entities, relations
-            
+
         except Exception as e:
             logger.error("Entity/relation extraction failed: %s", str(e))
             raise RuntimeError("Failed to extract entities and relations") from e
 
     def query(self, question: str, top_k: int = 3) -> Dict:
         """
-        Query the knowledge graph and generate a response.
+        Retrieve relevant information without LLM generation.
         
-        Args:
-            question: The query string
-            top_k: Number of top documents/entities to retrieve
-            
         Returns:
-            Dictionary with response and metadata
+            Dictionary containing:
+            - question: The original question
+            - top_chunks: Most relevant text chunks
+            - top_entities: Most relevant entities
+            - relations: Relevant relations between entities
+            - combined_context: All retrieved text for manual inspection
         """
-        logger.info("Processing query: %s", question)
+        logger.info("Processing retrieval query: %s", question)
         try:
             # Step 1: Embed the question
             question_embedding = self.embedding_model.encode(question, convert_to_tensor=True)
 
-            # Step 2: Specific-level retrieval - Retrieve relevant chunks
-            logger.debug("Retrieving top-%d chunks", top_k)
+            # Step 2: Retrieve relevant chunks
             chunk_scores = []
             for chunk in self.chunk_store:
                 chunk_embedding = chunk['embedding']
@@ -218,42 +224,56 @@ class LightRAG:
             chunk_scores.sort(key=lambda x: x[0], reverse=True)
             top_chunks = [chunk for _, chunk in chunk_scores[:top_k]]
 
-            # Step 3: Abstract-level retrieval - Graph-based entity retrieval
-            logger.debug("Retrieving top-%d entities from knowledge graph", top_k)
+            # Step 3: Retrieve relevant entities
             graph_results = self.knowledge_graph.search_entities_by_embedding(
                 question_embedding, top_k=top_k
             )
 
-            # Step 4: Combine and rerank results (simple merge for now)
-            retrieved_texts = []
-            for chunk in top_chunks:
-                retrieved_texts.append(chunk['text'])
+            # Step 4: Find relevant relations
+            relevant_relations = []
             for entity in graph_results:
-                retrieved_texts.append(entity.description)
+                # Get all relations involving this entity
+                for relation in self.knowledge_graph.relations:
+                    if entity.id in (relation.source_entity_id, relation.target_entity_id):
+                        relevant_relations.append(relation)
 
-            # Prepare entities and relations for response generation
-            entities_serialized = [e() for e in graph_results]
-            relations_serialized = self.knowledge_graph.relation_index.values()
+            # Step 5: Prepare combined context
+            retrieved_texts = [chunk['text'] for chunk in top_chunks]
+            retrieved_texts.extend(e.description for e in graph_results if e.description)
+            combined_context = "\n".join(retrieved_texts)
 
-            # Step 5: Generate final answer using LLM
-            context = "\n".join(retrieved_texts)
-            prompt = f"Context:\n{context}\n\nQuestion: {question}\nAnswer:"
-            response_text = self._generate_response(
-                query=prompt,
-                entities=entities_serialized,
-                relations=relations_serialized
-            )
-
-            logger.debug("Query processed successfully")
             return {
                 "question": question,
-                "response": response_text.strip(),
-                "top_chunks": [c['text'] for c in top_chunks],
-                "top_entities": [e.name for e in graph_results]
+                "top_chunks": [{
+                    "text": c['text'],
+                    "score": s,
+                    "metadata": c.get('metadata', {})
+                } for (s, c) in chunk_scores[:top_k]],
+                "top_entities": [{
+                    "id": e.id,
+                    "name": e.name,
+                    "type": e.type,
+                    "description": e.description,
+                    "metadata": e.metadata
+                } for e in graph_results],
+                "relations": [{
+                    "id": r.id,
+                    "type": r.type,
+                    "source": r.source_entity_id,
+                    "target": r.target_entity_id,
+                    "description": r.description,
+                    "metadata": r.metadata
+                } for r in relevant_relations],
+                "combined_context": combined_context,
+                "retrieval_success": True
             }
         except Exception as e:
-            logger.error("Query processing failed: %s", str(e))
-            raise
+            logger.error("Retrieval failed: %s", str(e))
+            return {
+                "question": question,
+                "error": str(e),
+                "retrieval_success": False
+            }
 
     def _generate_response(self, query: str,
                         entities: List[Dict[str, Any]],
@@ -271,11 +291,7 @@ class LightRAG:
         """
         prompt = f"QUERY: {query}\nENTITIES: {entities}\nRELATIONS: {relations}"
         try:
-            response = self.ollama_model.generate(
-                query=query,
-                entities=entities,
-                relations=relations
-            )
+            response = self.ollama_model.generate(prompt=prompt)
             return response
         except Exception as e:
             logger.error("LLM response generation failed: %s", str(e))

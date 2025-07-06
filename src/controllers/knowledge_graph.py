@@ -36,6 +36,7 @@ except (ImportError, OSError) as e:
     logging.error("Failed to set up main directory path: %s", e)
     sys.exit(1)
 
+#pylint: disable=wrong-import-position
 from src.utils import setup_logging
 from src.schemas import Entity, Relation
 
@@ -76,7 +77,7 @@ class KnowledgeGraph:
         self.relation_index: Optional[Dict] = None
         self.embedding_dim = embedding_dim
         self.embedding_model = embedding_model
-        
+
         try:
             self._initialize_indexes()
             logger.info("KnowledgeGraph initialized successfully")
@@ -104,14 +105,6 @@ class KnowledgeGraph:
     def add_entity(self, entity: Entity, text: Optional[str] = None):
         """
         Add an entity to the knowledge graph with embedding.
-        
-        Args:
-            entity: Entity object to add
-            text: Optional text for embedding generation
-            
-        Raises:
-            ValueError: If entity is invalid
-            RuntimeError: If embedding generation fails
         """
         logger.info("Adding entity: %s", entity.id)
         try:
@@ -122,16 +115,20 @@ class KnowledgeGraph:
                 if entity.description and not existing.description:
                     existing.description = entity.description
                 return
-                
-            self.entities[entity.id] = entity
+
+            # Generate and store embedding
             embed_text = entity.description or text or entity.name
             logger.debug("Generating embedding for entity %s", entity.id)
-            
             embedding = self.embedding_model.encode(embed_text)
+
+            # Store embedding in the entity
+            entity.embedding = embedding  # This requires the Entity class to support this
+
+            self.entities[entity.id] = entity
             idx = len(self.entity_index["id_to_entity"])
             self.entity_index["id_to_entity"][entity.id] = idx
             self.entity_index["faiss_index"].add(np.array([embedding]))
-            
+
             logger.debug("Added entity %s to index", entity.id)
         except Exception as e:
             logger.error("Failed to add entity %s: %s", entity.id, str(e))
@@ -149,25 +146,25 @@ class KnowledgeGraph:
             ValueError: If entities don't exist
             RuntimeError: If embedding fails
         """
-        logger.info("Adding relation %s between %s and %s", 
+        logger.info("Adding relation %s between %s and %s",
                    relation.type, relation.source_entity_id, relation.target_entity_id)
         try:
             if relation.source_entity_id not in self.entities:
                 raise ValueError(f"Source entity {relation.source_entity_id} not found")
             if relation.target_entity_id not in self.entities:
                 raise ValueError(f"Target entity {relation.target_entity_id} not found")
-                
+
             self.relations.append(relation)
             embed_text = relation.description or relation.type
             if text:
                 embed_text = f"{embed_text} {text}" if embed_text else text
-                
+
             logger.debug("Generating embedding for relation %s", relation.id)
             embedding = self.embedding_model.encode(embed_text)
             idx = len(self.relation_index["id_to_relation"])
             self.relation_index["id_to_relation"][relation.id] = idx
             self.relation_index["faiss_index"].add(np.array([embedding]))
-            
+
             logger.debug("Added relation %s to index", relation.id)
         except Exception as e:
             logger.error("Failed to add relation %s: %s", relation.id, str(e))
@@ -192,14 +189,14 @@ class KnowledgeGraph:
         try:
             if entity_id not in self.entities:
                 raise ValueError(f"Entity {entity_id} not found")
-                
+
             idx = self.entity_index["id_to_entity"][entity_id]
             embedding = self.entity_index["faiss_index"].reconstruct(idx)
-            
-            distances, indices = self.entity_index["faiss_index"].search(
+
+            _, indices = self.entity_index["faiss_index"].search(
                 np.array([embedding]), k+1
             )
-            
+
             neighbors = []
             for i in indices[0]:
                 if i != idx and i in self.entity_index["id_to_entity"]:
@@ -207,76 +204,48 @@ class KnowledgeGraph:
                     neighbors.append(self.entities[neighbor_id])
                 if len(neighbors) >= k:
                     break
-                    
+
             logger.debug("Found %d neighbors for %s", len(neighbors), entity_id)
             return neighbors
-            
+
         except Exception as e:
             logger.error("Neighbor search failed for %s: %s", entity_id, str(e))
             raise
 
     def search_entities_by_embedding(self, query_embedding, top_k=3):
-        results = []
-        for entity in self.entities.values():
-            entity_embedding = entity.embedding  # assume this exists
-            score = float(query_embedding @ entity_embedding)
-            results.append((score, entity))
-        results.sort(key=lambda x: x[0], reverse=True)
-        return [entity for _, entity in results[:top_k]]
-
-
-
-
-if __name__ == "__main__":
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
-    try:
-        # Initialize with embedding model
-        logger.info("Initializing example knowledge graph")
-        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-        kg = KnowledgeGraph(embedding_model=embedding_model)
-
-        # Create sample entities with required 'type' parameter
-        alice = Entity(
-            id="alice",
-            name="Alice",
-            type="person",
-            description="A software engineer working on AI systems",
-            metadata={"role": "developer"}
-        )
-
-        bob = Entity(
-            id="bob",
-            name="Bob",
-            type="person",
-            description="Machine learning researcher specializing in NLP",
-            metadata={"role": "researcher"}
-        )
-
-        # Add entities
-        kg.add_entity(alice)
-        kg.add_entity(bob)
+        """
+        Search entities by embedding similarity using cosine similarity.
         
-        # Add relation
-        works_with = Relation(
-            id="alice-bob-1",
-            type="collaborates_with",
-            source_entity_id="alice",
-            target_entity_id="bob",
-            description="Work together on AI projects"
-        )
-        kg.add_relation(works_with)
+        Args:
+            query_embedding: The query embedding vector
+            top_k: Number of results to return
+            
+        Returns:
+            List of matching entities sorted by similarity
+        """
+        try:
+            results = []
+            query_embedding = np.array(query_embedding)
 
-        # Query neighbors
-        print("\n=== Entity Neighbors ===")
-        neighbors = kg.get_entity_neighbors("alice")
-        for i, neighbor in enumerate(neighbors, 1):
-            print(f"{i}. {neighbor.name} ({neighbor.type}): {neighbor.description}")
+            # Normalize query embedding for cosine similarity
+            query_embedding = query_embedding / np.linalg.norm(query_embedding)
 
-    except Exception as e:
-        logger.critical("Example failed: %s", str(e))
-        raise
+            for entity in self.entities.values():
+                if not hasattr(entity, 'embedding') or entity.embedding is None:
+                    continue
+
+                # Normalize entity embedding
+                entity_embedding = np.array(entity.embedding)
+                entity_embedding = entity_embedding / np.linalg.norm(entity_embedding)
+
+                # Calculate cosine similarity
+                score = float(query_embedding @ entity_embedding)
+                results.append((score, entity))
+
+            # Sort by score (descending) and return top_k
+            results.sort(key=lambda x: x[0], reverse=True)
+            return [entity for score, entity in results[:top_k]]
+
+        except Exception as e:
+            logger.error("Embedding search failed: %s", str(e))
+            raise
