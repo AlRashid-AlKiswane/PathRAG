@@ -43,7 +43,7 @@ class NERModel:
         pipeline: Hugging Face NER pipeline with aggregation.
     """
 
-    def __init__(self, model_name: str = "mrm8488/TinyBERT-spanish-uncased-finetuned-ner"):
+    def __init__(self, model_name: str = "dslim/distilbert-NER"):
         """
         Initialize the NERModel with tokenizer, model, and pipeline.
 

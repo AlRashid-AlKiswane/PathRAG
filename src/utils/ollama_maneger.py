@@ -283,20 +283,41 @@ class OllamaManager:
 
     def execute_workflow(self, model_name: str):
         """
-        Starts Ollama server with the specified model in a non-blocking background process.
+        Executes the full workflow to:
+        1. Check dependencies
+        2. Start the Ollama server (if not running)
+        3. Pull the specified model
+        4. Run the model in background
+        
+        Args:
+            model_name (str): Name of the Ollama model to use
         """
+        logger.info("🧠 Starting Ollama Manager Workflow for model: %s", model_name)
 
-        # Optional: pull the model if not already pulled
-        subprocess.run(["ollama", "pull", model_name], check=True)
+        # Step 1: Check dependencies
+        if not self.check_dependencies():
+            logger.critical("💥 Aborting workflow due to missing dependencies.")
+            return
+
+        # Step 2: Ensure server is running
+        if not self.start_server():
+            logger.critical("💥 Aborting workflow. Could not start Ollama server.")
+            return
+
+        # Step 3: Pull the model
+        if not self.pull_model(model_name):
+            logger.critical("💥 Aborting workflow. Could not pull model.")
+            return
+
+        # Step 4: Run the model
+        logger.info("🧠 Launching model: %s", model_name)
 
         if platform.system() == "Windows":
-            # Windows-specific background execution
             subprocess.Popen(
                 ["start", "cmd", "/k", f"ollama run {model_name}"],
                 shell=True
             )
         else:
-            # Linux/macOS - run in background and disown from shell
             subprocess.Popen(
                 ["ollama", "run", model_name],
                 stdout=subprocess.DEVNULL,
@@ -304,6 +325,9 @@ class OllamaManager:
                 stdin=subprocess.DEVNULL,
                 start_new_session=True
             )
+
+        logger.info("🎯 Model '%s' started successfully in background", model_name)
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

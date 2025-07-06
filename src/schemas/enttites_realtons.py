@@ -5,6 +5,8 @@ This module provides data validation models for handling entity descriptions
 and relationship mappings in knowledge graph or NLP processing systems.
 """
 
+from typing import Dict, Optional, Any
+from dataclasses import dataclass
 from pydantic import BaseModel, Field
 
 
@@ -78,3 +80,24 @@ class RelationDescriptionRequest(BaseModel):
         min_length=1,
         max_length=500
     )
+
+
+@dataclass
+class Entity:
+    """Represents an entity in the knowledge graph."""
+    id: str
+    name: str
+    type: str
+    description: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@dataclass
+class Relation:
+    """Represents a relationship between entities."""
+    id: str
+    source_entity_id: str
+    target_entity_id: str
+    type: str
+    description: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None

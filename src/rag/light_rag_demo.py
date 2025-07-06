@@ -42,95 +42,40 @@ except (ImportError, OSError) as e:
 from sentence_transformers import SentenceTransformer
 
 from src.rag import LightRAG
-from src.llmsprovider import NERModel, CohereLLM
+from src.llmsprovider import NERModel, OllamaModel
 from src.utils import setup_logging
 
 logger = setup_logging()
 
 
-def load_embedding_model():
-    """
-    Load a sentence embedding model from Hugging Face using SentenceTransformer.
+from pathlib import Path
+from light_rag import LightRAG
 
-    Returns:
-        model (SentenceTransformer): The loaded embedding model.
-    """
-    try:
-        logger.info("🔄 Starting embedding model loading...")
-        model_name = "sentence-transformers/all-MiniLM-L6-v2"
-        logger.debug("Model name set to: %s", model_name)
+def run_case_example():
+    # Initialize system
+    rag = LightRAG()
 
-        model = SentenceTransformer(model_name)
+    # Ingest the document
+    document_path = Path("/home/alrashid/Desktop/PathRAG-LightRAG/asesst/sample.txt")
+    entities_count, relations_count = rag.ingest_document(document_path)
+    print(f"Ingested Document - Entities: {entities_count}, Relations: {relations_count}")
 
-        logger.info("✅ Embedding model loaded successfully.")
-        return model
-    except Exception as e:
-        logger.error("❌ Failed to load embedding model: %s", e, exc_info=True)
-        raise
+    # Ask a question
+    question = "Who was Albert Einstein?"
+    result = rag.query(question)
 
+    # Print result
+    print("\n--- Query Result ---")
+    print(f"Question: {result['question']}")
+    print(f"Answer: {result['response']}")
 
-def main():
-    """
-    Run the LightRAG demo with:
-    - Small CPU-friendly models
-    - Document processing
-    - RAG-based querying
-    """
-    logger.info("🚀 Starting LightRAG demo...")
-    try:
-        # Load models
-        logger.debug("Calling load_embedding_model()...")
-        embedding_model = load_embedding_model()
+    print("\nTop Chunks:")
+    for chunk in result['top_chunks']:
+        print(f"- {chunk.strip()[:80]}...")
 
-        logger.info("🧠 Initializing LightRAG...")
-        rag = LightRAG(
-            embedding_model=embedding_model,
-            ner_model=NERModel(),
-            llm_model=CohereLLM()
-        )
-        logger.debug("LightRAG instance created.")
-        from src.rag import document
-        # Sample document
-        logger.info("📄 Sample medical document prepared.")
-        logger.debug("Document content: %s", document[:100])
-
-        # Process document
-        logger.info("⚙️ Processing document...")
-        try:
-            rag.process_document(document=document,
-                                 chunk_size=1000,
-                                 chunk_overlap=50)
-            logger.info("✅ Document processed successfully.")
-        except Exception as e:
-            logger.error("❌ Failed to process document: %s", e, exc_info=True)
-            return
-
-        # Sample queries
-        queries = [
-            "What is the difference between supervised and unsupervised learning?",
-            "How do Transformers work in deep learning?",
-            "Explain the role of self-attention in LLMs.",
-            "What is Retrieval-Augmented Generation and why is it useful?",
-            "How does LightRAG differ from traditional RAG?",
-            "Name popular large language models and their use cases.",
-            "What are CNNs and where are they applied?",
-            "How does reinforcement learning train agents?"
-        ]
-
-        logger.info("🔍 Starting query loop...")
-        for query in queries:
-            try:
-                logger.debug("Sending query: %s", query)
-                response = rag.query(query)
-                print(f"Q: {query}\nA: {response}\n")
-                logger.info("✅ Query processed: %s", query)
-            except Exception as e:
-                logger.warning("⚠️ Failed to process query '%s': %s", query, e, exc_info=True)
-
-    except Exception as e:
-        logger.critical("💥 Fatal error in main: %s", e, exc_info=True)
-        raise
-
+    print("\nTop Entities:")
+    for entity in result['top_entities']:
+        print(f"- {entity}")
 
 if __name__ == "__main__":
-    main()
+    run_case_example()
