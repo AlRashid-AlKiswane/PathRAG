@@ -8,12 +8,12 @@ A modular system for building and querying a knowledge graph from documents, com
 - LLM-augmented response generation
 """
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name, wrong-import-position
 import logging
 import os
 import sys
 from dataclasses import asdict
-from typing import List, Dict, Union,Tuple, Any
+from typing import List, Dict, Union, Tuple, Any
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
 
@@ -25,248 +25,176 @@ except (ImportError, OSError) as e:
     logging.error("Failed to set up main directory path: %s", e)
     sys.exit(1)
 
-# pylint: disable= 
-from src.utils import setup_logging
-from src.controllers import KnowledgeGraph, DocumentProcessor
+from src.infra import setup_logging
+from src.controllers import KnowledgeGraph
 from src.llms_providers import NERModel
 from src.schemas import Entity, Relation
-from src.llms_providers import OllamaModel
 
 logger = setup_logging()
 
+
 class LightRAG:
     """
-    Main class for the LightRAG system implementing RAG with knowledge graph.
-    
-    Features:
-    - Document ingestion and processing pipeline
+    Core class implementing the LightRAG system with:
+    - Embedding model
+    - Named entity recognition
     - Knowledge graph construction
-    - Hybrid retrieval capabilities
-    - Response generation
-    
-    Example Usage:
-        >>> rag = LightRAG()
-        >>> rag.ingest_document("document.txt")
-        >>> response = rag.query("What is the main topic?")
+    - Chunk-based retrieval
     """
 
     def __init__(self, embedding_model_name: str = "all-MiniLM-L6-v2"):
         """
         Initialize the LightRAG system.
-        
+
         Args:
-            embedding_model_name: Name of the sentence transformer model to use
+            embedding_model_name: SentenceTransformer model to use for embeddings
         """
         logger.info("Initializing LightRAG system")
         try:
             self.embedding_model = SentenceTransformer(embedding_model_name)
             self.ner_model = NERModel()
-            self.ollama_model: OllamaModel = OllamaModel()
-            self.document_processor = DocumentProcessor(embedding_model=self.embedding_model)
             self.knowledge_graph = KnowledgeGraph(embedding_model=self.embedding_model)
-            self.chunk_store = []
+            self.chunk_store: List[Dict[str, Any]] = []
             logger.info("LightRAG initialized successfully")
         except Exception as e:
             logger.critical("Failed to initialize LightRAG: %s", str(e))
             raise
 
-    def ingest_document(self, document_source: Union[str, Path]) -> Tuple[int, int]:
+    def extract_entities_and_relations(self, chunks: List[Dict[str, Any]]
+    ) -> Tuple[List[Entity], List[Relation]]:
         """
-        Process and ingest a document into the system.
-        
-        Args:
-            document_source: Path to document or raw text
-            
-        Returns:
-            Tuple of (entities_added, relations_added)
-            
-        Raises:
-            ValueError: For invalid input
-            IOError: For file reading issues
-        """
-        logger.info("Starting document ingestion")
-        try:
-            # Step 1: Process document into chunks
-            if isinstance(document_source, (str, Path)) and os.path.isfile(document_source):
-                logger.debug("Processing file: %s", document_source)
-                with open(document_source, 'r', encoding='utf-8') as f:
-                    text = f.read()
-            else:
-                logger.debug("Processing raw text input")
-                text = document_source
-                
-            chunks = self.document_processor.process(text)
-            self.chunk_store.extend(chunks)
-            
-            # Step 2: Extract entities and relations
-            entities, relations = self._extract_entities_and_relations(chunks)
-            
-            # Step 3: Add to knowledge graph
-            for entity in entities:
-                self.knowledge_graph.add_entity(entity)
-            for relation in relations:
-                self.knowledge_graph.add_relation(relation)
-                
-            logger.info("Document ingested. Added %d entities and %d relations", 
-                       len(entities), len(relations))
-            return len(entities), len(relations)
-            
-        except Exception as e:
-            logger.error("Document ingestion failed: %s", str(e))
-            raise
+        Extract entities and relations from processed chunks using NER.
 
-    def _extract_entities_and_relations(self, chunks: List[Dict]) -> Tuple[List[Entity], List[Relation]]:
-        """
-        Extract entities and relations from processed chunks using NER model.
-        
         Args:
             chunks: List of processed document chunks with text and metadata
-            
+
         Returns:
-            Tuple of (entities, relations) where:
-            - entities: List of extracted Entity objects
-            - relations: List of extracted Relation objects
-            
-        Raises:
-            RuntimeError: If entity extraction fails
+            Tuple of (entities, relations)
         """
         logger.info("Extracting entities and relations from %d chunks", len(chunks))
-        entities = []
-        relations = []
-        seen_entities = set()  # For entity deduplication
-        
+
+        entities: List[Entity] = []
+        relations: List[Relation] = []
+        seen_entities = set()
+
         try:
             for chunk in chunks:
                 text = chunk['text']
                 chunk_id = chunk.get('metadata', {}).get('chunk_id', str(len(entities)))
-                
-                # Extract entities using NER model
+
                 try:
                     ner_results = self.ner_model.predict(text=text)
-                    # Get the entities list from the results dictionary
-                    entity_list = ner_results.get("entities", [])
-                    
-                    for ent in entity_list:
-                        # Create normalized entity ID
-                        entity_text = ent["text"].lower().replace(" ", "_")
-                        entity_id = f"{entity_text}_{ent['start']}"
-                        
-                        if entity_id not in seen_entities:
-                            entities.append(Entity(
-                                id=entity_id,
-                                name=ent["text"],
-                                type=ent["type"],
-                                description=text[max(0, ent['start']-50):ent['end']+50],
-                                metadata={
-                                    "source_text": text,
-                                    "start_pos": ent['start'],
-                                    "end_pos": ent['end'],
-                                    "confidence": float(ent['score']),
-                                    "chunk_id": chunk_id
-                                }
-                            ))
-                            seen_entities.add(entity_id)
-                            logger.debug(
-                                "Extracted entity: %s (%s)",
-                                ent["text"], ent["type"])
+                    for ent in ner_results.get("entities", []):
+                        entity_id = f"{ent['text'].lower().replace(' ', '_')}_{ent['start']}"
+                        if entity_id in seen_entities:
+                            continue
+                        entity = Entity(
+                            id=entity_id,
+                            name=ent["text"],
+                            type=ent["type"],
+                            description=text[max(0, ent['start'] - 50):ent['end'] + 50],
+                            metadata={
+                                "source_text": text,
+                                "start_pos": ent['start'],
+                                "end_pos": ent['end'],
+                                "confidence": float(ent['score']),
+                                "chunk_id": chunk_id
+                            }
+                        )
+                        entities.append(entity)
+                        seen_entities.add(entity_id)
+                        logger.debug("Extracted entity: %s (%s)", ent["text"], ent["type"])
+
                 except Exception as e:
                     logger.warning("NER failed for chunk %s: %s", chunk_id, str(e))
                     continue
 
-                # Extract relations (simplified example - replace with actual relation extraction)
+                # Simplified relation extraction
                 if len(entities) >= 2:
-                    last_two = entities[-2:]
+                    e1, e2 = entities[-2:]
                     relations.append(Relation(
                         id=f"rel_{len(relations)}",
                         type="associated_with",
-                        source_entity_id=last_two[0].id,
-                        target_entity_id=last_two[1].id,
+                        source_entity_id=e1.id,
+                        target_entity_id=e2.id,
                         description=f"Co-occurrence in chunk {chunk_id}",
                         metadata={
                             "chunk_id": chunk_id,
                             "extraction_method": "co-occurrence",
-                            "confidence": 0.7  # Example confidence score
+                            "confidence": 0.7
                         }
                     ))
-                    logger.debug("Created relation between %s and %s", 
-                            last_two[0].name, last_two[1].name)
+                    logger.debug("Created relation between %s and %s", e1.name, e2.name)
 
-            logger.info("Extracted %d entities and %d relations", len(entities), len(relations))
+            # Add to graph
+            for entity in entities:
+                self.knowledge_graph.add_entity(entity)
+            for relation in relations:
+                self.knowledge_graph.add_relation(relation)
+
+            logger.info(
+                "Extraction complete: %d entities, %d relations", len(entities), len(relations))
             return entities, relations
 
         except Exception as e:
             logger.error("Entity/relation extraction failed: %s", str(e))
             raise RuntimeError("Failed to extract entities and relations") from e
 
-    def query(self, question: str, top_k: int = 3) -> Dict:
+    def query(self, question: str, top_k: int = 3) -> Dict[str, Any]:
         """
-        Retrieve relevant information without LLM generation.
-        
+        Retrieve relevant information from chunks and knowledge graph.
+
+        Args:
+            question: The user's query
+            top_k: Number of top items to retrieve
+
         Returns:
-            Dictionary containing:
-            - question: The original question
-            - top_chunks: Most relevant text chunks
-            - top_entities: Most relevant entities
-            - relations: Relevant relations between entities
-            - combined_context: All retrieved text for manual inspection
+            Dictionary with question, top_chunks, top_entities, relations, context, etc.
         """
         logger.info("Processing retrieval query: %s", question)
+
         try:
-            # Step 1: Embed the question
-            question_embedding = self.embedding_model.encode(question, convert_to_tensor=True)
+            question_emb = self.embedding_model.encode(question, convert_to_tensor=True)
 
-            # Step 2: Retrieve relevant chunks
-            chunk_scores = []
-            for chunk in self.chunk_store:
-                chunk_embedding = chunk['embedding']
-                score = float(question_embedding @ chunk_embedding)
-                chunk_scores.append((score, chunk))
+            # Retrieve top chunks
+            chunk_scores = [
+                (float(question_emb @ chunk['embedding']), chunk)
+                for chunk in self.chunk_store
+            ]
             chunk_scores.sort(key=lambda x: x[0], reverse=True)
-            top_chunks = [chunk for _, chunk in chunk_scores[:top_k]]
+            top_chunks = chunk_scores[:top_k]
 
-            # Step 3: Retrieve relevant entities
-            graph_results = self.knowledge_graph.search_entities_by_embedding(
-                question_embedding, top_k=top_k
+            # Retrieve entities
+            top_entities = self.knowledge_graph.search_entities_by_embedding(
+                question_emb, top_k=top_k
+                )
+
+            # Retrieve relations linked to those entities
+            relevant_relations = [
+                r for r in self.knowledge_graph.relations
+                if any(e.id in (r.source_entity_id, r.target_entity_id) for e in top_entities)
+            ]
+
+            combined_context = "\n".join(
+                [c['text'] for _, c in top_chunks] +
+                [e.description for e in top_entities if e.description]
             )
-
-            # Step 4: Find relevant relations
-            relevant_relations = []
-            for entity in graph_results:
-                # Get all relations involving this entity
-                for relation in self.knowledge_graph.relations:
-                    if entity.id in (relation.source_entity_id, relation.target_entity_id):
-                        relevant_relations.append(relation)
-
-            # Step 5: Prepare combined context
-            retrieved_texts = [chunk['text'] for chunk in top_chunks]
-            retrieved_texts.extend(e.description for e in graph_results if e.description)
-            combined_context = "\n".join(retrieved_texts)
 
             return {
                 "question": question,
-                "top_chunks": [{
-                    "text": c['text'],
-                    "score": s,
-                    "metadata": c.get('metadata', {})
-                } for (s, c) in chunk_scores[:top_k]],
-                "top_entities": [{
-                    "id": e.id,
-                    "name": e.name,
-                    "type": e.type,
-                    "description": e.description,
-                    "metadata": e.metadata
-                } for e in graph_results],
-                "relations": [{
-                    "id": r.id,
-                    "type": r.type,
-                    "source": r.source_entity_id,
-                    "target": r.target_entity_id,
-                    "description": r.description,
-                    "metadata": r.metadata
-                } for r in relevant_relations],
+                "top_chunks": [
+                    {
+                        "text": c['text'],
+                        "score": s,
+                        "metadata": c.get('metadata', {})
+                    } for s, c in top_chunks
+                ],
+                "top_entities": [asdict(e) for e in top_entities],
+                "relations": [asdict(r) for r in relevant_relations],
                 "combined_context": combined_context,
                 "retrieval_success": True
             }
+
         except Exception as e:
             logger.error("Retrieval failed: %s", str(e))
             return {
@@ -274,25 +202,3 @@ class LightRAG:
                 "error": str(e),
                 "retrieval_success": False
             }
-
-    def _generate_response(self, query: str,
-                        entities: List[Dict[str, Any]],
-                        relations: List[Dict[str, Any]]) -> str:
-        """
-        Generate a final response from the LLM using query, entities, and relations.
-
-        Args:
-            query: The original user question.
-            entities: List of entity dictionaries.
-            relations: List of relation dictionaries.
-
-        Returns:
-            Generated response string from the LLM.
-        """
-        prompt = f"QUERY: {query}\nENTITIES: {entities}\nRELATIONS: {relations}"
-        try:
-            response = self.ollama_model.generate(prompt=prompt)
-            return response
-        except Exception as e:
-            logger.error("LLM response generation failed: %s", str(e))
-            raise RuntimeError("Failed to generate response using Ollama model") from e
