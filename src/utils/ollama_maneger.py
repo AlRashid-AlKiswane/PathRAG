@@ -35,7 +35,7 @@ except Exception as e:
     logging.basicConfig(level=logging.ERROR)
     logging.error("❌ Failed to set project root: %s", e)
 
-from src.utils import setup_logging
+from src.infra import setup_logging
 
 logger = setup_logging()
 

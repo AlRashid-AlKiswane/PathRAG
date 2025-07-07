@@ -1,59 +1,85 @@
+"""
+Main FastAPI Application Entry Point
 
-from rag import PathRAG
-from utils import setup_logging
-from src import chunks
+This module initializes the FastAPI application, configures routes, sets up logging,
+and manages the application lifecycle including database initialization.
+
+Features:
+- Sets up project base directory
+- Initializes SQLite connection on startup
+- Initializes required database tables
+- Mounts upload routes
+"""
+
+import os
+import sys
+import logging
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
+# Setup project base path
+try:
+    MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+    sys.path.append(MAIN_DIR)
+    logging.debug(f"Project base path set to: {MAIN_DIR}")
+except (ImportError, OSError) as e:
+    logging.critical(
+        "[Startup Critical] Failed to set up project base path. "
+        f"Error: {str(e)}. System paths: {sys.path}",
+        exc_info=True
+    )
+    sys.exit(1)
+
+# pylint: disable=wrong-import-position
+from src.db import get_sqlite_engine, init_chunks_table
+from src.routes import (upload_route,
+                        chunking_route)
+from src.infra import setup_logging
+
+# Set up application logger
 logger = setup_logging()
 
-def main():
+# Initialize FastAPI app with lifespan
+app = FastAPI(lifespan=lambda app: lifespan(app))
 
-    query = "What is the capital of Canada?"
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan context manager.
+
+    On startup:
+    - Establishes a SQLite connection
+    - Initializes required database tables
+
+    On shutdown:
+    - Closes the database connection gracefully
+    """
     try:
-        # Initialize with adjusted parameters for better connectivity
-        path_rag = PathRAG(
-            embedding_model="sentence-transformers/all-MiniLM-L6-v2",
-            decay_rate=0.7,  # Lower decay for longer paths
-            prune_thresh=0.05,  # Lower threshold to keep more paths
-            sim_should=0.5  # Higher threshold for semantic similarity
+        logger.info("[Startup] Application starting...")
+        conn = get_sqlite_engine()
+        if not conn:
+            logger.critical("[Startup Error] Failed to establish database connection.")
+            sys.exit(1)
+        app.state.conn = conn
+        logger.debug("[Startup] Database connection established.")
 
-        )
+        init_chunks_table(conn=conn)
+        logger.info("[Startup] Chunks table initialized successfully.")
 
-        # Build graph with error handling
-        path_rag.build_graph(chunks)
-        logger.info(f"Graph built with {path_rag.g.number_of_nodes()} nodes and {path_rag.g.number_of_edges()} edges")
-
-        # Visualize connections for debugging
-        for u, v, data in path_rag.g.edges(data=True):
-            logger.debug(f"Edge {u}->{v} with weight {data['weight']:.3f}")
-
-        # Retrieve more nodes to increase path possibilities
-        top_nodes = path_rag.retrieve_nodes(query, top_k=min(4, len(chunks)))
-        logger.info(f"Retrieved nodes: {top_nodes}")
-
-        # Try different hop counts if no paths found
-        max_hops_options = [2, 3]
-        scored_paths = []
-
-        for max_hops in max_hops_options:
-            paths = path_rag.prune_paths(top_nodes, max_hops=max_hops)
-            logger.info(f"Found {len(paths)} paths with {max_hops} hops")
-
-            if paths:
-                scored_paths = path_rag.score_paths(paths)
-                break
-
-        if not scored_paths:
-            logger.warning("No valid paths found. Using fallback strategy...")
-            # Fallback to direct node text if no paths
-            prompt = f"QUERY: {query}\nDIRECT RESULT: {path_rag.g.nodes[top_nodes[0]]['text']}"
-        else:
-            prompt = path_rag.generate_prompt(query, scored_paths)
-
-        print("\n=== FINAL OUTPUT ===")
-        print(prompt)
+        yield
 
     except Exception as e:
-        logger.error(f"Processing failed: {str(e)}", exc_info=True)
+        logger.exception(f"[Startup Exception] {e}")
+        raise
+    finally:
+        if hasattr(app.state, "conn") and app.state.conn:
+            app.state.conn.close()
+            logger.info("[Shutdown] Database connection closed.")
 
-if __name__ == "__main__":
-    main()
+
+# Mount API routes
+app.include_router(upload_route)
+app.include_router(chunking_route)
