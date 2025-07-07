@@ -13618,3 +13618,57 @@
 2025-07-06 15:32:52,399 - INFO - Processing retrieval query: What are some challenges in deploying LLMs in production?
 2025-07-06 15:32:52,485 - INFO - Processing retrieval query: Explain the concept of prompt engineering
 2025-07-06 15:32:52,724 - INFO - Processing retrieval query: What are some methods for reducing computational costs of LLMs?
+2025-07-07 13:05:39,457 - INFO - File size: 0.00 GB
+2025-07-07 13:50:21,665 - INFO - File size: 0.00 GB
+2025-07-07 14:32:12,299 - ERROR - Invalid Google Drive URL format: https://drive.google.com/drive/folders/1-SpMRcECPqDGVRBtj1UUiixdJPcUmom-?usp=sharing
+2025-07-07 14:36:38,515 - INFO - Starting download from https://drive.google.com/uc?id=1aBcDeFGHijkLMNOP1234567890
+2025-07-07 14:36:39,409 - ERROR - An error occurred during the download.
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/gdown/download.py", line 267, in download
+    url = get_url_from_gdrive_confirmation(res.text)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/gdown/download.py", line 55, in get_url_from_gdrive_confirmation
+    raise FileURLRetrievalError(
+gdown.exceptions.FileURLRetrievalError: Cannot retrieve the public link of the file. You may need to change the permission to 'Anyone with the link', or have had many accesses. Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/controllers/colling_driver.py", line 62, in pull_docs
+    gdown.download(download_url, str(file_path), quiet=False)
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/gdown/download.py", line 278, in download
+    raise FileURLRetrievalError(message)
+gdown.exceptions.FileURLRetrievalError: Failed to retrieve file url:
+
+	Cannot retrieve the public link of the file. You may need to change
+	the permission to 'Anyone with the link', or have had many accesses.
+	Check FAQ in https://github.com/wkentaro/gdown?tab=readme-ov-file#faq.
+
+You may still be able to access the file from the browser:
+
+	https://drive.google.com/uc?id=1aBcDeFGHijkLMNOP1234567890
+
+but Gdown can't. Please check connections and permissions.
+2025-07-07 14:37:54,784 - ERROR - Invalid Google Drive file URL format: https://drive.google.com/drive/folders/1-SpMRcECPqDGVRBtj1UUiixdJPcUmom-?usp=sharing
+2025-07-07 14:37:54,785 - ERROR - An error occurred during the download.
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/controllers/colling_driver.py", line 55, in pull_docs
+    raise ValueError("Expected a Google Drive *file* URL containing '/file/d/'. Folder URLs are not supported.")
+ValueError: Expected a Google Drive *file* URL containing '/file/d/'. Folder URLs are not supported.
+2025-07-07 14:39:03,088 - INFO - Detected folder link. Starting folder download...
+2025-07-07 14:39:11,444 - ERROR - An error occurred during the download.
+Traceback (most recent call last):
+  File "/home/alrashid/Desktop/PathRAG-LightRAG/src/controllers/colling_driver.py", line 55, in pull_docs
+    gdown.download_folder(
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/gdown/download_folder.py", line 275, in download_folder
+    is_success, gdrive_file = _download_and_parse_google_drive_link(
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/gdown/download_folder.py", line 158, in _download_and_parse_google_drive_link
+    return_code, child = _download_and_parse_google_drive_link(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/gdown/download_folder.py", line 158, in _download_and_parse_google_drive_link
+    return_code, child = _download_and_parse_google_drive_link(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/gdown/download_folder.py", line 176, in _download_and_parse_google_drive_link
+    raise FolderContentsMaximumLimitError(message)
+gdown.exceptions.FolderContentsMaximumLimitError: The gdrive folder with url: https://drive.google.com/drive/folders/1E313LaiTCXqGp6JnoiTbJ7gG9qSqG_YQ?hl=en has more than 50 files, gdrive can't download more than this limit.
