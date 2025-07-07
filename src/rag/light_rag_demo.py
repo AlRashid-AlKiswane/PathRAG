@@ -30,7 +30,7 @@ except (ImportError, OSError) as e:
 from sentence_transformers import SentenceTransformer
 from src.utils import setup_logging
 from src.rag import LightRAG
-from src.llmsprovider import NERModel
+from src.llms_providers import NERModel
 
 logger = setup_logging()
 

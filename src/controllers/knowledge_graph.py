@@ -37,7 +37,7 @@ except (ImportError, OSError) as e:
     sys.exit(1)
 
 #pylint: disable=wrong-import-position
-from src.utils import setup_logging
+from src.infra import setup_logging
 from src.schemas import Entity, Relation
 
 logger = setup_logging()

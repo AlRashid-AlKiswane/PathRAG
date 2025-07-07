@@ -41,7 +41,7 @@ except (ImportError, OSError) as e:
     logging.error("Failed to set up main directory path: %s", e)
     sys.exit(1)
 
-from src.utils import setup_logging
+from src.infra import setup_logging
 
 logger = setup_logging()
 

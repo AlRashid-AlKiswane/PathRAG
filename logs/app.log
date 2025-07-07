@@ -13672,3 +13672,7 @@ Traceback (most recent call last):
   File "/home/alrashid/Desktop/Chat-Immigration/ImiChatbot/lib/python3.11/site-packages/gdown/download_folder.py", line 176, in _download_and_parse_google_drive_link
     raise FolderContentsMaximumLimitError(message)
 gdown.exceptions.FolderContentsMaximumLimitError: The gdrive folder with url: https://drive.google.com/drive/folders/1E313LaiTCXqGp6JnoiTbJ7gG9qSqG_YQ?hl=en has more than 50 files, gdrive can't download more than this limit.
+2025-07-07 18:48:05,710 - DEBUG - Successfully created or verified directory: database
+2025-07-07 18:48:05,718 - INFO - Successfully connected to SQLite database at: database/data.db
+2025-07-07 18:49:21,688 - DEBUG - Successfully created or verified directory: home/alrashid/Desktop/PathRAG-LightRAG/database
+2025-07-07 18:49:21,695 - INFO - Successfully connected to SQLite database at: home/alrashid/Desktop/PathRAG-LightRAG/database/data.db

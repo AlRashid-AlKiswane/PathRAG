@@ -28,9 +28,9 @@ except (ImportError, OSError) as e:
 # pylint: disable= 
 from src.utils import setup_logging
 from src.controllers import KnowledgeGraph, DocumentProcessor
-from src.llmsprovider import NERModel
+from src.llms_providers import NERModel
 from src.schemas import Entity, Relation
-from src.llmsprovider import OllamaModel
+from src.llms_providers import OllamaModel
 
 logger = setup_logging()
 
