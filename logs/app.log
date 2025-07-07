@@ -13676,3 +13676,9 @@ gdown.exceptions.FolderContentsMaximumLimitError: The gdrive folder with url: ht
 2025-07-07 18:48:05,718 - INFO - Successfully connected to SQLite database at: database/data.db
 2025-07-07 18:49:21,688 - DEBUG - Successfully created or verified directory: home/alrashid/Desktop/PathRAG-LightRAG/database
 2025-07-07 18:49:21,695 - INFO - Successfully connected to SQLite database at: home/alrashid/Desktop/PathRAG-LightRAG/database/data.db
+2025-07-07 18:52:17,962 - DEBUG - Successfully created or verified directory: home/alrashid/Desktop/PathRAG-LightRAG/database
+2025-07-07 18:52:17,969 - INFO - Successfully connected to SQLite database at: home/alrashid/Desktop/PathRAG-LightRAG/database/data.db
+2025-07-07 18:53:18,058 - DEBUG - Successfully created or verified directory: sqlite:/home/alrashid/Desktop/PathRAG-LightRAG/database
+2025-07-07 18:53:18,066 - INFO - Successfully connected to SQLite database at: sqlite:/home/alrashid/Desktop/PathRAG-LightRAG/database/data.db
+2025-07-07 18:55:59,622 - DEBUG - Successfully created or verified directory: /home/alrashid/Desktop/PathRAG-LightRAG/database
+2025-07-07 18:55:59,630 - INFO - Successfully connected to SQLite database at: /home/alrashid/Desktop/PathRAG-LightRAG/database/data.db
