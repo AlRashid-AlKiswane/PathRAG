@@ -79,6 +79,17 @@ class Settings(BaseSettings):
         description="Sentence transformer model for embeddings"
     )
 
+    EMBEDDING_DIM: int = Field(
+        default=384,
+        env="EMBEDDING_DIM",
+        description="It maps senteces & pargraphs to a 384 dimensional dense vectore space."
+    )
+
+    OLLAMA_EMBED_MODL: str = Field(
+        default="all-minilm:l6-v2",
+        env="OLLAMA_EMBED_MODL",
+        description=""
+    )
     OLLAMA_MODEL: str = Field(
         default="gemma3:1b",
         env="OLLAMA_MODEL",

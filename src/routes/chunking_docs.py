@@ -40,7 +40,7 @@ app_settings: Settings = get_settings()
 
 chunking_route = APIRouter(
     prefix="/api/v1/chunk",
-    tags=["Chunking Docs"],
+    tags=["Chunking → Docs"],
     responses={404: {"description": "Not found"}}
 )
 

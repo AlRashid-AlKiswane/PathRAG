@@ -59,6 +59,83 @@ def init_chunks_table(conn: sqlite3.Connection) -> None:
         logger.error("Failed to create 'chunks' table: %s", e)
         raise
 
+def init_embed_vector_table(conn: sqlite3.Connection) -> None:
+    """
+    Initialize the 'embed_vector' table for storing document chunks and their embeddings.
+
+    Table Schema:
+        - id: Primary key (auto-incremented)
+        - chunk: Raw text of the document chunk
+        - embedding: Serialized vector representation (e.g., JSON string or BLOB)
+        - chunk_id: Optional logical identifier for the chunk (e.g., UUID or hash)
+
+    Args:
+        conn (sqlite3.Connection): Active SQLite database connection.
+
+    Raises:
+        sqlite3.Error: If table creation fails.
+    """
+    try:
+        logger.info("Creating 'embed_vector' table if it doesn't exist...")
+
+        create_query = """
+        CREATE TABLE IF NOT EXISTS embed_vector (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chunk TEXT NOT NULL,
+            embedding TEXT NOT NULL,
+            chunk_id TEXT NOT NULL
+        );
+        """
+        conn.execute(create_query)
+        conn.commit()
+
+        logger.info("'embed_vector' table created successfully.")
+
+    except sqlite3.Error as e:
+        logger.error("Failed to create 'embed_vector' table: %s", e)
+        raise
+
+def init_entitiys_table(conn: sqlite3.Connection) -> None:
+    """
+    Initialize the 'ner_entities' table in the SQLite database.
+
+    This table stores named entities extracted by the NERModel, including:
+    - `id`: Primary key
+    - `chunk_id`: Optional external reference ID to link with chunk source
+    - `text`: Named entity text (e.g., "Elon Musk")
+    - `type`: Entity type (e.g., "PER", "ORG")
+    - `start` and `end`: Character indices of the entity within the source text
+    - `score`: Confidence score of the model
+    - `source_text`: Full original text from which entity was extracted
+
+    Args:
+        conn (sqlite3.Connection): The SQLite database connection object.
+
+    Raises:
+        sqlite3.Error: If table creation fails.
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ner_entities (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chunk_id TEXT,
+                text TEXT NOT NULL,
+                type TEXT NOT NULL,
+                start INTEGER NOT NULL,
+                end INTEGER NOT NULL,
+                score REAL NOT NULL,
+                source_text TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        logger.info("✅ 'ner_entities' table created or already exists.")
+    except sqlite3.Error as e:
+        logger.exception("❌ Failed to create 'ner_entities' table: %s", e)
+        raise
+
+
 if __name__ == "__main__":
     from src.db import get_sqlite_engine
 
@@ -74,3 +151,5 @@ if __name__ == "__main__":
     else:
         logger.error("Database connection failed.")
         sys.exit(1)
+
+

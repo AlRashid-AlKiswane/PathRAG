@@ -14,10 +14,10 @@ Features:
 # pylint: disable=broad-exception-caught
 # pylint: disable=redefined-outer-name
 # pylint: disable=wrong-import-position
-from datetime import datetime
 import os
 import sys
 import logging
+import time
 from typing import Optional
 
 import requests
@@ -58,36 +58,53 @@ class OllamaModel:
         try:
             manager = OllamaManager()
             manager.execute_workflow(model_name=model_name)
+            
+            # Wait for model to be ready
+            self._wait_for_model_ready()
+            
             logger.info("✅ Ollama model workflow executed successfully.")
         except Exception as e:
             logger.critical("❌ Model initialization failed: %s", e)
 
-    def generate(
-        self,
-        prompt: str,
-        max_tokens: int = 512,
-        temperature: float = 0.1,
-        system_message: Optional[str] = None
-    ) -> str:
+    def _wait_for_model_ready(self, max_wait_time: int = 30) -> None:
         """
-        Generate text using the specified Ollama model.
-
+        Wait for the model to be ready for requests.
+        
         Args:
-            prompt (str): User prompt.
-            max_tokens (int): Maximum number of tokens to generate.
-            temperature (float): Sampling temperature for generation.
-            system_message (Optional[str]): Optional system-level message to steer the response.
-
-        Returns:
-            str: The generated response.
+            max_wait_time (int): Maximum time to wait in seconds.
         """
-        logger.debug("📝 Generating response (prompt length: %d)", len(prompt))
+        logger.info("⏳ Waiting for model to be ready...")
+        start_time = time.time()
+        
+        while time.time() - start_time < max_wait_time:
+            try:
+                # Test with a simple request
+                response = self._make_request("Hello", max_tokens=1, temperature=0.1)
+                if response and response != "[ERROR] Request failed.":
+                    logger.info("✅ Model is ready for requests")
+                    return
+            except Exception as e:
+                logger.debug("Model not ready yet: %s", e)
+            
+            time.sleep(2)
+        
+        logger.warning("⚠️ Model may not be fully ready after %d seconds", max_wait_time)
 
-        full_prompt = f"{system_message.strip() if system_message else ''}\n\n{prompt}".strip()
-
+    def _make_request(self, prompt: str, max_tokens: int = 512, temperature: float = 0.1) -> str:
+        """
+        Make a request to the Ollama API with error handling.
+        
+        Args:
+            prompt (str): The prompt to send.
+            max_tokens (int): Maximum tokens to generate.
+            temperature (float): Temperature for generation.
+            
+        Returns:
+            str: Generated response or error message.
+        """
         payload = {
             "model": self.model,
-            "prompt": full_prompt,
+            "prompt": prompt,
             "stream": False,
             "options": {
                 "temperature": temperature,
@@ -96,185 +113,137 @@ class OllamaModel:
         }
 
         try:
-            response = requests.post(f"{self.base_url}/api/generate", json=payload, timeout=30)
+            response = requests.post(
+                f"{self.base_url}/api/generate", 
+                json=payload, 
+                timeout=60  # Increased timeout
+            )
             response.raise_for_status()
             result = response.json()
-            return result.get("response", "").strip()
+            
+            generated_text = result.get("response", "").strip()
+            if not generated_text:
+                logger.warning("⚠️ Empty response from model")
+                return "[ERROR] Empty response from model."
+            
+            return generated_text
+            
+        except requests.exceptions.Timeout:
+            logger.error("❌ Request timed out")
+            return "[ERROR] Request timed out."
+        except requests.exceptions.ConnectionError:
+            logger.error("❌ Connection error - is Ollama server running?")
+            return "[ERROR] Connection error."
+        except requests.exceptions.HTTPError as e:
+            logger.error("❌ HTTP error: %s", e)
+            if e.response.status_code == 500:
+                logger.error("Server error - model may not be loaded properly")
+                return "[ERROR] Server error - model not ready."
+            return f"[ERROR] HTTP error: {e.response.status_code}."
         except requests.RequestException as e:
             logger.error("❌ Request failed: %s", e)
             return "[ERROR] Request failed."
         except Exception as e:
-            logger.error("❌ Text generation failed: %s", e)
-            raise RuntimeError("Text generation error") from e
+            logger.error("❌ Unexpected error: %s", e)
+            return "[ERROR] Unexpected error."
 
-    def extract_relation_between_entities(
+    def generate(
         self,
-        entity_1: str,
-        entity_2: str,
-        context: str,
-        system_message: Optional[str] = "You are an expert in information extraction. Determine the semantic relation between two entities in the given context."
+        prompt: str,
+        max_tokens: int = 512,
+        temperature: float = 0.1,
+        system_message: Optional[str] = None,
+        retry_count: int = 3
     ) -> str:
         """
-        Extract the semantic relation between two entities using the LLM.
+        Generate text using the specified Ollama model with retry logic.
 
         Args:
-            entity_1 (str): The first entity.
-            entity_2 (str): The second entity.
-            context (str): Context text that contains or surrounds both entities.
-            system_message (Optional[str]): Instruction for the LLM to guide its response.
+            prompt (str): User prompt.
+            max_tokens (int): Maximum number of tokens to generate.
+            temperature (float): Sampling temperature for generation.
+            system_message (Optional[str]): Optional system-level message.
+            retry_count (int): Number of retries on failure.
 
         Returns:
-            str: The relation between the two entities.
+            str: The generated response.
         """
-        prompt = (
-            "You are an expert in extracting relationships between entities from a given context.\n"
-            "For each example below, identify the relation between the two specified entities based on the context.\n\n"
+        if not prompt or not prompt.strip():
+            logger.warning("⚠️ Empty prompt provided")
+            return "[ERROR] Empty prompt."
 
-            "Example 1:\n"
-            "Context: 'Elon Musk founded SpaceX.'\n"
-            "Entity 1: 'Elon Musk'\n"
-            "Entity 2: 'SpaceX'\n"
-            "Relation: 'founded'\n\n"
+        logger.debug("📝 Generating response (prompt length: %d)", len(prompt))
 
-            "Example 2:\n"
-            "Context: 'The Eiffel Tower is located in Paris.'\n"
-            "Entity 1: 'Eiffel Tower'\n"
-            "Entity 2: 'Paris'\n"
-            "Relation: 'located in'\n\n"
+        # Construct full prompt
+        full_prompt = prompt
+        if system_message:
+            full_prompt = f"{system_message.strip()}\n\n{prompt}".strip()
 
-            "Now, analyze the following example carefully and provide the relation between the two entities.\n"
-            "After that, on a scale from 1 to 5, indicate your confidence level in the relation you provided, where 1 means low confidence and 5 means very high confidence.\n\n"
+        # Try generating with retries
+        for attempt in range(retry_count + 1):
+            try:
+                response = self._make_request(full_prompt, max_tokens, temperature)
+                
+                if not response.startswith("[ERROR]"):
+                    logger.debug("✅ Successfully generated response")
+                    return response
+                    
+                if attempt < retry_count:
+                    logger.warning("⚠️ Attempt %d failed, retrying...", attempt + 1)
+                    time.sleep(2)  # Wait before retry
+                else:
+                    logger.error("❌ All attempts failed")
+                    return response
+                    
+            except Exception as e:
+                logger.error("❌ Generation attempt %d failed: %s", attempt + 1, e)
+                if attempt < retry_count:
+                    time.sleep(2)
+                else:
+                    return "[ERROR] Text generation failed after all retries."
 
-            f"Context:\n{context.strip()}\n\n"
-            f"Entity 1: '{entity_1}'\n"
-            f"Entity 2: '{entity_2}'\n\n"
-            "Relation:"
-            "\n\nConfidence (1-5):"
-        )
-
-        logger.info("🔍 Extracting relation between '%s' and '%s'", entity_1, entity_2)
+    def is_available(self) -> bool:
+        """
+        Check if the Ollama service is available.
+        
+        Returns:
+            bool: True if available, False otherwise.
+        """
         try:
-            relation = self.generate(
-                prompt=prompt,
-                max_tokens=50,
-                temperature=0.2,
-                system_message=system_message
-            )
-            logger.info("✅ Extracted relation: %s", relation)
-            return {
-                "entity_1": entity_1,
-                "entity_2": entity_2,
-                "relation": relation,
-                "source": "ollama-gemma3",
-                "timestamp": datetime.utcnow().isoformat()
-            }
+            response = requests.get(f"{self.base_url}/api/version", timeout=5)
+            return response.status_code == 200
+        except Exception:
+            return False
 
+    def get_model_info(self) -> dict:
+        """
+        Get information about the current model.
+        
+        Returns:
+            dict: Model information.
+        """
+        try:
+            response = requests.get(f"{self.base_url}/api/show", json={"name": self.model_name}, timeout=10)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"error": "Failed to get model info"}
         except Exception as e:
-            logger.error("❌ Failed to extract relation: %s", e)
-            return "[ERROR] Failed to extract relation."
+            logger.error("Failed to get model info: %s", e)
+            return {"error": str(e)}
 
+
+# Example usage and testing
 if __name__ == "__main__":
+    # Test the OllamaModel
     model = OllamaModel()
-
-    test_cases = [
-        # Leadership
-        {
-            "entity1": "Angela Merkel",
-            "entity2": "Germany",
-            "context": "Angela Merkel was the Chancellor of Germany from 2005 to 2021."
-        },
-        # Authorship
-        {
-            "entity1": "J.K. Rowling",
-            "entity2": "Harry Potter",
-            "context": "J.K. Rowling is the author of the globally successful Harry Potter book series."
-        },
-        # Birthplace
-        {
-            "entity1": "Albert Einstein",
-            "entity2": "Germany",
-            "context": "Albert Einstein was born in Ulm, in the Kingdom of Württemberg in the German Empire."
-        },
-        # Company Founding
-        {
-            "entity1": "Steve Jobs",
-            "entity2": "Apple",
-            "context": "Steve Jobs co-founded Apple in 1976 along with Steve Wozniak and Ronald Wayne."
-        },
-        # Membership
-        {
-            "entity1": "Serena Williams",
-            "entity2": "WTA",
-            "context": "Serena Williams was a dominant player in the Women's Tennis Association (WTA) for decades."
-        },
-        # Headquartered Location
-        {
-            "entity1": "UNICEF",
-            "entity2": "New York",
-            "context": "UNICEF is headquartered in New York and operates worldwide to support children's rights."
-        },
-        # Product Development
-        {
-            "entity1": "OpenAI",
-            "entity2": "ChatGPT",
-            "context": "ChatGPT is a language model developed by OpenAI to assist with natural language processing tasks."
-        },
-        # Awards
-        {
-            "entity1": "Malala Yousafzai",
-            "entity2": "Nobel Peace Prize",
-            "context": "Malala Yousafzai received the Nobel Peace Prize for her advocacy of girls' education."
-        },
-        # Scientific Contribution
-        {
-            "entity1": "Isaac Newton",
-            "entity2": "Gravity",
-            "context": "Isaac Newton developed the theory of gravity after observing a falling apple."
-        },
-        # City-Country
-        {
-            "entity1": "Tokyo",
-            "entity2": "Japan",
-            "context": "Tokyo is the capital city of Japan and one of the most populous urban areas in the world."
-        },
-        # CEO of Tech Company
-        {
-            "entity1": "Satya Nadella",
-            "entity2": "Microsoft",
-            "context": "Satya Nadella became CEO of Microsoft in 2014, leading major innovations and acquisitions."
-        },
-        # Musical Group
-        {
-            "entity1": "Freddie Mercury",
-            "entity2": "Queen",
-            "context": "Freddie Mercury was the lead vocalist of the rock band Queen, known for his powerful performances."
-        },
-        # Film Role
-        {
-            "entity1": "Leonardo DiCaprio",
-            "entity2": "Titanic",
-            "context": "Leonardo DiCaprio played the role of Jack Dawson in the movie Titanic."
-        },
-        # Invention
-        {
-            "entity1": "Tim Berners-Lee",
-            "entity2": "World Wide Web",
-            "context": "Tim Berners-Lee is credited with inventing the World Wide Web in 1989."
-        },
-        # Headquarters and Country
-        {
-            "entity1": "Samsung",
-            "entity2": "South Korea",
-            "context": "Samsung, a multinational conglomerate, is headquartered in South Korea."
-        }
-    ]
-
-    for i, case in enumerate(test_cases, 1):
-        print(f"\n🔍 Test Case {i}:")
-        print(f"Entities: {case['entity1']} <--> {case['entity2']}")
-        print(f"Context: {case['context']}")
-        relation = model.extract_relation_between_entities(
-            case["entity1"], case["entity2"], case["context"]
-        )
-        print("🧩 Extracted Relation:", relation)
-
+    
+    # Test if service is available
+    if model.is_available():
+        print("✅ Ollama service is available")
+        
+        # Test generation
+        response = model.generate("What is the capital of France?")
+        print(f"Response: {response}")
+    else:
+        print("❌ Ollama service is not available")

@@ -32,9 +32,9 @@ except (ImportError, OSError) as e:
     sys.exit(1)
 
 # Local imports
-from src.rag import LightRAG
+from src.rag import RAGLight
 from src.infra import setup_logging
-from src import get_light_rag
+from src import get_rag_light
 
 # Initialize logger
 logger = setup_logging()
@@ -50,7 +50,8 @@ live_retrieval_route = APIRouter(
 async def retrieve(
     query: str = Query(..., description="Query string to search relevant chunks"),
     top_k: int = Query(3, ge=1, le=10, description="Number of top results to retrieve"),
-    light_rag: LightRAG = Depends(get_light_rag),
+    mode: str = "hybrid",
+    rag_light: RAGLight = Depends(get_rag_light)
 ):
     """
     Retrieves top-k relevant information chunks for a given query.
@@ -70,7 +71,7 @@ async def retrieve(
         if not query.strip():
             raise HTTPException(status_code=400, detail="Query must not be empty.")
 
-        results = light_rag.query(question=query, top_k=top_k)
+        results = await rag_light.query(question=query, mode=mode, top_k=top_k)
 
         return JSONResponse(
             content={

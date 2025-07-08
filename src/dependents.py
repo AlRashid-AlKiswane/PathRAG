@@ -2,28 +2,31 @@
 Connection Utilities
 
 This module provides utility functions for retrieving shared application resources
-from the FastAPI app state, such as the active SQLite database connection and the
-LightRAG instance used for retrieval-augmented generation (RAG).
+from the FastAPI app state, including:
 
-Key Features:
-- Robust error handling for missing or invalid app state resources.
-- Clean separation of concerns for resource access.
-- Structured logging for observability and debugging.
+- The active SQLite database connection.
+- The initialized OllamaModel used for large language model inference.
+- The HuggingFaceModel instance used for embedding generation.
+
+These utilities help centralize access to app-scoped resources while enforcing robust
+error handling, observability through structured logging, and a clean separation of concerns.
 
 Usage Example:
+--------------
     from fastapi import Request
-    from src.db.connection_utils import get_db_conn, get_light_rag, get_llm
+    from src.db.connection_utils import get_db_conn, get_llm, get_embedding_model
 
     @app.get("/example")
     def example_endpoint(request: Request):
         conn = get_db_conn(request)
-        rag = get_light_rag(request)
         llm = get_llm(request)
-        # Use `conn`, `rag`, and `llm` for processing...
+        embedding_model = get_embedding_model(request)
+        # Use these resources as needed...
 
 Raises:
-- HTTPException with status 503 if the resource is not initialized.
-- HTTPException with status 500 for unexpected internal errors.
+-------
+- HTTPException with status 503 if a required resource is not initialized.
+- HTTPException with status 500 if an unexpected internal error occurs.
 """
 
 import logging
@@ -48,30 +51,30 @@ except (ImportError, OSError) as e:
     sys.exit(1)
 
 from src.infra import setup_logging
-from src.rag import LightRAG
-from src.llms_providers import OllamaModel
+from src.llms_providers import OllamaModel, HuggingFaceModel, NERModel
 
 logger = setup_logging()
 
 
 def get_db_conn(request: Request) -> sqlite3.Connection:
     """
-    Retrieve the active SQLite database connection from FastAPI app state.
+    Retrieve the active SQLite database connection from the FastAPI app state.
 
     Args:
-        request (Request): FastAPI request object.
+        request (Request): The current FastAPI request object.
 
     Returns:
-        sqlite3.Connection: An active database connection instance.
+        sqlite3.Connection: A live SQLite database connection.
 
     Raises:
         HTTPException: 
-            - 503 if the database connection is missing.
-            - 500 if an unexpected error occurs.
+            - 503 if the database connection is not available in app state.
+            - 500 if an unexpected internal error occurs.
     """
     try:
         conn = getattr(request.app.state, "conn", None)
         if not conn:
+            logger.error("Database connection not found in app state.")
             raise HTTPException(
                 status_code=HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Database connection is unavailable."
@@ -88,58 +91,25 @@ def get_db_conn(request: Request) -> sqlite3.Connection:
         ) from e
 
 
-def get_light_rag(request: Request) -> LightRAG:
-    """
-    Retrieve the LightRAG instance from FastAPI app state.
-
-    Args:
-        request (Request): FastAPI request object.
-
-    Returns:
-        LightRAG: An initialized LightRAG instance.
-
-    Raises:
-        HTTPException: 
-            - 503 if the LightRAG instance is missing.
-            - 500 if an unexpected error occurs.
-    """
-    try:
-        rag = getattr(request.app.state, "light_rag", None)
-        if not rag:
-            raise HTTPException(
-                status_code=HTTP_503_SERVICE_UNAVAILABLE,
-                detail="LightRAG service is unavailable."
-            )
-        logger.debug("LightRAG instance retrieved successfully.")
-        return rag
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("Unexpected error retrieving LightRAG instance.")
-        raise HTTPException(
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while accessing LightRAG."
-        ) from e
-
-
 def get_llm(request: Request) -> OllamaModel:
     """
     Retrieve the OllamaModel instance from FastAPI app state.
 
     Args:
-        request (Request): FastAPI request object.
+        request (Request): The current FastAPI request object.
 
     Returns:
         OllamaModel: An initialized OllamaModel instance.
 
     Raises:
-        HTTPException: 
-            - 503 if the OllamaModel instance is missing.
-            - 500 if an unexpected error occurs.
+        HTTPException:
+            - 503 if the OllamaModel is not available in app state.
+            - 500 if an unexpected internal error occurs.
     """
     try:
         llm = getattr(request.app.state, "llm", None)
         if not llm:
+            logger.error("OllamaModel instance not found in app state.")
             raise HTTPException(
                 status_code=HTTP_503_SERVICE_UNAVAILABLE,
                 detail="OllamaModel service is unavailable."
@@ -153,4 +123,79 @@ def get_llm(request: Request) -> OllamaModel:
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while accessing OllamaModel."
+        ) from e
+
+
+def get_embedding_model(request: Request) -> HuggingFaceModel:
+    """
+    Retrieve the HuggingFaceModel instance from FastAPI app state.
+
+    Args:
+        request (Request): The current FastAPI request object.
+
+    Returns:
+        HuggingFaceModel: An initialized HuggingFaceModel for embeddings.
+
+    Raises:
+        HTTPException:
+            - 503 if the HuggingFaceModel is not available in app state.
+            - 500 if an unexpected internal error occurs.
+    """
+    try:
+        embedding_model = getattr(request.app.state, "embedding_model", None)
+        if not embedding_model:
+            logger.error("HuggingFaceModel instance not found in app state.")
+            raise HTTPException(
+                status_code=HTTP_503_SERVICE_UNAVAILABLE,
+                detail="HuggingFace embedding model is unavailable."
+            )
+        logger.debug("HuggingFaceModel instance retrieved successfully.")
+        return embedding_model
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Unexpected error retrieving HuggingFaceModel instance.")
+        raise HTTPException(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while accessing HuggingFace embedding model."
+        ) from e
+
+
+def get_ner_model(request: Request) -> NERModel:
+    """
+    Dependency function to retrieve the NERModel instance from FastAPI app state.
+
+    This function is intended to be used with FastAPI's dependency injection system,
+    allowing route handlers to access the NER model without re-instantiating it.
+
+    Args:
+        request (Request): The FastAPI request object, containing app state.
+
+    Returns:
+        NERModel: An instance of the pre-loaded NERModel from app.state.
+
+    Raises:
+        HTTPException: 
+            - 503 if the NER model is not available in app state.
+            - 500 if an unexpected error occurs during retrieval.
+    """
+    try:
+        ner_model = getattr(request.app.state, "ner_model", None)
+        if not ner_model:
+            logger.error("NERModel instance not found in app state.")
+            raise HTTPException(
+                status_code=HTTP_503_SERVICE_UNAVAILABLE,
+                detail="NER model is not available. Try again later."
+            )
+        logger.debug("NERModel instance retrieved successfully from app state.")
+        return ner_model
+
+    except HTTPException:
+        raise  # Already logged and constructed correctly above
+
+    except Exception as e:
+        logger.exception("Unexpected error while retrieving NERModel instance.")
+        raise HTTPException(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unexpected internal server error while accessing the NER model."
         ) from e

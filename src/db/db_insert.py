@@ -33,6 +33,7 @@ import logging
 import os
 import sys
 import sqlite3
+from typing import Optional
 
 # Set up the main directory for imports
 try:
@@ -79,6 +80,87 @@ def insert_chunk(conn: sqlite3.Connection,
     except sqlite3.Error as e:
         logger.error("Failed to insert chunk: %s", e)
         conn.rollback()
+        return False
+
+def insert_embed_vector(conn: sqlite3.Connection,
+                        chunk: str,
+                        embedding: str,
+                        chunk_id: str) -> bool:
+    """
+    Inserts a document chunk and its embedding into the 'embed_vector' table.
+
+    Args:
+        conn (sqlite3.Connection): SQLite database connection.
+        chunk (str): The text content of the document chunk.
+        embedding (str): Serialized embedding vector (e.g., JSON string).
+        chunk_id (str): Unique identifier for the chunk (e.g., UUID or hash).
+
+    Returns:
+        bool: True if insertion was successful, False otherwise.
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO embed_vector (chunk, embedding, chunk_id)
+            VALUES (:chunk, :embedding, :chunk_id)
+            """,
+            {"chunk": chunk, "embedding": embedding, "chunk_id": chunk_id}
+        )
+        conn.commit()
+        logger.info("Inserted chunk with chunk_id: %s into 'embed_vector' table.", chunk_id)
+        return True
+
+    except sqlite3.Error as e:
+        logger.error("Failed to insert into 'embed_vector' table: %s", e)
+        conn.rollback()
+        return False
+
+def insert_ner_entity(
+    conn: sqlite3.Connection,
+    chunk_id: Optional[str],
+    text: str,
+    entity_type: str,
+    start: int,
+    end: int,
+    score: float,
+    source_text: str
+) -> bool:
+    """
+    Insert a single named entity record into the 'ner_entities' table.
+
+    Args:
+        conn (sqlite3.Connection): SQLite database connection.
+        chunk_id (Optional[str]): Reference to the source chunk (can be None).
+        text (str): Extracted entity text.
+        entity_type (str): Type/category of the entity (e.g., 'PER', 'ORG').
+        start (int): Character start index in source text.
+        end (int): Character end index in source text.
+        score (float): Confidence score of the prediction.
+        source_text (str): Full text that contained the entity.
+
+    Returns:
+        bool: True if insertion is successful, False otherwise.
+
+    Raises:
+        sqlite3.Error: If insertion fails due to database error.
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO ner_entities (
+                chunk_id, text, type, start, end, score, source_text
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (chunk_id, text, entity_type, start, end, score, source_text)
+        )
+        conn.commit()
+        logger.debug("✅ Inserted NER entity: %s (%s)", text, entity_type)
+        return True
+
+    except sqlite3.Error as e:
+        logger.exception("❌ Failed to insert NER entity: %s", e)
         return False
 
 

@@ -5,114 +5,128 @@ This module initializes and configures the FastAPI application, including:
 - Setting up the project base directory
 - Managing application lifespan (startup/shutdown)
 - Initializing SQLite database connection and tables
-- Instantiating core components such as OllamaModel and LightRAG
-- Mounting API routes
+- Instantiating core components such as OllamaModel and HuggingFaceModel
+- Mounting all API routes
 
 Features:
 - Robust error handling with critical logging on failure
-- Async lifespan context management for graceful startup/shutdown
-- Structured logger integration for observability
+- Async lifespan context for clean resource management
+- Structured logger for full observability
 """
 
+import asyncio
 import os
 import sys
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
 from pathlib import Path
+from fastapi import FastAPI, HTTPException
 
-# Setup project base path
+# === Project Path Setup ===
 try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
     if MAIN_DIR not in sys.path:
         sys.path.append(MAIN_DIR)
-    logging.debug(f"Project base path set to: {MAIN_DIR}")
+    logging.debug(f"📁 Project base path set to: {MAIN_DIR}")
 except (ImportError, OSError) as e:
     logging.critical(
-        "[Startup Critical] Failed to set up project base path. "
-        f"Error: {e}. System paths: {sys.path}",
+        "🔴 [Startup Critical] Failed to set up project path. Error: %s\nSystem paths: %s",
+        e, sys.path,
         exc_info=True
     )
     sys.exit(1)
 
-# pylint: disable=wrong-import-position
-from src.db import get_sqlite_engine, init_chunks_table
+# === Internal Imports (after path config) ===
+from src.db import (
+    get_sqlite_engine,
+    init_chunks_table,
+    init_embed_vector_table,
+    init_entitiys_table,
+)
 from src.routes import (
     upload_route,
     chunking_route,
-    chunks_to_rag_route,
-    live_retrieval_route,
+    embedding_chunks_route,
+    ner_route
 )
 from src.infra import setup_logging
-from src.rag import LightRAG
-from src.llms_providers import OllamaModel
+from src.llms_providers import OllamaModel, HuggingFaceModel, NERModel
 from src.helpers import get_settings, Settings
 
+# === Logger and Settings ===
 logger = setup_logging()
 app_settings: Settings = get_settings()
 
-app = FastAPI()
+# === FastAPI App ===
+app = FastAPI(title="Graph-RAG API", version="1.0.0")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Async context manager for FastAPI app lifespan.
+    Async context manager for FastAPI app lifecycle events.
 
     On startup:
-    - Establish a SQLite database connection and assign it to app state.
-    - Initialize the required database tables.
-    - Instantiate OllamaModel and LightRAG, storing them in app state.
+    - Establish database connection
+    - Initialize tables
+    - Load LLM and embedding model
 
     On shutdown:
-    - Close the database connection if it exists.
+    - Close the database connection safely
 
     Raises:
-        SystemExit: If the database connection fails to initialize.
-        Exception: For unexpected errors during startup.
+        SystemExit: If the database connection cannot be established.
     """
     try:
-        logger.info("[Startup] Initializing application...")
+        logger.info("🚀 [Startup] Initializing FastAPI application...")
+
+        # Establish SQLite DB connection
         conn = get_sqlite_engine()
         if not conn:
-            logger.critical("[Startup Error] Unable to establish database connection.")
+            logger.critical("❌ [Startup Error] Unable to establish database connection.")
             sys.exit(1)
+
         app.state.conn = conn
-        logger.debug("[Startup] Database connection established.")
+        logger.debug("🔗 Database connection established.")
 
+        # Initialize database tables
         init_chunks_table(conn=conn)
-        logger.info("[Startup] Database chunks table initialized.")
+        logger.info("🧱 'chunks' table initialized.")
+        init_embed_vector_table(conn=conn)
+        logger.info("🧠 'embed_vector' table initialized.")
+        init_entitiys_table(conn=conn)
+        logger.info(" 'enttesy' table initialized.")
 
+        # Load LLM and embedding models
         app.state.llm = OllamaModel(app_settings.OLLAMA_MODEL)
-        logger.info(f"[Startup] OllamaModel initialized with model: {app_settings.OLLAMA_MODEL}")
+        logger.info(f"🤖 OllamaModel initialized: {app_settings.OLLAMA_MODEL}")
+        app.state.embedding_model = HuggingFaceModel(model_name=app_settings.EMBEDDING_MODEL)
+        logger.info(f"🔡 HuggingFace embedding model loaded: {app_settings.EMBEDDING_MODEL}")
+        app.state.ner_model = NERModel(model_name=app_settings.NER_MODEL)
+        logger.info("Successfully Loading NER Model: %s", app_settings.NER_MODEL)
 
-        app.state.light_rag = LightRAG(
-            embedding_model_name=app_settings.EMBEDDING_MODEL,
-            llm=app.state.llm
-        )
-        logger.info(f"[Startup] LightRAG initialized with embedding model: {app_settings.EMBEDDING_MODEL}")
-
-        yield  # Allow FastAPI to start serving requests
+        yield  # App is now ready to serve
 
     except Exception as e:
-        logger.exception(f"[Startup Exception] Failed during application startup: {e}")
+        logger.exception("💥 [Startup Exception] Critical error during startup.")
         raise
 
     finally:
+        # Graceful shutdown
         conn = getattr(app.state, "conn", None)
         if conn:
             try:
                 conn.close()
-                logger.info("[Shutdown] Database connection closed successfully.")
+                logger.info("🛑 [Shutdown] Database connection closed.")
             except Exception as e:
-                logger.error(f"[Shutdown Error] Error closing database connection: {e}")
+                logger.error("⚠️ [Shutdown Error] Failed to close database connection: %s", e)
 
 
-# Assign the lifespan context manager to FastAPI app
+# === Register App Lifespan ===
 app.router.lifespan_context = lifespan
 
-# Mount API routes
+# === Register API Routes ===
 app.include_router(upload_route)
 app.include_router(chunking_route)
-app.include_router(chunks_to_rag_route)
-app.include_router(live_retrieval_route)
+app.include_router(embedding_chunks_route)
+app.include_router(ner_route)

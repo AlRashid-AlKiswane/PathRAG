@@ -1,3 +1,3 @@
 
 
-from .dependents import get_db_conn, get_light_rag, get_llm
+from .dependents import get_db_conn, get_llm, get_embedding_model, get_ner_model
