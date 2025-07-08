@@ -6,8 +6,8 @@ and relationship mappings in knowledge graph or NLP processing systems.
 """
 
 from typing import Dict, Optional, Any
-from dataclasses import dataclass
-from pydantic import BaseModel, Field
+from dataclasses import dataclass, field
+import numpy as np
 
 
 @dataclass
@@ -18,6 +18,8 @@ class Entity:
     type: str
     description: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
+    embedding: Optional[np.ndarray] = field(default=None, repr=False)
+
 
     def to_dict(self):
         return {
@@ -25,7 +27,8 @@ class Entity:
             'name': self.name,
             'type': self.type,
             'description': self.description,
-            'metadata': self.metadata
+            'metadata': self.metadata,
+            'embedding': self.embedding
         }
 
 
