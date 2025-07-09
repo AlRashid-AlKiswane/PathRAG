@@ -124,7 +124,8 @@ async def retrieve(
 
     try:
         logger.debug("Performing entity-level retrieval.")
-        entity_result = entity_level_filtering.entities_retrieval(query=query)
+        entity_result = entity_level_filtering.entities_retrieval(query=query,
+                                                                  top_k=top_k)
         logger.info(f"EntityLevelFiltering returned {len(entity_result)} chunks.")
 
     except Exception as entity_exc:

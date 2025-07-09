@@ -121,7 +121,15 @@ if __name__ == "__main__":
 
     ner_model = NERModel()
 
-    sample_text = "Elon Musk founded SpaceX and co-founded OpenAI in the United States."
+    sample_text = """
+    Can you explain how Google DeepMind’s AlphaFold uses transformer-based
+    architectures similar to BERT to predict protein structures, and how this
+    compares to traditional bioinformatics approaches developed at institutions 
+    like Stanford University and MIT? Also, what role did the CASP14 competition and 
+    the EMBL-EBI play in validating the effectiveness of AlphaFold’s predictions, and
+    how does this model relate to other recent innovations in generative AI such as
+    OpenAI’s GPT-4 or Meta’s LLaMA models?
+    """
 
     results = ner_model.predict(sample_text)
 

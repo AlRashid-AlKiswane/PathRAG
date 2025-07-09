@@ -21,7 +21,7 @@ except (ImportError, OSError) as e:
     sys.exit(1)
 
 # pylint: disable=wrong-import-position
-from src.utils import setup_logging
+from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 
 # Initialize application settings and logger

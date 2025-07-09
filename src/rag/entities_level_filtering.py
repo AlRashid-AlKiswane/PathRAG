@@ -77,39 +77,45 @@ class EntityLevelFiltering:
             logger.error(f"NER model prediction failed: {e}", exc_info=True)
             raise RuntimeError(f"NER prediction failed: {e}")
 
-    def _fetch_chunks_from_db(self, text: str, entity_type: str) -> List[Dict[str, int]]:
+    def _fetch_chunks_from_db(self, text: str, entity_type: str, top_k: int) -> List[Dict[str, str]]:
         """
-        Retrieve chunk IDs from the database associated with the entity text or type.
+        Retrieve top_k chunk texts from the database associated with the entity text or type.
 
         Args:
             text (str): Named entity text to match (partial match).
             entity_type (str): Entity type to match exactly.
+            top_k (int): Maximum number of results to retrieve.
 
         Returns:
-            List[Dict[str, int]]: List of dicts each containing a 'chunk_id'.
+            List[Dict[str, str]]: List of dicts each containing a 'chunk' string.
 
         Raises:
             sqlite3.DatabaseError: If database query fails.
         """
-        logger.debug(f"Fetching chunks from DB for entity text '{text}' and type '{entity_type}'")
+        logger.debug(f"Fetching top_k={top_k} for text='{text}' OR type='{entity_type}'")
         result = []
         try:
             cursor = self.conn.cursor()
             cursor.execute("""
-                SELECT DISTINCT source_text
-                FROM ner_entities
-                WHERE text LIKE ? OR type = ?
-            """, (f"%{text}%", entity_type))
+                SELECT source_text
+                FROM (
+                    SELECT source_text
+                    FROM ner_entities
+                    WHERE text LIKE ? OR type = ?
+                    GROUP BY source_text
+                )
+                LIMIT ?
+            """, (f"%{text}%", entity_type, top_k))
             rows = cursor.fetchall()
-            logger.info(f"Found {len(rows)} chunks matching entity '{text}' or type '{entity_type}'")
+            logger.debug(f"Returned {len(rows)} rows: {[row[0] for row in rows]}")
             for row in rows:
-                result.append({"chunk_id": row[0]})
+                result.append({"chunk": row[0]})
             return result
         except sqlite3.DatabaseError as e:
-            logger.error(f"Database query failed while fetching chunks: {e}", exc_info=True)
+            logger.error("Failed to fetch from DB: %s", e, exc_info=True)
             raise
 
-    def entities_retrieval(self, query: str) -> List[Dict[str, int]]:
+    def entities_retrieval(self, query: str, top_k: int) -> List[Dict[str, int]]:
         """
         Extract entities from the query and retrieve unique associated chunk IDs from the database.
 
@@ -128,11 +134,13 @@ class EntityLevelFiltering:
             all_chunks = []
             for ent in extracted_entities["entities"]:
                 logger.debug(f"Processing entity: {ent}")
-                chunks = self._fetch_chunks_from_db(text=ent.get("text", ""), entity_type=ent.get("type", ""))
+                chunks = self._fetch_chunks_from_db(text=ent.get("text", ""), 
+                                                    entity_type=ent.get("type", ""),
+                                                    top_k=top_k)
                 logger.debug(f"Chunks found for entity '{ent.get('text', '')}': {chunks}")
                 all_chunks.extend(chunks)
-            # Remove duplicates by chunk_id
-            unique_chunks = {chunk["chunk_id"]: chunk for chunk in all_chunks}.values()
+            # Remove duplicates
+            unique_chunks = {chunk["chunk"]: chunk for chunk in all_chunks}.values()
             unique_chunks_list = list(unique_chunks)
             logger.info(f"Total unique chunks retrieved: {len(unique_chunks_list)}")
             return unique_chunks_list

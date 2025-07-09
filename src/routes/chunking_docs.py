@@ -28,7 +28,7 @@ except (ImportError, OSError) as e:
     sys.exit(1)
 
 # pylint: disable=wrong-import-position
-from src.db import insert_chunk
+from src.db import insert_chunk, clear_table
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 from src.controllers import chunking_docs
@@ -47,6 +47,7 @@ chunking_route = APIRouter(
 @chunking_route.post("/", response_class=JSONResponse)
 async def chunking(file_path: Optional[str] = None,
                    dir_file: Optional[str] = None,
+                   reset_table: bool = False,
                    conn: Connection = Depends(get_db_conn)):
     """
     Process a single file or an entire directory for document chunking and store the chunks.
@@ -60,6 +61,11 @@ async def chunking(file_path: Optional[str] = None,
         JSONResponse: Summary message indicating the success and total processed chunks.
     """
     total_chunks_inserted = 0
+
+    if reset_table:
+        clear_table(conn=conn,
+                    table_name="chunks")
+        logger.warning("Remove all Chunks in `chunks` table successfully.")
 
     # Single file processing
     if file_path:
