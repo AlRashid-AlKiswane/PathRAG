@@ -61,7 +61,6 @@ class FaissRAG:
             logger.debug("Attempting to pull embedding vectors from the database.")
 
             embedd_meta = pull_from_table(
-                self,
                 conn=self.conn,
                 table_name="embed_vector",
                 columns=["chunk_id", "embedding"]

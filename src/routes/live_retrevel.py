@@ -1,17 +1,26 @@
 """
-Live Retrieval API
+Live Retrieval API Module
 
-This module defines a FastAPI route that handles live semantic queries using
-a FaissRAG instance. It allows users to pass in a question and receive
-semantically similar chunks of information from the database.
+This module defines a FastAPI route that handles live semantic retrieval queries.
+It uses two retrieval mechanisms:
+1. FaissRAG: semantic vector similarity search
+2. EntityLevelFiltering: entity-based chunk filtering
+
+The API combines retrieval results according to a specified mode:
+- intersection: common chunks only
+- union: all chunks from both sources
+- faiss_only: only FaissRAG results
+- entity_only: only entity-level results
 
 Key Features:
-- Accepts a user query and retrieves top-k relevant results
-- Uses dependency injection for FaissRAG instance
-- Provides clean logging and full error handling
+- Dependency injection for reusable components
+- Embedding generation with HuggingFaceModel
+- Flexible retrieval result combination modes
+- Comprehensive logging for traceability and debugging
+- Full error handling for robustness
 
 Typical Usage:
-    GET /api/v1/retrieval?query="What is AI?"&top_k=5
+    POST /api/v1/retrieval?query="What is AI?"&top_k=5&mode=intersection
 """
 
 import os
@@ -21,7 +30,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 import numpy as np
 
-# Set project base path
+# Setup project base path for imports
 try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     if MAIN_DIR not in sys.path:
@@ -31,9 +40,9 @@ except (ImportError, OSError) as e:
     sys.exit(1)
 
 # Project imports
-from src.rag import FaissRAG
+from src.rag import FaissRAG, EntityLevelFiltering
 from src.infra import setup_logging
-from src import get_embedding_model, get_faiss_rag
+from src import get_embedding_model, get_faiss_rag, get_entity_level_filtering
 from src.llms_providers import HuggingFaceModel
 
 logger = setup_logging()
@@ -45,61 +54,149 @@ live_retrieval_route = APIRouter(
 )
 
 
-@live_retrieval_route.get("", response_class=JSONResponse)
+@live_retrieval_route.post("", response_class=JSONResponse)
 async def retrieve(
     query: str = Query(..., description="Query string to search relevant chunks"),
     top_k: int = Query(3, ge=1, le=10, description="Number of top results to retrieve"),
+    mode: str = Query(
+        "intersection",
+        description="Mode of combining results: 'intersection', 'union', 'faiss_only', 'entity_only'",
+        regex="^(intersection|union|faiss_only|entity_only)$"
+    ),
     embed_model: HuggingFaceModel = Depends(get_embedding_model),
-    faiss_rag: FaissRAG = Depends(get_faiss_rag)
+    faiss_rag: FaissRAG = Depends(get_faiss_rag),
+    entity_level_filtering: EntityLevelFiltering = Depends(get_entity_level_filtering)
 ):
     """
-    Retrieves top-k relevant information chunks for a given query using FaissRAG.
+    Handle live retrieval requests by querying FaissRAG and EntityLevelFiltering,
+    and returning results combined according to the specified mode.
 
     Args:
-        query (str): The user-provided semantic question or search input.
-        top_k (int): Number of top matching chunks to retrieve (default: 3).
-        embed_model: Dependency-injected embedding model.
-        faiss_rag (FaissRAG): Dependency-injected retriever.
+        query (str): The user query string.
+        top_k (int): Number of top chunks to retrieve.
+        mode (str): Strategy to combine retrieval results.
+            Options:
+            - 'intersection': return common chunks only.
+            - 'union': return all chunks from both sources.
+            - 'faiss_only': return only FaissRAG results.
+            - 'entity_only': return only entity-level results.
+        embed_model (HuggingFaceModel): Embedding model injected by FastAPI.
+        faiss_rag (FaissRAG): FaissRAG retrieval instance injected by FastAPI.
+        entity_level_filtering (EntityLevelFiltering): Entity-level retrieval instance.
 
     Returns:
-        JSONResponse: Retrieved document chunks.
+        JSONResponse: JSON with retrieved chunk data.
 
     Raises:
-        HTTPException: For client or internal errors.
+        HTTPException: For client errors (e.g., empty query) and server errors.
     """
+    logger.info(f"Received retrieval request - Query: '{query}', Top_k: {top_k}, Mode: '{mode}'")
+
+    if not query or not query.strip():
+        logger.warning("Empty or whitespace-only query received.")
+        raise HTTPException(status_code=400, detail="Query must not be empty.")
+
     try:
-        logger.info(f"Received retrieval request: query='{query}', top_k={top_k}")
-
-        if not query.strip():
-            logger.warning("Empty query string received.")
-            raise HTTPException(status_code=400, detail="Query must not be empty.")
-
+        logger.debug("Generating embedding for query.")
         embed_query = embed_model.embed_texts(query)
-
-        # Ensure it's a NumPy array
         if not isinstance(embed_query, np.ndarray):
             embed_query = np.array(embed_query, dtype=np.float32)
+        logger.debug(f"Embedding generated with shape: {embed_query.shape}")
 
-        logger.debug(f"Query embedding generated with shape: {embed_query.shape}")
+    except Exception as embed_exc:
+        logger.error(f"Embedding generation failed: {embed_exc}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate embeddings for the query."
+        ) from embed_exc
 
+    try:
+        logger.debug("Performing semantic retrieval via FaissRAG.")
         results = faiss_rag.semantic_retrieval(embed_query=embed_query, top_k=top_k)
+        logger.info(f"FaissRAG returned {len(results)} chunks.")
 
-        logger.info(f"Successfully retrieved {len(results)} chunks for query.")
+    except Exception as faiss_exc:
+        logger.error(f"FaissRAG semantic retrieval failed: {faiss_exc}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Semantic retrieval failed."
+        ) from faiss_exc
+
+    try:
+        logger.debug("Performing entity-level retrieval.")
+        entity_result = entity_level_filtering.entities_retrieval(query=query)
+        logger.info(f"EntityLevelFiltering returned {len(entity_result)} chunks.")
+
+    except Exception as entity_exc:
+        logger.error(f"Entity-level retrieval failed: {entity_exc}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Entity-level retrieval failed."
+        ) from entity_exc
+
+    try:
+        # Extract sets of chunk identifiers
+        faiss_chunks = set(chunk.get("chunk") or chunk.get("chunk_id") for chunk in results)
+        entity_chunks = set(
+            chunk.get("chunk") if isinstance(chunk, dict) else chunk
+            for chunk in entity_result
+        )
+
+        logger.info(f"Combining results using mode: {mode}")
+
+        if mode == "intersection":
+            combined_chunks = faiss_chunks.intersection(entity_chunks)
+            filtered_results = [
+                chunk for chunk in results if (chunk.get("chunk") or chunk.get("chunk_id")) in combined_chunks
+            ]
+
+        elif mode == "union":
+            combined_chunks = faiss_chunks.union(entity_chunks)
+            # Map chunks to dict for fast lookup
+            faiss_map = {chunk.get("chunk") or chunk.get("chunk_id"): chunk for chunk in results}
+            entity_map = {}
+            for ent_chunk in entity_result:
+                key = ent_chunk.get("chunk") if isinstance(ent_chunk, dict) else ent_chunk
+                entity_map[key] = ent_chunk if isinstance(ent_chunk, dict) else {"chunk": key}
+
+            # Combine: Faiss results first, then entity results not in Faiss
+            filtered_results = [faiss_map[c] for c in combined_chunks if c in faiss_map]
+            filtered_results.extend([entity_map[c] for c in combined_chunks if c not in faiss_map])
+
+        elif mode == "faiss_only":
+            filtered_results = results
+
+        elif mode == "entity_only":
+            filtered_results = []
+            for ent_chunk in entity_result:
+                if isinstance(ent_chunk, dict):
+                    filtered_results.append(ent_chunk)
+                else:
+                    filtered_results.append({"chunk": ent_chunk})
+
+        else:
+            # Defensive fallback (should not happen due to regex validation)
+            logger.warning(f"Unknown mode '{mode}', defaulting to 'intersection'.")
+            combined_chunks = faiss_chunks.intersection(entity_chunks)
+            filtered_results = [
+                chunk for chunk in results if (chunk.get("chunk") or chunk.get("chunk_id")) in combined_chunks
+            ]
+
+        logger.info(f"Returning {len(filtered_results)} chunks for mode '{mode}'.")
 
         return JSONResponse(
+            status_code=200,
             content={
                 "query": query,
                 "top_k": top_k,
-                "results": results
-            },
-            status_code=200
+                "mode": mode,
+                "results": filtered_results
+            }
         )
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("Live retrieval failed.")
+    except Exception as combine_exc:
+        logger.error(f"Failed to combine retrieval results: {combine_exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="Internal server error during retrieval."
-        ) from e
+            detail="Failed to combine retrieval results."
+        ) from combine_exc

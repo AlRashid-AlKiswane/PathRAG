@@ -47,11 +47,12 @@ from src.routes import (
     upload_route,
     chunking_route,
     embedding_chunks_route,
-    ner_route
+    ner_route,
+    live_retrieval_route
 )
 from src.infra import setup_logging
 from src.llms_providers import OllamaModel, HuggingFaceModel, NERModel
-from src.rag import FaissRAG
+from src.rag import FaissRAG, EntityLevelFiltering
 from src.helpers import get_settings, Settings
 
 # === Logger and Settings ===
@@ -103,11 +104,14 @@ async def lifespan(app: FastAPI):
         logger.info(f"🤖 OllamaModel initialized: {app_settings.OLLAMA_MODEL}")
         app.state.embedding_model = HuggingFaceModel(model_name=app_settings.EMBEDDING_MODEL)
         logger.info(f"🔡 HuggingFace embedding model loaded: {app_settings.EMBEDDING_MODEL}")
-        app.state.ner_model = NERModel(model_name=app_settings.NER_MODEL)
+        ner_model = NERModel(model_name=app_settings.NER_MODEL)
+        app.state.ner_model = ner_model
+
         logger.info("Successfully Loading NER Model: %s", app_settings.NER_MODEL)
         app.state.faiss_rag = FaissRAG(conn=conn)
 
-
+        app.state.entity_level_filtering = EntityLevelFiltering(conn=conn,
+                                                                ner_model=ner_model)
         yield  # App is now ready to serve
 
     except Exception as e:
@@ -133,3 +137,4 @@ app.include_router(upload_route)
 app.include_router(chunking_route)
 app.include_router(embedding_chunks_route)
 app.include_router(ner_route)
+app.include_router(live_retrieval_route)

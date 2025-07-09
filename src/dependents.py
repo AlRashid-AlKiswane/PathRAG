@@ -52,7 +52,7 @@ except (ImportError, OSError) as e:
 
 from src.infra import setup_logging
 from src.llms_providers import OllamaModel, HuggingFaceModel, NERModel
-from src.rag import FaissRAG
+from src.rag import FaissRAG, EntityLevelFiltering
 logger = setup_logging()
 
 
@@ -239,4 +239,45 @@ def get_faiss_rag(request: Request) -> FaissRAG:
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unexpected internal server error while accessing the FaissRAG instance."
+        ) from e
+
+
+def get_entity_level_filtering(request: Request) -> EntityLevelFiltering:
+    """
+    Dependency function to retrieve the EntityLevelFiltering instance from FastAPI app state.
+
+    This function allows FastAPI route handlers to access the shared EntityLevelFiltering instance
+    stored in the application's state without re-instantiating it.
+
+    Args:
+        request (Request): The FastAPI request object, which contains app state.
+
+    Returns:
+        EntityLevelFiltering: An instance of the pre-loaded EntityLevelFiltering from app.state.
+
+    Raises:
+        HTTPException:
+            - 503 if the EntityLevelFiltering instance is not available in app state.
+            - 500 if an unexpected error occurs during retrieval.
+    """
+    try:
+        entity_filtering = getattr(request.app.state, "entity_level_filtering", None)
+        if not entity_filtering:
+            logger.error("EntityLevelFiltering instance not found in app state.")
+            raise HTTPException(
+                status_code=HTTP_503_SERVICE_UNAVAILABLE,
+                detail="EntityLevelFiltering is not available. Try again later."
+            )
+
+        logger.debug("EntityLevelFiltering instance retrieved successfully from app state.")
+        return entity_filtering
+
+    except HTTPException:
+        raise  # Already handled and logged above
+
+    except Exception as e:
+        logger.exception("Unexpected error while retrieving EntityLevelFiltering instance.")
+        raise HTTPException(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unexpected internal server error while accessing the EntityLevelFiltering instance."
         ) from e
