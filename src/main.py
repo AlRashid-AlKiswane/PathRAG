@@ -51,6 +51,7 @@ from src.routes import (
 )
 from src.infra import setup_logging
 from src.llms_providers import OllamaModel, HuggingFaceModel, NERModel
+from src.rag import FaissRAG
 from src.helpers import get_settings, Settings
 
 # === Logger and Settings ===
@@ -104,6 +105,8 @@ async def lifespan(app: FastAPI):
         logger.info(f"🔡 HuggingFace embedding model loaded: {app_settings.EMBEDDING_MODEL}")
         app.state.ner_model = NERModel(model_name=app_settings.NER_MODEL)
         logger.info("Successfully Loading NER Model: %s", app_settings.NER_MODEL)
+        app.state.faiss_rag = FaissRAG(conn=conn)
+
 
         yield  # App is now ready to serve
 

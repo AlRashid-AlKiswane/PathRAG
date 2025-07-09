@@ -52,7 +52,7 @@ except (ImportError, OSError) as e:
 
 from src.infra import setup_logging
 from src.llms_providers import OllamaModel, HuggingFaceModel, NERModel
-
+from src.rag import FaissRAG
 logger = setup_logging()
 
 
@@ -198,4 +198,45 @@ def get_ner_model(request: Request) -> NERModel:
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unexpected internal server error while accessing the NER model."
+        ) from e
+
+
+def get_faiss_rag(request: Request) -> FaissRAG:
+    """
+    Dependency function to retrieve the FaissRAG instance from FastAPI app state.
+
+    This function allows FastAPI route handlers to access the shared FaissRAG instance
+    stored in the application's state without re-instantiating it.
+
+    Args:
+        request (Request): The FastAPI request object, which contains app state.
+
+    Returns:
+        FaissRAG: An instance of the pre-loaded FaissRAG from app.state.
+
+    Raises:
+        HTTPException:
+            - 503 if the FaissRAG instance is not available in app state.
+            - 500 if an unexpected error occurs during retrieval.
+    """
+    try:
+        faiss_rag = getattr(request.app.state, "faiss_rag", None)
+        if not faiss_rag:
+            logger.error("FaissRAG instance not found in app state.")
+            raise HTTPException(
+                status_code=HTTP_503_SERVICE_UNAVAILABLE,
+                detail="FaissRAG is not available. Try again later."
+            )
+
+        logger.debug("FaissRAG instance retrieved successfully from app state.")
+        return faiss_rag
+
+    except HTTPException:
+        raise  # Already handled and logged above
+
+    except Exception as e:
+        logger.exception("Unexpected error while retrieving FaissRAG instance.")
+        raise HTTPException(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unexpected internal server error while accessing the FaissRAG instance."
         ) from e

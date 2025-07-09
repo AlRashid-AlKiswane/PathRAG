@@ -2,13 +2,13 @@
 Live Retrieval API
 
 This module defines a FastAPI route that handles live semantic queries using
-a LightRAG instance. It allows users to pass in a question and receive
-semantically similar chunks of information from the knowledge graph or database.
+a FaissRAG instance. It allows users to pass in a question and receive
+semantically similar chunks of information from the database.
 
 Key Features:
 - Accepts a user query and retrieves top-k relevant results
-- Uses dependency injection for LightRAG instance
-- Provides clean logging and error handling
+- Uses dependency injection for FaissRAG instance
+- Provides clean logging and full error handling
 
 Typical Usage:
     GET /api/v1/retrieval?query="What is AI?"&top_k=5
@@ -17,12 +17,11 @@ Typical Usage:
 import os
 import sys
 import logging
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
+import numpy as np
 
-# Setup project root path
+# Set project base path
 try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     if MAIN_DIR not in sys.path:
@@ -31,12 +30,12 @@ except (ImportError, OSError) as e:
     logging.error("Failed to configure project base directory: %s", e, exc_info=True)
     sys.exit(1)
 
-# Local imports
-from src.rag import RAGLight
+# Project imports
+from src.rag import FaissRAG
 from src.infra import setup_logging
-from src import get_rag_light
+from src import get_embedding_model, get_faiss_rag
+from src.llms_providers import HuggingFaceModel
 
-# Initialize logger
 logger = setup_logging()
 
 live_retrieval_route = APIRouter(
@@ -50,28 +49,42 @@ live_retrieval_route = APIRouter(
 async def retrieve(
     query: str = Query(..., description="Query string to search relevant chunks"),
     top_k: int = Query(3, ge=1, le=10, description="Number of top results to retrieve"),
-    mode: str = "hybrid",
-    rag_light: RAGLight = Depends(get_rag_light)
+    embed_model: HuggingFaceModel = Depends(get_embedding_model),
+    faiss_rag: FaissRAG = Depends(get_faiss_rag)
 ):
     """
-    Retrieves top-k relevant information chunks for a given query.
+    Retrieves top-k relevant information chunks for a given query using FaissRAG.
 
     Args:
         query (str): The user-provided semantic question or search input.
         top_k (int): Number of top matching chunks to retrieve (default: 3).
-        light_rag (LightRAG): Dependency-injected LightRAG instance.
+        embed_model: Dependency-injected embedding model.
+        faiss_rag (FaissRAG): Dependency-injected retriever.
 
     Returns:
-        JSONResponse: JSON object containing retrieved chunks and their scores.
+        JSONResponse: Retrieved document chunks.
 
     Raises:
-        HTTPException: 400 if query is missing, 500 for internal server errors.
+        HTTPException: For client or internal errors.
     """
     try:
+        logger.info(f"Received retrieval request: query='{query}', top_k={top_k}")
+
         if not query.strip():
+            logger.warning("Empty query string received.")
             raise HTTPException(status_code=400, detail="Query must not be empty.")
 
-        results = await rag_light.query(question=query, mode=mode, top_k=top_k)
+        embed_query = embed_model.embed_texts(query)
+
+        # Ensure it's a NumPy array
+        if not isinstance(embed_query, np.ndarray):
+            embed_query = np.array(embed_query, dtype=np.float32)
+
+        logger.debug(f"Query embedding generated with shape: {embed_query.shape}")
+
+        results = faiss_rag.semantic_retrieval(embed_query=embed_query, top_k=top_k)
+
+        logger.info(f"Successfully retrieved {len(results)} chunks for query.")
 
         return JSONResponse(
             content={
@@ -86,4 +99,7 @@ async def retrieve(
         raise
     except Exception as e:
         logger.exception("Live retrieval failed.")
-        raise HTTPException(status_code=500, detail="Internal server error during retrieval.")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error during retrieval."
+        ) from e

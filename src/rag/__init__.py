@@ -1,4 +1,3 @@
 
 
-from .pathrag  import PathRAG
-from .rag_light import RAGLight
+from .faiss_rag import FaissRAG
