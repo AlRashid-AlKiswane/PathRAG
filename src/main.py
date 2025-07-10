@@ -42,6 +42,7 @@ try:
         init_chunks_table,
         init_embed_vector_table,
         init_entitiys_table,
+        init_chatbot_table
     )
     from src.routes import (
         upload_route,
@@ -49,7 +50,8 @@ try:
         embedding_chunks_route,
         ner_route,
         live_retrieval_route,
-        storage_management_route
+        storage_management_route,
+        chatbot_route
     )
 
     from src.infra import setup_logging
@@ -114,6 +116,9 @@ async def lifespan(app: FastAPI):
 
             init_entitiys_table(conn)
             logger.debug("🧠 Initialized 'entitsy' table.")
+
+            init_chatbot_table(conn=conn)
+            logger.debug("Initialized 'chatbot' table.")
 
             logger.info("✅ All database tables initialized successfully.")
         except Exception as table_err:
@@ -189,6 +194,10 @@ try:
 
     app.include_router(storage_management_route)
     logger.debug("⚡ Registered Storage Management route.")
+
+    app.include_router(chatbot_route)
+    logger.debug("⚡ Registered Chatbot route.")
+
 
     logger.info("✅ All API routes registered.")
 except Exception as route_err:

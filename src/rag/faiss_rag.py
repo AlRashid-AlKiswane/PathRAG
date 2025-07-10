@@ -31,15 +31,18 @@ logger = setup_logging()
 
 class FaissRAG:
     """
-    A simple FAISS-based semantic retriever using embedding vectors stored in a database.
+    Lightweight FAISS-based semantic retriever using SQLite-stored embedding vectors.
 
     Attributes:
-        conn (sqlite3.Connection): SQLite database connection.
+        conn (sqlite3.Connection): SQLite connection.
+        vectors_embedding (np.ndarray): Matrix of embedding vectors.
+        chunk_ids (list[int]): Corresponding chunk IDs.
+        index (faiss.IndexFlatL2): FAISS index built from embeddings.
     """
 
     def __init__(self, conn: sqlite3.Connection) -> None:
         """
-        Initialize the FaissRAG object.
+        Initialize FaissRAG with a database connection.
 
         Args:
             conn (sqlite3.Connection): SQLite database connection.
@@ -47,148 +50,143 @@ class FaissRAG:
         self.conn = conn
         logger.info("FaissRAG initialized with active database connection.")
 
-    def _fetch_embedding_vector(self):
+        self.vectors_embedding, self.chunk_ids = self._fetch_embedding_vectors()
+        self.index = self._build_faiss_index()
+
+    def _fetch_embedding_vectors(self) -> tuple[np.ndarray, list[int]]:
         """
-        Fetches embedding vectors and corresponding chunk IDs from the database.
+        Fetch and decode embedding vectors from the database.
 
         Returns:
-            tuple: (vectors_embed: np.ndarray, chunk_ids: list of int)
+            tuple: (vectors_embedding: np.ndarray, chunk_ids: list[int])
 
         Raises:
-            ValueError: If no embeddings are found or conversion fails.
+            ValueError: If no embeddings are found or malformed.
         """
         try:
-            logger.debug("Attempting to pull embedding vectors from the database.")
+            logger.debug("Fetching embedding vectors from table 'embed_vector'.")
 
-            embedd_meta = pull_from_table(
+            records = pull_from_table(
                 conn=self.conn,
                 table_name="embed_vector",
                 columns=["chunk_id", "embedding"]
             )
 
             chunk_ids = []
-            embedding_vectors = []
+            vectors = []
 
-            for i, row in enumerate(embedd_meta):
-                logger.debug(f"Parsing embedding for chunk_id={row['chunk_id']}")
-                chunk_ids.append(row["chunk_id"])
-                embedding_blob = row["embedding"]
-
+            for row in records:
+                chunk_id = row["chunk_id"]
                 try:
-                    embedding_list = json.loads(embedding_blob)
+                    emb_list = json.loads(row["embedding"])
+                    emb_array = np.array(emb_list, dtype=np.float32)
+                    vectors.append(emb_array)
+                    chunk_ids.append(chunk_id)
                 except json.JSONDecodeError:
-                    logger.warning(f"Failed to parse JSON for chunk_id={row['chunk_id']}")
-                    continue
+                    logger.warning(f"Skipping malformed embedding for chunk_id={chunk_id}")
 
-                embedding_array = np.array(embedding_list, dtype=np.float32)
-                embedding_vectors.append(embedding_array)
+            if not vectors:
+                raise ValueError("No valid embedding vectors found in the database.")
 
-            if not embedding_vectors:
-                logger.error("No valid embedding vectors found.")
-                raise ValueError("No embedding vectors found in the database.")
+            vectors_embedding = np.vstack(vectors)
+            logger.info("Successfully loaded %d embedding vectors.", len(vectors))
 
-            vectors_embed = np.vstack(embedding_vectors)
-            logger.info(f"Successfully loaded {len(embedding_vectors)} embedding vectors.")
-
-            return vectors_embed, chunk_ids
+            return vectors_embedding, chunk_ids
 
         except Exception as e:
-            logger.exception("Failed to fetch or parse embeddings: %s", e)
+            logger.exception("Failed to load embeddings: %s", e)
             raise
 
-    def _build_faiss_index(self, vectors_embedding: np.ndarray) -> faiss.IndexFlatL2:
+    def _build_faiss_index(self) -> faiss.IndexFlatL2:
         """
-        Builds a FAISS index using L2 distance.
-
-        Args:
-            vectors_embedding (np.ndarray): Array of embedding vectors.
+        Build a FAISS index using L2 distance metric.
 
         Returns:
-            faiss.IndexFlatL2: FAISS index built on embeddings.
+            faiss.IndexFlatL2: FAISS index instance.
+
+        Raises:
+            RuntimeError: If building index fails.
         """
         try:
-            logger.debug("Building FAISS index.")
-            _, dim = vectors_embedding.shape
+            logger.debug("Building FAISS index using L2 distance.")
+
+            _, dim = self.vectors_embedding.shape
             index = faiss.IndexFlatL2(dim)
-            index.add(vectors_embedding)
-            logger.info("FAISS index built and populated.")
+            index.add(self.vectors_embedding)
+
+            logger.info("FAISS index successfully built and populated.")
             return index
+
         except Exception as e:
-            logger.exception("Failed to build FAISS index: %s", e)
-            raise
+            logger.exception("Error building FAISS index: %s", e)
+            raise RuntimeError("Failed to build FAISS index.")
 
     def semantic_retrieval(self, embed_query: np.ndarray, top_k: int = 5) -> list[dict]:
         """
-        Perform semantic search to retrieve the most relevant chunks.
+        Perform semantic retrieval using the FAISS index.
 
         Args:
-            embed_query (np.ndarray): Embedding vector of the query.
+            embed_query (np.ndarray): 1D query embedding vector.
             top_k (int): Number of top results to return.
 
         Returns:
-            list[dict]: List of retrieved chunks with IDs and content.
+            list[dict]: List of retrieved chunks with `id` and `chunk`.
+
+        Raises:
+            ValueError: If input dimensions are invalid.
         """
-        logger.info("Starting semantic retrieval.")
+        logger.info("Performing semantic retrieval.")
+
         try:
             if embed_query.ndim != 1:
-                logger.error("Query embedding must be a 1D array.")
                 raise ValueError("Query embedding must be 1D.")
 
-            vectors_embed, chunk_ids = self._fetch_embedding_vector()
+            if embed_query.shape[0] != self.vectors_embedding.shape[1]:
+                raise ValueError("Embedding dimension mismatch.")
 
-            if embed_query.shape[0] != vectors_embed.shape[1]:
-                logger.error("Embedding dimension mismatch.")
-                raise ValueError("Query embedding dimension mismatch.")
+            distances, indices = self.index.search(np.expand_dims(embed_query, axis=0), top_k)
+            logger.debug("FAISS search complete. Retrieved indices: %s", indices[0])
 
-            index = self._build_faiss_index(vectors_embed)
-            logger.debug("Searching FAISS index.")
-
-            distances, indices = index.search(np.expand_dims(embed_query, axis=0), top_k)
-
-            logger.info(f"Top-{top_k} retrieval completed.")
-            return self._fetch_chunk_retrieval(indices[0], chunk_ids)
+            return self._fetch_chunks(indices[0])
 
         except Exception as e:
             logger.exception("Semantic retrieval failed: %s", e)
             raise
 
-    def _fetch_chunk_retrieval(self, indices, chunk_ids):
+    def _fetch_chunks(self, indices: list[int]) -> list[dict]:
         """
-        Fetch chunk texts from the database using retrieved indices.
+        Retrieve chunk texts from the `chunks` table based on FAISS indices.
 
         Args:
-            indices (list[int]): Indices returned by FAISS search.
-            chunk_ids (list[int]): Corresponding chunk IDs.
+            indices (list[int]): FAISS index results.
 
         Returns:
-            list[dict]: Retrieved chunks as dictionaries with `id` and `chunk`.
+            list[dict]: List of chunks with `id` and `chunk`.
+
+        Raises:
+            sqlite3.Error: On database errors.
         """
         try:
-            logger.debug("Fetching chunk texts for retrieved indices.")
+            logger.debug("Fetching chunk texts based on retrieved indices.")
             cursor = self.conn.cursor()
             results = []
 
             for idx in indices:
-                if idx < 0 or idx >= len(chunk_ids):
-                    logger.warning(f"Invalid index encountered during retrieval: {idx}")
-                    continue
-
-                chunk_id = chunk_ids[idx]
-                cursor.execute("SELECT id, chunk FROM chunks WHERE id = ?", (chunk_id,))
-                row = cursor.fetchone()
-
-                if row:
-                    results.append({"id": row[0], "chunk": row[1]})
-                    logger.debug(f"Retrieved chunk: id={row[0]}")
+                if 0 <= idx < len(self.chunk_ids):
+                    chunk_id = self.chunk_ids[idx]
+                    cursor.execute("SELECT id, chunk FROM chunks WHERE id = ?", (chunk_id,))
+                    row = cursor.fetchone()
+                    if row:
+                        results.append({"id": row[0], "chunk": row[1]})
+                        logger.debug("Retrieved chunk id=%s", row[0])
+                    else:
+                        logger.warning("Chunk not found for id=%d", chunk_id)
                 else:
-                    logger.warning(f"No chunk found with id={chunk_id}")
+                    logger.warning("Invalid FAISS index: %d", idx)
 
-            logger.info(f"Retrieved {len(results)} valid chunks.")
+            logger.info("Retrieved %d chunks from the database.", len(results))
             return results
 
         except sqlite3.Error as e:
-            logger.exception("Database error while fetching chunks: %s", e)
-            raise
-        except Exception as e:
-            logger.exception("Unexpected error during chunk retrieval: %s", e)
+            logger.exception("Database error during chunk fetch: %s", e)
             raise

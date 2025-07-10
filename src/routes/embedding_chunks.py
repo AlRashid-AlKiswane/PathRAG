@@ -41,7 +41,8 @@ from src.llms_providers import HuggingFaceModel
 from src.db import pull_from_table, insert_embed_vector
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
-from src import get_db_conn, get_embedding_model
+from src import get_db_conn, get_embedding_model, get_faiss_rag
+from src.rag import FaissRAG
 
 # === Logger & Settings ===
 logger = setup_logging()
@@ -61,47 +62,40 @@ async def chunks_to_embeddings(
     table_name: str = "chunks",
     conn: Connection = Depends(get_db_conn),
     embedding_model: HuggingFaceModel = Depends(get_embedding_model),
+    faiss_rag: FaissRAG = Depends(get_faiss_rag)
 ) -> JSONResponse:
     """
-    Retrieve text chunks from a database, generate embeddings, and store them in the 'embed_vector' table.
+    Retrieve text chunks from a database, generate embeddings,
+    and store them in the 'embed_vector' table.
 
     Args:
-        columns (List[str]): List of column names to retrieve. Default: ["id", "chunk", "dataName"].
-        table_name (str): Name of the SQLite table containing chunk data.
-        conn (Connection): SQLite connection object (injected).
-        embedding_model (HuggingFaceModel): Embedding model instance (injected).
+        columns (List[str]): Columns to retrieve. Default: ["id", "chunk", "dataName"].
+        table_name (str): Source table for chunks.
+        conn (Connection): SQLite DB connection.
+        embedding_model (HuggingFaceModel): Embedding model instance.
+        faiss_rag (FaissRAG): FAISS index manager.
 
     Returns:
-        JSONResponse: Summary of how many chunks were successfully embedded and stored.
-
-    Raises:
-        HTTPException: For database or embedding errors.
+        JSONResponse: Count of successfully embedded and stored chunks.
     """
     try:
         logger.info("📦 Retrieving chunks from table '%s' with columns: %s", table_name, columns)
 
-        # Pull chunks from database
         meta_chunks = pull_from_table(conn=conn, columns=columns, table_name=table_name)
-
         if not meta_chunks:
-            logger.warning("⚠️ No records found in table '%s'.", table_name)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No chunks found in the specified database table."
+                detail=f"No chunks found in table '{table_name}'."
             )
 
-        # Validate chunk content
         valid_chunks = [row for row in meta_chunks if row.get("chunk")]
         if not valid_chunks:
-            logger.warning("⚠️ No valid 'chunk' fields available in retrieved rows.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="No usable chunk data found."
             )
 
-        logger.debug("🧩 Retrieved %d valid chunks. Preview: %s...",
-                     len(valid_chunks),
-                     valid_chunks[0]['chunk'][:100])
+        logger.debug("🧩 %d valid chunks retrieved. Sample: %s...", len(valid_chunks), valid_chunks[0]['chunk'][:100])
 
         processed_count = 0
 
@@ -112,19 +106,17 @@ async def chunks_to_embeddings(
             try:
                 logger.debug("🔄 Embedding chunk ID: %s | Text: %.50s...", chunk_id, chunk)
 
-                # Generate embedding vector
                 embedding_vector = embedding_model.embed_texts(
                     texts=chunk,
                     convert_to_tensor=True,
                     normalize_embeddings=True
                 )
 
-                # Serialize embedding
                 if hasattr(embedding_vector, "tolist"):
                     embedding_vector = embedding_vector.tolist()
+
                 serialized = json.dumps(embedding_vector)
 
-                # Insert into DB
                 success = insert_embed_vector(
                     conn=conn,
                     chunk=chunk,
@@ -132,17 +124,19 @@ async def chunks_to_embeddings(
                     chunk_id=str(chunk_id)
                 )
 
-                if not success:
+                if success:
+                    processed_count += 1
+                else:
                     logger.warning("⚠️ Insertion failed for chunk ID %s", chunk_id)
-                    continue
-
-                processed_count += 1
 
             except Exception as embed_err:
                 logger.error("💥 Embedding error on chunk ID %s: %s", chunk_id, embed_err, exc_info=True)
 
-        logger.info("✅ %d/%d chunks embedded and stored in 'embed_vector' table.",
-                    processed_count, len(valid_chunks))
+        logger.info("✅ %d/%d chunks embedded and stored.", processed_count, len(valid_chunks))
+
+        # 🔄 Refresh FAISS internal state
+        faiss_rag.vectors_embedding, faiss_rag.chunk_ids = faiss_rag._fetch_embedding_vectors()
+        faiss_rag.index = faiss_rag._build_faiss_index()
 
         return JSONResponse(
             content={
@@ -152,6 +146,7 @@ async def chunks_to_embeddings(
             status_code=status.HTTP_200_OK
         )
 
+    # --- Error Handling ---
     except (OperationalError, DatabaseError) as db_err:
         logger.exception("❌ Database error during chunk processing.")
         raise HTTPException(
@@ -159,22 +154,22 @@ async def chunks_to_embeddings(
             detail="Database error during embedding process."
         ) from db_err
 
-    except asyncio.TimeoutError as timeout_err:
+    except asyncio.TimeoutError:
         logger.error("⌛ Embedding operation timed out.")
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="Embedding generation timed out."
-        ) from timeout_err
+        )
 
-    except asyncio.CancelledError as cancel_err:
+    except asyncio.CancelledError:
         logger.error("🚫 Embedding process was cancelled.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Embedding operation was cancelled."
-        ) from cancel_err
+        )
 
     except HTTPException as http_err:
-        logger.warning("⚠️ HTTPException encountered: %s", http_err.detail)
+        logger.warning("⚠️ HTTPException: %s", http_err.detail)
         raise http_err
 
     except Exception as e:

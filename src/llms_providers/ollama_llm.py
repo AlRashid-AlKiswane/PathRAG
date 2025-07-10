@@ -150,57 +150,70 @@ class OllamaModel:
     def generate(
         self,
         prompt: str,
-        max_tokens: int = 512,
+        max_new_tokens: int = 512,
         temperature: float = 0.1,
         system_message: Optional[str] = None,
-        retry_count: int = 3
+        retry_count: int = 3,
+        max_input_tokens: int = 1024,
     ) -> str:
         """
         Generate text using the specified Ollama model with retry logic.
 
         Args:
-            prompt (str): User prompt.
-            max_tokens (int): Maximum number of tokens to generate.
-            temperature (float): Sampling temperature for generation.
-            system_message (Optional[str]): Optional system-level message.
-            retry_count (int): Number of retries on failure.
+            prompt (str): The user's prompt to the model.
+            max_tokens (int): Maximum tokens to generate in the response.
+            temperature (float): Sampling temperature for randomness.
+            system_message (Optional[str]): Optional system-level instruction (prepended).
+            retry_count (int): Number of retry attempts on failure.
+            max_input_tokens (int): Maximum tokens allowed in input.
 
         Returns:
-            str: The generated response.
+            str: The generated text, or an error string if generation fails.
         """
         if not prompt or not prompt.strip():
             logger.warning("⚠️ Empty prompt provided")
             return "[ERROR] Empty prompt."
 
-        logger.debug("📝 Generating response (prompt length: %d)", len(prompt))
+        try:
+            logger.debug("📝 Preparing prompt for generation (original length: %d)", len(prompt))
 
-        # Construct full prompt
-        full_prompt = prompt
-        if system_message:
-            full_prompt = f"{system_message.strip()}\n\n{prompt}".strip()
+            # Build final prompt with optional system message
+            full_prompt = f"{system_message.strip()}\n\n{prompt}".strip() if system_message else prompt.strip()
 
-        # Try generating with retries
-        for attempt in range(retry_count + 1):
-            try:
-                response = self._make_request(full_prompt, max_tokens, temperature)
-                
-                if not response.startswith("[ERROR]"):
-                    logger.debug("✅ Successfully generated response")
-                    return response
-                    
+            # Truncate to max_input_tokens
+            truncated_prompt = full_prompt[:max_input_tokens]
+
+            logger.debug("📨 Final prompt length: %d (max allowed: %d)", len(truncated_prompt), max_input_tokens)
+
+            for attempt in range(retry_count + 1):
+                try:
+                    logger.debug("🔁 Generation attempt %d", attempt + 1)
+                    response = self._make_request(
+                        prompt=truncated_prompt,
+                        max_tokens=max_new_tokens,
+                        temperature=temperature
+                    )
+
+                    if not response.startswith("[ERROR]"):
+                        logger.info("✅ Text generation succeeded on attempt %d", attempt + 1)
+                        return response
+
+                    logger.warning("⚠️ Model returned error: %s", response)
+
+                except Exception as e:
+                    logger.exception("❌ Exception during generation attempt %d: %s", attempt + 1, str(e))
+
+                # If not the last attempt, wait before retrying
                 if attempt < retry_count:
-                    logger.warning("⚠️ Attempt %d failed, retrying...", attempt + 1)
-                    time.sleep(2)  # Wait before retry
-                else:
-                    logger.error("❌ All attempts failed")
-                    return response
-                    
-            except Exception as e:
-                logger.error("❌ Generation attempt %d failed: %s", attempt + 1, e)
-                if attempt < retry_count:
+                    logger.debug("⏳ Retrying after delay...")
                     time.sleep(2)
-                else:
-                    return "[ERROR] Text generation failed after all retries."
+
+            logger.error("❌ Text generation failed after %d attempts", retry_count + 1)
+            return "[ERROR] Text generation failed after all retries."
+
+        except Exception as outer_error:
+            logger.exception("💥 Unexpected error during prompt generation: %s", str(outer_error))
+            return "[ERROR] Unexpected failure in text generation."
 
     def is_available(self) -> bool:
         """
