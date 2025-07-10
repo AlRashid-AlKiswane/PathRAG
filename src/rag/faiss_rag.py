@@ -180,7 +180,7 @@ class FaissRAG:
                         results.append({"id": row[0], "chunk": row[1]})
                         logger.debug("Retrieved chunk id=%s", row[0])
                     else:
-                        logger.warning("Chunk not found for id=%d", chunk_id)
+                        logger.warning(f"Chunk not found for id={chunk_id}" )
                 else:
                     logger.warning("Invalid FAISS index: %d", idx)
 
