@@ -50,8 +50,16 @@ class FaissRAG:
         self.conn = conn
         logger.info("FaissRAG initialized with active database connection.")
 
-        self.vectors_embedding, self.chunk_ids = self._fetch_embedding_vectors()
-        self.index = self._build_faiss_index()
+    
+    async def initialize_faiss(self):
+        """
+        
+        """
+        try:
+            self.vectors_embedding, self.chunk_ids = self._fetch_embedding_vectors()
+            self.index = self._build_faiss_index()
+        except Exception as e:
+            logger.error("[FAISSRAG][INITIALIZE FAISS] Error: %s", e)
 
     def _fetch_embedding_vectors(self) -> tuple[np.ndarray, list[int]]:
         """

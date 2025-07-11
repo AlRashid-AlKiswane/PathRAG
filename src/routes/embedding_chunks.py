@@ -78,6 +78,7 @@ async def chunks_to_embeddings(
     Returns:
         JSONResponse: Count of successfully embedded and stored chunks.
     """
+    await faiss_rag.initialize_faiss()
     try:
         logger.info("📦 Retrieving chunks from table '%s' with columns: %s", table_name, columns)
 

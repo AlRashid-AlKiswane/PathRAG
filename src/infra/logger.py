@@ -82,7 +82,7 @@ def setup_logging(
     # File handler (rotating)
     file_handler_exists = any(isinstance(h, RotatingFileHandler) for h in logger__.handlers)
     if not file_handler_exists:
-        file_handler = RotatingFileHandler(log_path, maxBytes=1_048_576, backupCount=5)
+        file_handler = logging.FileHandler(log_path, mode='a')
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
         logger__.addHandler(file_handler)
