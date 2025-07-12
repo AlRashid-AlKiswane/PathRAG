@@ -1,3 +1,4 @@
 # Ignore files (txt, pdf)
 *.pdf
 *.txt
+*.PDF
