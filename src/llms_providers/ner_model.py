@@ -12,7 +12,7 @@ from typing import List, Dict, Any
 
 import torch
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
-from transformers.pipelines import AggregationStrategy, PipelineException
+from transformers.pipelines import AggregationStrategy
 
 # Setup main path for relative imports
 try:
@@ -71,13 +71,13 @@ class NERModel:
 
     def predict(self, text: str) -> Dict[str, List[Dict[str, Any]]]:
         """
-        Run NER prediction on the given text and return entities in LightRAG format.
+        Run NER prediction on the given text and return deduplicated entities in LightRAG format.
 
         Args:
             text (str): Input text to extract entities from.
 
         Returns:
-            Dict[str, List[Dict[str, Any]]]: Entities in LightRAG-compatible format.
+            Dict[str, List[Dict[str, Any]]]: Deduplicated entities in LightRAG-compatible format.
         """
         logger.debug("Starting NER prediction...")
         if not text.strip():
@@ -87,32 +87,36 @@ class NERModel:
         try:
             raw_entities = self.pipeline(text)
             logger.debug("NER raw output: %s", raw_entities)
-        except PipelineException as e:
+        except Exception as e:
             logger.error("NER pipeline error: %s", e)
             return {"entities": []}
-        except Exception as e:
-            logger.error("Unexpected error during prediction: %s", e)
-            return {"entities": []}
 
+        seen = set()
         entities = []
+
         for ent in raw_entities:
             try:
-                entities.append({
+                key = (ent["word"], ent["entity_group"], ent["start"], ent["end"])
+                if key in seen:
+                    logger.debug("Duplicate entity skipped: %s", key)
+                    continue
+                seen.add(key)
+                entity = {
                     "text": ent["word"],
                     "type": ent["entity_group"],
                     "start": ent["start"],
                     "end": ent["end"],
                     "score": ent["score"],
                     "source_text": text
-                })
-                logger.debug(
-                    "Entity found: %s [%s] (%d-%d)", ent["word"], ent["entity_group"], ent["start"], ent["end"]
-                )
+                }
+                entities.append(entity)
+                logger.debug("Entity added: %s", entity)
             except KeyError as e:
                 logger.warning("Skipping malformed entity: %s", e)
                 continue
 
         return {"entities": entities}
+
 
 
 # Example usage

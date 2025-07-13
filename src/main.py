@@ -142,7 +142,7 @@ async def lifespan(app: FastAPI):
 
         # Initialize RAG components
         try:
-            app.state.faiss_rag = FaissRAG(conn=conn)
+            app.state.faiss_rag = None
             logger.debug("🔍 FAISS RAG component initialized.")
 
             app.state.entity_level_filtering = EntityLevelFiltering(
