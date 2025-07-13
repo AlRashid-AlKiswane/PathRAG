@@ -15,7 +15,6 @@ Author: [Your Name]
 Created: [YYYY-MM-DD]
 """
 
-import asyncio
 import os
 import sys
 import logging
@@ -30,9 +29,7 @@ try:
         sys.path.append(MAIN_DIR)
     logging.debug(f"📁 Project base path configured: {MAIN_DIR}")
 except (ImportError, OSError) as e:
-    logging.critical(
-        "🔴 Failed to configure project path: %s\nSystem path: %s", e, sys.path, exc_info=True
-    )
+    logging.critical("🔴 Failed to configure project path: %s\nSystem path: %s", e, sys.path, exc_info=True)
     sys.exit(1)
 
 # === Internal Imports (after path configuration) ===
@@ -53,7 +50,6 @@ try:
         storage_management_route,
         chatbot_route
     )
-
     from src.infra import setup_logging
     from src.llms_providers import OllamaModel, HuggingFaceModel, NERModel
     from src.rag import FaissRAG, EntityLevelFiltering
@@ -66,114 +62,69 @@ except ImportError as e:
 logger = setup_logging()
 app_settings: Settings = get_settings()
 
-# === FastAPI Application ===
-app = FastAPI(
-    title="Graph-RAG API",
-    version="1.0.0",
-    description="A lightweight RAG system with semantic and entity-level filtering"
-)
-
-
+# === Lifespan Manager ===
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Async context manager handling the FastAPI application lifespan.
-
-    This includes:
-    - Startup phase: DB connection, table creation, model loading
-    - Shutdown phase: DB disconnection
-
-    Args:
-        app (FastAPI): The FastAPI application instance
-
-    Yields:
-        None
-
-    Raises:
-        SystemExit: If database setup or critical components fail
-    """
     try:
         logger.info("🚀 Starting up Graph-RAG API...")
 
         # Connect to SQLite DB
-        try:
-            conn = get_sqlite_engine()
-            if not conn:
-                raise ConnectionError("Failed to get a valid SQLite connection.")
-            app.state.conn = conn
-            logger.info("🔗 SQLite database connection established.")
-        except Exception as db_err:
-            logger.critical("❌ Could not establish database connection: %s", db_err, exc_info=True)
-            sys.exit(1)
+        conn = get_sqlite_engine()
+        if not conn:
+            raise ConnectionError("Failed to get a valid SQLite connection.")
+        app.state.conn = conn
+        logger.info("🔗 SQLite database connection established.")
 
         # Initialize tables
-        try:
-            init_chunks_table(conn)
-            logger.debug("📦 Initialized 'chunks' table.")
-
-            init_embed_vector_table(conn)
-            logger.debug("📊 Initialized 'embed_vector' table.")
-
-            init_entitiys_table(conn)
-            logger.debug("🧠 Initialized 'entitsy' table.")
-
-            init_chatbot_table(conn=conn)
-            logger.debug("Initialized 'chatbot' table.")
-
-            logger.info("✅ All database tables initialized successfully.")
-        except Exception as table_err:
-            logger.error("❌ Failed to initialize tables: %s", table_err, exc_info=True)
-            sys.exit(1)
+        init_chunks_table(conn)
+        init_embed_vector_table(conn)
+        init_entitiys_table(conn)
+        init_chatbot_table(conn)
+        logger.info("✅ All database tables initialized successfully.")
 
         # Load models
+        app.state.llm = OllamaModel(app_settings.OLLAMA_MODEL)
+        app.state.embedding_model = HuggingFaceModel(app_settings.EMBEDDING_MODEL)
+        ner_model = NERModel(model_name=app_settings.NER_MODEL)
+        app.state.ner_model = ner_model
+        logger.info("✅ All models loaded successfully.")
+
+        # Initialize FAISS RAG
         try:
-            app.state.llm = OllamaModel(app_settings.OLLAMA_MODEL)
-            logger.info(f"🤖 OllamaModel loaded: {app_settings.OLLAMA_MODEL}")
-
-            app.state.embedding_model = HuggingFaceModel(model_name=app_settings.EMBEDDING_MODEL)
-            logger.info(f"🔡 Embedding model loaded: {app_settings.EMBEDDING_MODEL}")
-
-            ner_model = NERModel(model_name=app_settings.NER_MODEL)
-            app.state.ner_model = ner_model
-            logger.info(f"🧬 NER model loaded: {app_settings.NER_MODEL}")
-        except Exception as model_err:
-            logger.critical("❌ Failed to load one or more models: %s", model_err, exc_info=True)
-            sys.exit(1)
-
-        # Initialize RAG components
-        try:
-            app.state.faiss_rag = None
-            logger.debug("🔍 FAISS RAG component initialized.")
-
-            app.state.entity_level_filtering = EntityLevelFiltering(
-                conn=conn,
-                ner_model=ner_model
-            )
-            logger.debug("📎 Entity-level filtering module initialized.")
+            faiss_rag = FaissRAG(conn)
+            await faiss_rag.initialize_faiss()
+            app.state.faiss_rag = faiss_rag
+            logger.info("🔍 FAISS RAG initialized and ready.")
         except Exception as rag_err:
-            logger.error("❌ Failed to initialize RAG components: %s", rag_err, exc_info=True)
-            sys.exit(1)
+            logger.critical("❌ Failed to initialize FAISS RAG: %s", rag_err, exc_info=True)
+            raise
 
-        logger.info("✅ FastAPI app fully initialized and ready.")
-        yield
+        # Entity-level filtering
+        app.state.entity_level_filtering = EntityLevelFiltering(conn=conn, ner_model=ner_model)
 
-    except Exception as e:
+        yield  # App runs here
+
+    except Exception:
         logger.exception("💥 Fatal error during FastAPI startup.")
         raise
 
     finally:
-        # Clean shutdown
+        # Graceful shutdown
         conn = getattr(app.state, "conn", None)
         if conn:
             try:
                 conn.close()
-                logger.info("🛑 SQLite database connection closed gracefully.")
-            except Exception as close_err:
-                logger.warning("⚠️ Error closing DB connection: %s", close_err, exc_info=True)
+                logger.info("🛑 SQLite connection closed.")
+            except Exception as e:
+                logger.warning("⚠️ Error closing DB connection: %s", e, exc_info=True)
 
-
-# === Register App Lifespan Context ===
-app.router.lifespan_context = lifespan
+# === FastAPI Application ===
+app = FastAPI(
+    title="Graph-RAG API",
+    version="1.0.0",
+    description="A lightweight RAG system with semantic and entity-level filtering",
+    lifespan=lifespan  # ✅ use modern lifespan pattern
+)
 
 # === Register API Routers ===
 try:
@@ -193,11 +144,10 @@ try:
     logger.debug("⚡ Registered live retrieval route.")
 
     app.include_router(storage_management_route)
-    logger.debug("⚡ Registered Storage Management route.")
+    logger.debug("🗂️ Registered Storage Management route.")
 
     app.include_router(chatbot_route)
-    logger.debug("⚡ Registered Chatbot route.")
-
+    logger.debug("🤖 Registered Chatbot route.")
 
     logger.info("✅ All API routes registered.")
 except Exception as route_err:
