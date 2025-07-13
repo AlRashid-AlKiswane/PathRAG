@@ -26,6 +26,7 @@ from src import (get_db_conn, get_llm,
 
 from src.rag import dual_level_retrieval, FaissRAG, EntityLevelFiltering
 from src.prompt import PromptOllama
+from src.schemas import Chatbot
 
 # Initialize logger and settings
 logger = setup_logging()
@@ -37,16 +38,11 @@ chatbot_route = APIRouter(
     responses={404: {"description": "Not found"}}
 )
 
+
+# === Endpoint ===
 @chatbot_route.post("", response_class=JSONResponse)
 async def chatbot(
-    query: str = Query(..., alias="quyer"),
-    top_k: int = 3,
-    temperature: float = Query(0.4, alias="tempreture"),
-    max_new_tokens: int = 512,
-    max_input_tokens: int = 1024,
-    mode_retrieval: str = Query("union", alias="mode_retreval"),
-    user_id: str = "exe-012e",
-    cache: bool = Query(True, alias="cach"),
+    body: Chatbot,
     conn: Connection = Depends(get_db_conn),
     llm: OllamaModel = Depends(get_llm),
     faiss_rag: FaissRAG = Depends(get_faiss_rag),
@@ -54,33 +50,28 @@ async def chatbot(
     embed_model: HuggingFaceModel = Depends(get_embedding_model)
 ):
     """
-    Handles a chatbot request using a local LLM model, retrieval-based context, and optional caching.
-
-    If caching is enabled and a response for the same query/user exists in the database,
-    it will return the cached response. Otherwise, it performs dual-level semantic/entity retrieval,
-    generates a response with an LLM, stores it, and returns it.
+    Handles chatbot requests using retrieval-augmented generation (RAG) and a local LLM.
+    Supports entity-level and semantic filtering. Uses cache if enabled.
 
     Args:
-        query (str): User input query.
-        top_k (int): Number of top chunks to retrieve for context.
-        temperature (float): Sampling temperature for the LLM.
-        max_new_tokens (int): Maximum number of tokens to generate.
-        max_input_tokens (int): Maximum number of tokens allowed in the input prompt.
-        mode_retrieval (str): Retrieval strategy ("union", "intersection", etc.).
-        user_id (str): Unique identifier for the querying user.
-        cache (bool): Whether to use cached responses from previous queries.
-        conn (Connection): SQLite database connection.
-        llm (OllamaModel): Injected LLM instance for generation.
-        faiss_rag (FaissRAG): FAISS-based semantic retriever.
-        entity_level_filtering (EntityLevelFiltering): Entity-based filtering module.
-        embed_model (HuggingFaceModel): Embedding model for query/vector conversion.
+        body (Chatbot): Chatbot request parameters including query, top_k, temperature, etc.
 
     Returns:
-        JSONResponse: JSON containing the LLM response and cache status.
+        JSONResponse: Response with the generated answer and cache status.
     """
     try:
+        query = body.query
+        top_k = body.top_k
+        temperature = body.temperature
+        max_new_tokens = body.max_new_tokens
+        max_input_tokens = body.max_input_tokens
+        mode_retrieval = body.mode_retrieval
+        user_id = body.user_id
+        cache = body.cache
+
         logger.info("🚀 Chatbot request | user_id='%s' | query='%s' | cache=%s", user_id, query, cache)
 
+        # === Cache Check ===
         if cache:
             logger.debug("🔍 Checking cache for user_id='%s' and query='%s'", user_id, query)
             cursor = conn.cursor()
@@ -93,9 +84,8 @@ async def chatbot(
                 logger.info("📦 Cache hit. Returning cached response.")
                 return JSONResponse(content={"response": row[0], "cached": True})
 
+        # === Retrieval Phase ===
         logger.debug("📡 Performing retrieval (mode='%s') for top_k=%d", mode_retrieval, top_k)
-
-        # Run dual-level retrieval (semantic + entity)
         retrieval_result = dual_level_retrieval(
             embed_model=embed_model,
             entity_level_filtering=entity_level_filtering,
@@ -111,12 +101,12 @@ async def chatbot(
 
         logger.debug("📚 Retrieved %d context chunks.", len(retrieval_result))
 
-        # Construct context prompt for generation
+        # === Prompt Construction ===
         context_chunks = [ctx["chunk"] for ctx in retrieval_result]
-        prompt_templte = PromptOllama()
-        prompt = prompt_templte.prompt(query=query, retrieval_context=context_chunks)
+        prompt_template = PromptOllama()
+        prompt = prompt_template.prompt(query=query, retrieval_context=context_chunks)
 
-        # Generate response
+        # === LLM Generation ===
         llm_response = llm.generate(
             prompt=prompt,
             temperature=temperature,
@@ -130,7 +120,7 @@ async def chatbot(
 
         logger.info("✅ LLM response generated.")
 
-        # Store all context chunks with their rank
+        # === Store Results ===
         for idx, ctx in enumerate(retrieval_result):
             success = insert_chatbot_entry(
                 conn=conn,

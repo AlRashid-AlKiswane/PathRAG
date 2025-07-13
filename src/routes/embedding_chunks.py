@@ -63,6 +63,7 @@ async def chunks_to_embeddings(
     table_name: str = "chunks",
     conn: Connection = Depends(get_db_conn),
     embedding_model: HuggingFaceModel = Depends(get_embedding_model),
+    faiss_rag: FaissRAG = Depends(get_faiss_rag)
 ) -> JSONResponse:
     """
     Retrieve text chunks from a database, generate embeddings,
@@ -78,11 +79,6 @@ async def chunks_to_embeddings(
     Returns:
         JSONResponse: Count of successfully embedded and stored chunks.
     """
-    faiss_rag = FaissRAG(conn=conn)
-    faiss_rag.initialize_faiss()
-
-    request.app.state.faiss_rag = faiss_rag
-    
     try:
         logger.info("📦 Retrieving chunks from table '%s' with columns: %s", table_name, columns)
 
