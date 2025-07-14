@@ -69,8 +69,11 @@ class ResourceMonitor:
         """
         try:
             cpu_usage = psutil.cpu_percent(interval=1) / 100.0
+            logger.info(f"CPU Usage: {cpu_usage * 100:.2f}%")
+
             if cpu_usage > self.cpu_threshold:
                 logger.warning(f"High CPU usage detected: {cpu_usage * 100:.2f}%")
+
             return {"cpu_usage": cpu_usage}
         except psutil.Error as err:
             logger.error(f"Failed to get CPU usage: {err}")
@@ -86,8 +89,11 @@ class ResourceMonitor:
         try:
             memory = psutil.virtual_memory()
             mem_usage = memory.percent / 100.0
+            logger.info(f"Memory Usage: {mem_usage * 100:.2f}%")
+
             if mem_usage > self.memory_threshold:
                 logger.warning(f"High memory usage detected: {memory.percent:.2f}%")
+
             return {"memory_usage": mem_usage}
         except psutil.Error as err:
             logger.error(f"Failed to get memory usage: {err}")
@@ -103,8 +109,11 @@ class ResourceMonitor:
         try:
             disk = psutil.disk_usage("/")
             disk_usage = disk.percent / 100.0
+            logger.info(f"Disk Usage: {disk_usage * 100:.2f}%")
+
             if disk_usage > self.disk_threshold:
                 logger.warning(f"High disk usage detected: {disk.percent:.2f}%")
+
             return {"disk_usage": disk_usage}
         except psutil.Error as err:
             logger.error(f"Failed to get disk usage: {err}")
@@ -118,6 +127,7 @@ class ResourceMonitor:
             dict: Contains 'gpu_usage' as float percentage, or error string.
         """
         if not self.gpu_available:
+            logger.info("GPU monitoring is disabled or unavailable.")
             return {"gpu_usage": "GPU monitoring unavailable"}
 
         try:
@@ -131,6 +141,8 @@ class ResourceMonitor:
             handle = nvmlDeviceGetHandleByIndex(0)
             util = nvmlDeviceGetUtilizationRates(handle)
             gpu_usage = util.gpu / 100.0
+
+            logger.info(f"GPU Usage: {gpu_usage * 100:.2f}%")
 
             if gpu_usage > self.gpu_threshold:
                 logger.warning(f"High GPU usage detected: {gpu_usage * 100:.2f}%")
@@ -150,7 +162,7 @@ class ResourceMonitor:
         Continuously monitor system resources at configured intervals.
         """
         interval = self.app_settings.MONITOR_INTERVAL
-        logger.info("Starting system resource monitoring with interval %d seconds.", interval)
+        logger.info("Starting system resource monitoring (interval: %d sec)...", interval)
 
         try:
             while True:
@@ -167,6 +179,7 @@ class ResourceMonitor:
             logger.info("Resource monitoring stopped by user.")
         except Exception as exc:
             logger.error(f"Unexpected error during monitoring: {exc}", exc_info=True)
+
 
 if __name__ == "__main__":
     monitor = ResourceMonitor()
