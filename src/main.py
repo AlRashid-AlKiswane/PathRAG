@@ -48,7 +48,8 @@ try:
         ner_route,
         live_retrieval_route,
         storage_management_route,
-        chatbot_route
+        chatbot_route,
+        resource_monitor_router
     )
     from src.infra import setup_logging
     from src.llms_providers import OllamaModel, HuggingFaceModel, NERModel
@@ -148,6 +149,9 @@ try:
 
     app.include_router(chatbot_route)
     logger.debug("🤖 Registered Chatbot route.")
+
+    app.include_router(resource_monitor_router)
+    logger.debug("Registered Resource Monitor route.")
 
     logger.info("✅ All API routes registered.")
 except Exception as route_err:
