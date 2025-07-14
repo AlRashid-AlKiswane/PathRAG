@@ -58,7 +58,7 @@ async def get_resource_usage():
             "disk": monitor.check_disk_usage(),
         }
 
-        if app_settings.GPU_AVAILABLE:
+        if True:
             usage_data["gpu"] = monitor.check_gpu_usage()
         else:
             usage_data["gpu"] = {"gpu_usage": "GPU monitoring disabled"}
