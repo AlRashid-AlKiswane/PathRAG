@@ -1,53 +1,81 @@
 """
-Application configuration settings loaded from environment variables.
+Configuration Module for the Application.
 
-This module provides a Settings class that loads configuration from:
-1. .env file
+This module defines the Settings class that centralizes application configuration.
+Settings are automatically loaded from environment variables or a `.env` file
+at runtime using `pydantic-settings`. Validation is built-in to ensure that
+each configuration item adheres to expected types and value constraints.
+
+Structure:
+- Database configuration
+- Document processing configuration
+- Model identifiers for NER, embeddings, and generation
+- Ollama LLM generation settings
+- System monitoring thresholds
+
+Usage:
+    from app.core.config import get_settings
+    settings = get_settings()
+
+Raises:
+    SystemExit: If required environment variables are missing or invalid.
 """
 
+import os
 import sys
 import logging
-import os
 from pathlib import Path
 from typing import List
 from pydantic import Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Configure module-level logger
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
+
+# Attempt to resolve the project root for imports
 try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     sys.path.append(MAIN_DIR)
 except (ImportError, OSError) as e:
-    logging.error("Failed to set up main directory path: %s", e)
+    logger.error("Failed to set up main directory path: %s", e)
     sys.exit(1)
 
 
 class Settings(BaseSettings):
     """
-    Application setting configuration with proper security measures.
+    Centralized application settings loaded from environment variables.
 
-    Note:
-    - Sensitive credentials are stored as SecretStr
-    - Required database paths are validated
+    This class validates and exposes configuration variables for:
+    - Database access
+    - Document chunking and storage
+    - Embedding and NER models
+    - Ollama language model generation
+    - System resource monitoring thresholds
     """
 
+    # -----------------------------
     # Database Configuration
+    # -----------------------------
     SQLITE_DB: str = Field(
         env="SQLITE_DB",
-        description="SQLite database connection string"
+        description="SQLite database file path or URI."
     )
 
-    # Document Processing
+    # -----------------------------
+    # Document Handling
+    # -----------------------------
     FILE_TYPES: List[str] = Field(
         default=["text", "pdf"],
         env="FILE_TYPES",
-        description="Supported file extensions for document processing"
+        description="Allowed file types for upload and processing."
     )
 
     DOC_LOCATION_STORE: Path = Field(
         default=Path("./assets/docs"),
         env="DOC_LOCATION_STORE",
-        description="Directory to store uploaded documents"
+        description="Directory where uploaded documents will be stored."
     )
 
     CHUNKS_SIZE: int = Field(
@@ -55,7 +83,7 @@ class Settings(BaseSettings):
         gt=100,
         lt=2000,
         env="CHUNKS_SIZE",
-        description="Size of text chunks for processing (100 - 2000 chars)"
+        description="Maximum number of characters in each text chunk."
     )
 
     CHUNKS_OVERLAP: int = Field(
@@ -63,46 +91,51 @@ class Settings(BaseSettings):
         ge=0,
         lt=100,
         env="CHUNKS_OVERLAP",
-        description="Overlap between chunks (0-100 chars)"
+        description="Number of overlapping characters between consecutive chunks."
     )
 
-    # Model Configurations
+    # -----------------------------
+    # Model Configuration
+    # -----------------------------
     NER_MODEL: str = Field(
         default="dslim/distilbert-NER",
         env="NER_MODEL",
-        description="Named Entity Recognition model identifier"
+        description="HuggingFace model ID used for Named Entity Recognition."
     )
 
     EMBEDDING_MODEL: str = Field(
         default="all-MiniLM-L6-v2",
         env="EMBEDDING_MODEL",
-        description="Sentence transformer model for embeddings"
+        description="Model name used for generating sentence embeddings."
     )
 
     EMBEDDING_DIM: int = Field(
         default=384,
         env="EMBEDDING_DIM",
-        description="It maps senteces & pargraphs to a 384 dimensional dense vectore space."
+        description="Embedding vector dimensionality (e.g., 384 for MiniLM)."
     )
 
     OLLAMA_EMBED_MODL: str = Field(
         default="all-minilm:l6-v2",
         env="OLLAMA_EMBED_MODL",
-        description=""
+        description="Model used by Ollama for embedding generation."
     )
+
     OLLAMA_MODEL: str = Field(
         default="gemma3:1b",
         env="OLLAMA_MODEL",
-        description="LLM model used by Ollama"
+        description="Ollama model name for large language model (LLM) inference."
     )
 
-    # Ollama Configuration
+    # -----------------------------
+    # Generation Parameters
+    # -----------------------------
     MAX_NEW_TOKENS: int = Field(
         default=256,
         ge=10,
         lt=1024,
         env="MAX_NEW_TOKENS",
-        description="Maximum number of tokens to generate"
+        description="Maximum number of new tokens the model is allowed to generate."
     )
 
     MAX_INPUT_TOKENS: int = Field(
@@ -110,7 +143,7 @@ class Settings(BaseSettings):
         ge=100,
         lt=4096,
         env="MAX_INPUT_TOKENS",
-        description="Maximum number of input tokens allowed"
+        description="Maximum number of tokens allowed in the input prompt."
     )
 
     TEMPERATURE: float = Field(
@@ -118,7 +151,7 @@ class Settings(BaseSettings):
         ge=0.0,
         le=1.0,
         env="TEMPERATURE",
-        description="Sampling temperature for generation"
+        description="Controls randomness in generation; higher values = more random."
     )
 
     TOP_K: int = Field(
@@ -126,7 +159,7 @@ class Settings(BaseSettings):
         ge=1,
         le=100,
         env="TOP_K",
-        description="Top-K sampling for generation"
+        description="Limits token sampling to the top-K most likely options."
     )
 
     TOP_P: float = Field(
@@ -134,35 +167,87 @@ class Settings(BaseSettings):
         ge=0.0,
         le=1.0,
         env="TOP_P",
-        description="Top-P (nucleus) sampling for generation"
+        description="Top-p (nucleus) sampling probability mass cutoff."
     )
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    # -----------------------------
+    # System Monitoring Thresholds
+    # -----------------------------
+    CPU_THRESHOLD: float = Field(
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        env="CPU_THRESHOLD",
+        description="CPU usage threshold for triggering alerts or scaling."
+    )
+
+    MEMORY_THRESHOLD: float = Field(
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        env="MEMORY_THRESHOLD",
+        description="Memory usage threshold for monitoring."
+    )
+
+    DISK_THRESHOLD: float = Field(
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        env="DISK_THRESHOLD",
+        description="Disk usage threshold for storage alerts."
+    )
+
+    GPUs_THRESHOLD: float = Field(
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        env="GPUs_THRESHOLD",
+        description="GPU usage threshold for scaling or warning."
+    )
+
+    MONITOR_INTERVAL: int = Field(
+        default=60,
+        ge=5,
+        le=3600,
+        env="MONITOR_INTERVAL",
+        description="Interval (in seconds) between monitoring checks."
+    )
+
+    # -----------------------------
+    # Pydantic Settings Metadata
+    # -----------------------------
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
 
 
 def get_settings() -> Settings:
     """
-    Safely initialize application settings with proper error handling.
+    Load and validate the application settings.
+
+    Ensures that:
+    - All required environment variables are loaded and validated.
+    - The document storage directory exists or is created.
 
     Returns:
-        Settings: Configured settings instance
+        Settings: A validated Settings instance with all configuration values.
 
     Raises:
-        SystemExit: If configuration is invalid
+        SystemExit: If validation fails or if file system setup fails.
     """
     try:
         settings = Settings()
 
-        # Ensure document directory exists
-        # pylint: disable=no-member
-        settings.DOC_LOCATION_STORE.mkdir(exist_ok=True, parents=True)
-
+        # Ensure the document directory exists
+        settings.DOC_LOCATION_STORE.mkdir(parents=True, exist_ok=True)
+        logger.info("Settings loaded successfully.")
         return settings
 
-    except ValidationError as e:
-        print("Configuration error:", file=sys.stderr)
-        print(e.json(indent=2), file=sys.stderr)
+    except ValidationError as ve:
+        logger.critical("Configuration validation failed:\n%s", ve.json(indent=2))
         sys.exit(1)
-    except OSError as e:
-        print(f"Filesystem error: {e}", file=sys.stderr)
+
+    except OSError as oe:
+        logger.critical("Filesystem setup error: %s", oe)
         sys.exit(1)
