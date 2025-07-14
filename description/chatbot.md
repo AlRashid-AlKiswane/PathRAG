@@ -107,16 +107,16 @@ curl -X POST http://localhost:8000/api/v1/chatbot \
 ```
 
 # **Chatbot route pipeline**
+
 ```mermaid
 graph TD
-    A[Input Parsing\n(Request Body: Chatbot)] --> B{Cache Enabled?}
+    A[Input Parsing (Request Body: Chatbot)] --> B{Cache Enabled?}
     B -- Yes --> C[Check DB for Cached Response]
     C -- Hit --> H[Return Cached Response]
-
-    B -- No or Miss --> D[Dual-Level Retrieval\n(FAISS + Entity Filter)]
-    D --> E[Prompt Generation\n(PromptOllama)]
-    E --> F[LLM Inference\n(OllamaModel.generate)]
-    F --> G[Store Result in DB\n(Query + Context + Response)]
-    G --> H[Return Response JSON\n{"response": ..., "cached": False}]
+    B -- No or Miss --> D[Dual-Level Retrieval (FAISS + Entity Filter)]
+    D --> E[Prompt Generation (PromptOllama)]
+    E --> F[LLM Inference (OllamaModel.generate)]
+    F --> G[Store Result in DB (Query + Context + Response)]
+    G --> H[Return Response JSON]
 ```
 
