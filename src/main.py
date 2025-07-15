@@ -38,7 +38,7 @@ try:
         get_sqlite_engine,
         init_chunks_table,
         init_embed_vector_table,
-        init_entitiys_table,
+        init_entities_table,
         init_chatbot_table
     )
     from src.routes import (
@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
         # Initialize tables
         init_chunks_table(conn)
         init_embed_vector_table(conn)
-        init_entitiys_table(conn)
+        init_entities_table(conn)
         init_chatbot_table(conn)
         logger.info("✅ All database tables initialized successfully.")
 

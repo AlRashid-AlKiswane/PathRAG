@@ -95,18 +95,11 @@ def init_embed_vector_table(conn: sqlite3.Connection) -> None:
         logger.error("Failed to create 'embed_vector' table: %s", e)
         raise
 
-def init_entitiys_table(conn: sqlite3.Connection) -> None:
+def init_entities_table(conn: sqlite3.Connection) -> None:
     """
     Initialize the 'ner_entities' table in the SQLite database.
 
-    This table stores named entities extracted by the NERModel, including:
-    - `id`: Primary key
-    - `chunk_id`: Optional external reference ID to link with chunk source
-    - `text`: Named entity text (e.g., "Elon Musk")
-    - `type`: Entity type (e.g., "PER", "ORG")
-    - `start` and `end`: Character indices of the entity within the source text
-    - `score`: Confidence score of the model
-    - `source_text`: Full original text from which entity was extracted
+    The table stores lists of named entities associated with each chunk.
 
     Args:
         conn (sqlite3.Connection): The SQLite database connection object.
@@ -119,13 +112,8 @@ def init_entitiys_table(conn: sqlite3.Connection) -> None:
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS ner_entities (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                chunk_id TEXT,
-                text TEXT NOT NULL,
-                type TEXT NOT NULL,
-                start INTEGER NOT NULL,
-                end INTEGER NOT NULL,
-                score REAL NOT NULL,
-                source_text TEXT NOT NULL,
+                chunk_id TEXT UNIQUE NOT NULL,
+                entities TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)

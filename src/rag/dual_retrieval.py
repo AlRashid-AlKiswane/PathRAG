@@ -17,139 +17,134 @@ Date: 2025-07-09
 """
 
 import logging
+import os
+import sys
 from typing import List, Dict, Any
 import numpy as np
 from fastapi import HTTPException
+from sqlite3 import Connection
 
-# Assume these are implemented/imported correctly
+# Set up project base directory
+try:
+    MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    sys.path.append(MAIN_DIR)
+except (ImportError, OSError) as e:
+    logging.error("Failed to set up main directory path: %s", e)
+    sys.exit(1)
+
 from src.llms_providers import HuggingFaceModel
 from src.rag import FaissRAG, EntityLevelFiltering
+from src.infra import setup_logging
 
-logger = logging.getLogger(__name__)
-
+logger = setup_logging()
 
 def dual_level_retrieval(
     query: str,
     top_k: int,
     mode: str,
+    conn: Connection,
     embed_model: HuggingFaceModel,
     faiss_rag: FaissRAG,
     entity_level_filtering: EntityLevelFiltering
 ) -> List[Dict[str, Any]]:
     """
-    Perform dual-level semantic retrieval using FAISS and named entity filtering.
+    Perform dual-level semantic retrieval using FAISS and named entity filtering,
+    and return full chunks.
 
     Args:
         query (str): The search query text.
         top_k (int): Number of top results to retrieve.
-        mode (str): Retrieval combination mode. One of:
-                    - 'intersection'
-                    - 'union'
-                    - 'faiss_only'
-                    - 'entity_only'
-        embed_model: An object with an `.embed_texts()` method returning a vector.
-        faiss_rag: An object with a `.semantic_retrieval()` method.
-        entity_level_filtering: An object with `.entities_retrieval()` method.
+        mode (str): Retrieval combination mode.
+        conn (Connection): SQLite connection.
+        embed_model: Embedding model.
+        faiss_rag: FAISS retrieval object.
+        entity_level_filtering: NER-based retrieval object.
 
     Returns:
-        List[Dict[str, Any]]: Filtered list of retrieved chunks.
-
-    Raises:
-        HTTPException: On input validation or processing failure.
+        List[Dict[str, Any]]: Full chunks retrieved.
     """
     if not query or not query.strip():
         logger.warning("❗ Empty or whitespace-only query received.")
         raise HTTPException(status_code=400, detail="Query must not be empty.")
 
-    # === Generate Embedding ===
+    # === Generate embedding ===
     try:
-        logger.debug("🔍 Generating embedding for query.")
         embed_query = embed_model.embed_texts(query)
         if not isinstance(embed_query, np.ndarray):
             embed_query = np.array(embed_query, dtype=np.float32)
-        logger.debug("✅ Embedding generated. Shape: %s", embed_query.shape)
-    except Exception as embed_exc:
-        logger.error("❌ Embedding generation failed: %s", embed_exc, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to generate embeddings for the query."
-        ) from embed_exc
+    except Exception as e:
+        logger.error("Embedding generation failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to generate embeddings.") from e
 
-    # === FAISS Retrieval ===
+    # === FAISS semantic retrieval ===
     try:
-        logger.debug("🔎 Performing semantic retrieval via FaissRAG.")
-        results = faiss_rag.semantic_retrieval(embed_query=embed_query, top_k=top_k)
-        logger.info("✅ FaissRAG returned %d chunks.", len(results))
-    except Exception as faiss_exc:
-        logger.error("❌ FAISS semantic retrieval failed: %s", faiss_exc, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Semantic retrieval failed."
-        ) from faiss_exc
+        faiss_results = faiss_rag.semantic_retrieval(embed_query=embed_query, top_k=top_k)
+        faiss_chunk_map = {
+            chunk.get("chunk_id") or chunk.get("chunk"): chunk for chunk in faiss_results
+        }
+        faiss_chunk_ids = set(faiss_chunk_map.keys())
+    except Exception as e:
+        logger.error("FAISS retrieval failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="Semantic retrieval failed.") from e
 
-    # === Entity-Level Retrieval ===
+    # === Entity-level retrieval ===
     try:
-        logger.debug("🔎 Performing entity-level retrieval.")
-        entity_result = entity_level_filtering.entities_retrieval(query=query, top_k=top_k)
-        logger.info("✅ EntityLevelFiltering returned %d chunks.", len(entity_result))
-    except Exception as entity_exc:
-        logger.error("❌ Entity-level retrieval failed: %s", entity_exc, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Entity-level retrieval failed."
-        ) from entity_exc
+        entity_chunk_ids = entity_level_filtering.entities_retrieval(query=query, top_k=top_k)
+        entity_chunk_ids_set = set(entity_chunk_ids)
+    except Exception as e:
+        logger.error("Entity-level retrieval failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="Entity-level retrieval failed.") from e
+
+    # === Fetch full chunks from DB for entity-only mode or union ===
+    def fetch_chunks_by_ids(ids: List[int]) -> Dict[int, Dict[str, Any]]:
+        if not ids:
+            return {}
+        try:
+            cursor = conn.cursor()
+            placeholders = ",".join(["?"] * len(ids))
+            cursor.execute(f"SELECT * FROM embed_vector WHERE chunk_id IN ({placeholders})", ids)
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            return {row[0]: dict(zip(columns, row)) for row in rows}
+        except Exception as e:
+            logger.error("Failed to fetch full chunks from DB", exc_info=True)
+            raise HTTPException(status_code=500, detail="Failed to load chunks from DB.") from e
 
     # === Combine Results ===
     try:
-        faiss_chunks = set(chunk.get("chunk") or chunk.get("chunk_id") for chunk in results)
-        entity_chunks = set(
-            chunk.get("chunk") if isinstance(chunk, dict) else chunk
-            for chunk in entity_result
-        )
-
-        logger.info("🔁 Combining results using mode: '%s'", mode)
+        logger.info("Combining retrievals with mode: %s", mode)
 
         if mode == "intersection":
-            combined_chunks = faiss_chunks.intersection(entity_chunks)
-            filtered_results = [
-                chunk for chunk in results if (chunk.get("chunk") or chunk.get("chunk_id")) in combined_chunks
-            ]
+            combined_ids = faiss_chunk_ids.intersection(entity_chunk_ids_set)
+            results = [faiss_chunk_map[cid] for cid in combined_ids if cid in faiss_chunk_map]
 
         elif mode == "union":
-            combined_chunks = faiss_chunks.union(entity_chunks)
+            combined_ids = faiss_chunk_ids.union(entity_chunk_ids_set)
 
-            faiss_map = {chunk.get("chunk") or chunk.get("chunk_id"): chunk for chunk in results}
-            entity_map = {
-                (chunk.get("chunk") if isinstance(chunk, dict) else chunk):
-                    (chunk if isinstance(chunk, dict) else {"chunk": chunk})
-                for chunk in entity_result
-            }
-
-            filtered_results = [faiss_map[c] for c in combined_chunks if c in faiss_map]
-            filtered_results.extend([entity_map[c] for c in combined_chunks if c not in faiss_map])
+            # Get any entity-only chunks not in faiss
+            missing_ids = list(combined_ids - faiss_chunk_ids)
+            extra_chunks = fetch_chunks_by_ids(missing_ids)
+            results = [
+                faiss_chunk_map[cid] if cid in faiss_chunk_map else extra_chunks[cid]
+                for cid in combined_ids
+                if cid in faiss_chunk_map or cid in extra_chunks
+            ]
 
         elif mode == "faiss_only":
-            filtered_results = results
+            results = list(faiss_chunk_map.values())
 
         elif mode == "entity_only":
-            filtered_results = [
-                chunk if isinstance(chunk, dict) else {"chunk": chunk}
-                for chunk in entity_result
-            ]
+            entity_chunks = fetch_chunks_by_ids(list(entity_chunk_ids_set))
+            results = list(entity_chunks.values())
 
         else:
-            logger.warning("⚠️ Unknown mode '%s'. Defaulting to 'intersection'.", mode)
-            combined_chunks = faiss_chunks.intersection(entity_chunks)
-            filtered_results = [
-                chunk for chunk in results if (chunk.get("chunk") or chunk.get("chunk_id")) in combined_chunks
-            ]
+            logger.warning("Unknown mode '%s'. Defaulting to 'intersection'.", mode)
+            combined_ids = faiss_chunk_ids.intersection(entity_chunk_ids_set)
+            results = [faiss_chunk_map[cid] for cid in combined_ids if cid in faiss_chunk_map]
 
-        logger.info("✅ Final combined results: %d chunks", len(filtered_results))
-        return filtered_results
+        logger.info("✅ Final combined results: %d chunks", len(results))
+        return results
 
-    except Exception as combine_exc:
-        logger.error("❌ Failed to combine retrieval results: %s", combine_exc, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to combine retrieval results."
-        ) from combine_exc
+    except Exception as e:
+        logger.error("Failed during result combination", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to combine retrieval results.") from e

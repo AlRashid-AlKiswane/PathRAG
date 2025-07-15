@@ -33,7 +33,7 @@ except Exception as e:
     sys.exit(1)
 
 # === Project Imports ===
-from src.db import pull_from_table, insert_ner_entity
+from src.db import pull_from_table, insert_ner_entities
 from src.infra import setup_logging
 from src.llms_providers import NERModel
 from src import get_db_conn, get_ner_model
@@ -67,7 +67,7 @@ async def extract_named_entities(
         ner_model (NERModel): Dependency-injected NER model.
 
     Returns:
-        JSONResponse: Count of processed and inserted entities.
+        JSONResponse: Count of processed chunks and inserted entities.
     """
     logger.info("📦 Retrieving chunks from table '%s' with columns: %s", table_name, columns)
 
@@ -95,27 +95,24 @@ async def extract_named_entities(
 
         entity_total = 0
 
-        for meta in valid_chunks:
-            chunk = meta["chunk"]
-            chunk_id = meta["id"]
+        for i, meta in enumerate(valid_chunks):
+            chunk: str = meta["chunk"]
+            chunk_id = str(meta["id"])
 
             try:
-                results = ner_model.predict(text=chunk)
-                for entity in results["entities"]:
-                    success = insert_ner_entity(
-                        conn=conn,
-                        chunk_id=str(chunk_id),
-                        text=entity["text"],
-                        entity_type=entity["type"],
-                        start=entity["start"],
-                        end=entity["end"],
-                        score=entity["score"],
-                        source_text=entity["source_text"]
-                    )
-                    if success:
-                        entity_total += 1
-                    else:
-                        logger.warning("⚠️ Failed to insert entity from chunk ID %s", chunk_id)
+                results = ner_model.predict(text=chunk.strip())
+                if not results:
+                    logger.debug("No entities found for chunk_id %s", chunk_id)
+                    continue
+
+                inserted = insert_ner_entities(conn=conn,
+                                              chunk_id=chunk_id,
+                                              entities=results)
+                if inserted:
+                    entity_total += len(results)
+                    logger.info("Inserted %d entities for chunk_id %s", len(results), chunk_id)
+                else:
+                    logger.warning("Failed to insert entities for chunk_id %s", chunk_id)
 
             except Exception as e:
                 logger.error("❌ Failed to process NER for chunk ID %s: %s", chunk_id, e, exc_info=True)
@@ -137,6 +134,4 @@ async def extract_named_entities(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during NER processing."
         ) from e
-
-            
 

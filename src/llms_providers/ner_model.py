@@ -13,6 +13,8 @@ from typing import List, Dict, Any
 import torch
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 from transformers.pipelines import AggregationStrategy
+import transformers
+transformers.logging.set_verbosity_error()
 
 # Setup main path for relative imports
 try:
@@ -43,7 +45,7 @@ class NERModel:
         pipeline: Hugging Face NER pipeline with aggregation.
     """
 
-    def __init__(self, model_name: str = "dslim/distilbert-NER"):
+    def __init__(self, model_name: str = "dslim/bert-large-NER"):
         """
         Initialize the NERModel with tokenizer, model, and pipeline.
 
@@ -71,53 +73,40 @@ class NERModel:
 
     def predict(self, text: str) -> Dict[str, List[Dict[str, Any]]]:
         """
-        Run NER prediction on the given text and return deduplicated entities in LightRAG format.
+        Run NER prediction on the given text and return a debuplicated list of
+        entity strings.
 
         Args:
             text (str): Input text to extract entities from.
-
+        
         Returns:
-            Dict[str, List[Dict[str, Any]]]: Deduplicated entities in LightRAG-compatible format.
+            List[str]: Unique entity names extracted from the text.
         """
         logger.debug("Starting NER prediction...")
         if not text.strip():
             logger.warning("Input text is empty or whitespace.")
-            return {"entities": []}
-
+        
         try:
-            raw_entities = self.pipeline(text)
+            raw_entities = self.pipeline(text.strip())
             logger.debug("NER raw output: %s", raw_entities)
         except Exception as e:
             logger.error("NER pipeline error: %s", e)
-            return {"entities": []}
-
+        
         seen = set()
-        entities = []
+        entity_texts = []
 
         for ent in raw_entities:
             try:
-                key = (ent["word"], ent["entity_group"], ent["start"], ent["end"])
-                if key in seen:
-                    logger.debug("Duplicate entity skipped: %s", key)
+                entity_word = ent.get("word", "").strip()
+                if not entity_word or entity_word.lower() in seen:
                     continue
-                seen.add(key)
-                entity = {
-                    "text": ent["word"],
-                    "type": ent["entity_group"],
-                    "start": ent["start"],
-                    "end": ent["end"],
-                    "score": ent["score"],
-                    "source_text": text
-                }
-                entities.append(entity)
-                logger.debug("Entity added: %s", entity)
-            except KeyError as e:
+                seen.add(entity_word.lower())
+                entity_texts.append(entity_word)
+                logger.debug("Entity extractted: %s", entity_word)
+            except Exception as e:
                 logger.warning("Skipping malformed entity: %s", e)
                 continue
-
-        return {"entities": entities}
-
-
+        return entity_texts
 
 # Example usage
 if __name__ == "__main__":
@@ -125,19 +114,12 @@ if __name__ == "__main__":
 
     ner_model = NERModel()
 
-    sample_text = """
-    Can you explain how Google DeepMind’s AlphaFold uses transformer-based
-    architectures similar to BERT to predict protein structures, and how this
-    compares to traditional bioinformatics approaches developed at institutions 
-    like Stanford University and MIT? Also, what role did the CASP14 competition and 
-    the EMBL-EBI play in validating the effectiveness of AlphaFold’s predictions, and
-    how does this model relate to other recent innovations in generative AI such as
-    OpenAI’s GPT-4 or Meta’s LLaMA models?
-    """
+    text = (
+        "In 2024, OpenAI partnered with Microsoft and the World Health Organization to develop an AI-driven "
+        "epidemiological modeling tool for pandemic forecasting. The tool was deployed in over 15 countries, "
+        "including Germany, Brazil, and India. Funding was partially provided by the Gates Foundation."
+    )
 
-    results = ner_model.predict(sample_text)
-
-    for entity in results["entities"]:
-        print(f"{entity['text']} - {entity['type']} (Confidence: {entity['score']:.2f})")
-        print(f"Position: {entity['start']}-{entity['end']}")
-        print(f"Source text: '{entity['source_text'][entity['start']:entity['end']]}'\n")
+    result = ner_model.predict(text)
+    
+    print(result)

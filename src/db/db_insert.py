@@ -29,11 +29,12 @@ Example:
 """
 
 
+import json
 import logging
 import os
 import sys
 import sqlite3
-from typing import Optional
+from typing import List, Optional
 
 # Set up the main directory for imports
 try:
@@ -116,52 +117,41 @@ def insert_embed_vector(conn: sqlite3.Connection,
         conn.rollback()
         return False
 
-def insert_ner_entity(
+def insert_ner_entities(
     conn: sqlite3.Connection,
     chunk_id: Optional[str],
-    text: str,
-    entity_type: str,
-    start: int,
-    end: int,
-    score: float,
-    source_text: str
+    entities: List[str],
 ) -> bool:
     """
-    Insert a single named entity record into the 'ner_entities' table.
+    Insert or update the list of named entities associated with a chunk in the 'ner_entities' table.
 
     Args:
         conn (sqlite3.Connection): SQLite database connection.
-        chunk_id (Optional[str]): Reference to the source chunk (can be None).
-        text (str): Extracted entity text.
-        entity_type (str): Type/category of the entity (e.g., 'PER', 'ORG').
-        start (int): Character start index in source text.
-        end (int): Character end index in source text.
-        score (float): Confidence score of the prediction.
-        source_text (str): Full text that contained the entity.
+        chunk_id (Optional[str]): Reference to the source chunk. Must not be None.
+        entities (List[str]): List of named entity strings extracted from the chunk.
 
     Returns:
-        bool: True if insertion is successful, False otherwise.
-
-    Raises:
-        sqlite3.Error: If insertion fails due to database error.
+        bool: True if insertion/update is successful, False otherwise.
     """
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO ner_entities (
-                chunk_id, text, type, start, end, score, source_text
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (chunk_id, text, entity_type, start, end, score, source_text)
-        )
-        conn.commit()
-        logger.debug("✅ Inserted NER entity: %s (%s)", text, entity_type)
-        return True
-
-    except sqlite3.Error as e:
-        logger.exception("❌ Failed to insert NER entity: %s", e)
+    if not chunk_id:
+        logger.error("❌ chunk_id must be provided for inserting NER entities.")
         return False
+
+    try:
+        entities_json = json.dumps(entities)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO ner_entities (chunk_id, entities)
+            VALUES (?, ?)
+            ON CONFLICT(chunk_id) DO UPDATE SET entities=excluded.entities, created_at=CURRENT_TIMESTAMP
+        """, (chunk_id, entities_json))
+        conn.commit()
+        logger.debug("✅ Inserted/Updated NER entities for chunk_id: %s, entities: %s", chunk_id, entities)
+        return True
+    except sqlite3.Error as e:
+        logger.exception("❌ Failed to insert/update NER entities for chunk_id %s: %s", chunk_id, e)
+        return False
+
 
 def insert_chatbot_entry(conn: sqlite3.Connection,
                          user_id: str = None,
