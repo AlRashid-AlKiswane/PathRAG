@@ -8,7 +8,6 @@ and optionally GPU usage using the ResourceMonitor utility.
 import os
 import sys
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
