@@ -94,47 +94,60 @@ class EntityLevelFiltering:
             RuntimeError: If database access or entity extraction fails.
         """
         logger.info(f"🚀 Starting entity-level retrieval for query: '{query}'")
+
         try:
             extracted_entities = self._ner_query(query=query)
             if not extracted_entities:
                 logger.warning("⚠️ No entities extracted. Returning empty result.")
                 return []
 
-            # Pull all rows from ner_entities (chunk_id, entities JSON)
+            # Pull rows as dictionaries from ner_entities
             try:
                 rows = pull_from_table(
                     conn=self.conn,
                     columns=["chunk_id", "entities"],
                     table_name="ner_entities"
                 )
+                if rows is None:
+                    raise RuntimeError("Failed to retrieve rows from ner_entities.")
+
                 logger.debug(f"📦 Retrieved {len(rows)} rows from 'ner_entities' table.")
             except Exception as db_error:
                 logger.error(f"❌ Failed to fetch data from database: {db_error}", exc_info=True)
                 raise RuntimeError(f"Database query failed: {db_error}")
 
-            # Filter chunks by exact entity match
             all_chunk_ids = set()
 
             for entity in extracted_entities:
                 logger.debug(f"🔎 Searching for chunks containing entity: '{entity}'")
                 matched_count = 0
 
-                for chunk_id, entity_json in rows:
+                for row in rows:
+                    chunk_id = row["chunk_id"]
+                    entity_json = row["entities"]
+
+                    # Parse JSON entity list
                     try:
+                        if not isinstance(entity_json, str):
+                            logger.warning(f"Skipping chunk {chunk_id}: 'entities' is not a string.")
+                            continue
+
                         entity_list = json.loads(entity_json)
+
                         if not isinstance(entity_list, list):
-                            logger.warning(f"Skipping malformed entity list for chunk {chunk_id}")
+                            logger.warning(f"Skipping chunk {chunk_id}: decoded 'entities' is not a list.")
                             continue
                     except json.JSONDecodeError:
                         logger.warning(f"Skipping chunk {chunk_id} due to JSON decode error.")
                         continue
 
-                    if entity in entity_list:
+                    # Match exact entity
+                    if any(entity.lower() in e.lower() for e in entity_list):
                         all_chunk_ids.add(chunk_id)
                         matched_count += 1
                         logger.debug(f"✅ Match found in chunk {chunk_id} for entity '{entity}'")
                         if matched_count >= top_k:
-                            break  # Stop if top_k matches for this entity
+                            break
 
             logger.info(f"✅ Total unique chunks retrieved: {len(all_chunk_ids)}")
             return list(all_chunk_ids)

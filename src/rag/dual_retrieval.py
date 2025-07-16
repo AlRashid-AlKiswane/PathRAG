@@ -102,8 +102,10 @@ def dual_level_retrieval(
         try:
             cursor = conn.cursor()
             placeholders = ",".join(["?"] * len(ids))
-            cursor.execute(f"SELECT * FROM embed_vector WHERE chunk_id IN ({placeholders})", ids)
+            cursor.execute(f"SELECT chunk FROM embed_vector WHERE chunk_id IN ({placeholders})", ids)
             rows = cursor.fetchall()
+
+
             columns = [desc[0] for desc in cursor.description]
             return {row[0]: dict(zip(columns, row)) for row in rows}
         except Exception as e:
