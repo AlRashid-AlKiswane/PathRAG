@@ -58,6 +58,7 @@ class HuggingFaceModel:
         self,
         texts: Union[str, List[str]],
         convert_to_tensor: bool = True,
+        convert_to_numpy: bool = True,
         normalize_embeddings: bool = False
     ) -> Optional[Union[List[float], List[List[float]]]]:
         """
@@ -84,7 +85,8 @@ class HuggingFaceModel:
             embedding = self.model.encode(
                 texts,
                 convert_to_tensor=convert_to_tensor,
-                normalize_embeddings=normalize_embeddings
+                normalize_embeddings=normalize_embeddings,
+                convert_to_numpy=convert_to_numpy
             )
 
             preview_texts = texts if isinstance(texts, str) else texts[0]

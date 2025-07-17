@@ -87,6 +87,7 @@ async def chatbot(
         # === Retrieval Phase ===
         logger.debug("📡 Performing retrieval (mode='%s') for top_k=%d", mode_retrieval, top_k)
         retrieval_result = dual_level_retrieval(
+            conn=conn,
             embed_model=embed_model,
             entity_level_filtering=entity_level_filtering,
             faiss_rag=faiss_rag,
