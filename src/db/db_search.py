@@ -30,22 +30,24 @@ logger = setup_logging()
 def pull_from_table(
     conn: sqlite3.Connection,
     table_name: str,
-    columns: Optional[List[str]] = None
+    columns: Optional[List[str]] = None,
+    limit: Optional[int] = None
 ) -> Optional[List[Dict[str, Any]]]:
     """
-    Retrieve rows from a specific SQLite table.
+    Retrieve rows from a specific SQLite table with an optional limit on the number of rows.
 
     Args:
         conn (sqlite3.Connection): Active SQLite database connection.
         table_name (str): Name of the table to query.
         columns (Optional[List[str]]): Columns to retrieve. Defaults to all columns if None.
+        limit (Optional[int]): Number of rows to pull. If None, all rows will be retrieved.
 
     Returns:
         Optional[List[Dict[str, Any]]]: 
             A list of dictionaries representing each row, or None if an error occurs.
 
     Example:
-        >>> pull_from_table(conn, "documents", ["id", "text"])
+        >>> pull_from_table(conn, "documents", ["id", "text"], limit=10)
         >>> [{'id': 1, 'text': 'example text'}, ...]
     """
     try:
@@ -53,15 +55,27 @@ def pull_from_table(
 
         # Use '*' if no columns are specified
         cols = ", ".join(columns) if columns else "*"
+        
+        # Create the base query
         query = f"SELECT {cols} FROM {table_name}"
+        
+        # Add limit to the query if specified
+        if limit is not None:
+            query += f" LIMIT {limit}"
+
         cursor.execute(query)
 
+        # Get column names from cursor description
         col_names = [description[0] for description in cursor.description]
+        
+        # Fetch all the rows from the query result
         rows = cursor.fetchall()
 
+        # Map column names to row values to create a list of dictionaries
         result = [dict(zip(col_names, row)) for row in rows]
 
         logger.info(f"Successfully pulled {len(result)} row(s) from '{table_name}'.")
+
         return result
 
     except sqlite3.OperationalError as e:

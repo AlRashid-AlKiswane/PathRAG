@@ -241,7 +241,6 @@ def get_settings() -> Settings:
 
         # Ensure the document directory exists
         settings.DOC_LOCATION_STORE.mkdir(parents=True, exist_ok=True)
-        logger.info("Settings loaded successfully.")
         return settings
 
     except ValidationError as ve:
