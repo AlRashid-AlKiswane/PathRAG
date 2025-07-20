@@ -9,12 +9,10 @@ import heapq
 import os
 import sys
 import json
-import logging
 from typing import List, Dict, Any
 import numpy as np
 import networkx as nx
 from tqdm import tqdm
-from sqlite3 import Connection
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Setup project root path
