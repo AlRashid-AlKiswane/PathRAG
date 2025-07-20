@@ -238,11 +238,11 @@ def example_usage():
         embedding_model = HuggingFaceModel(model_name="sentence-transformers/all-MiniLM-L6-v2")
         pathrag = PathRAG(
             embedding_model=embedding_model,
-            decay_rate=0.8,
-            prune_thresh=0.2,
-            sim_should=0.1
+            decay_rate=0.85,
+            prune_thresh=0.5,
+            sim_should=0.5
         )
-        rows = pull_from_table(conn=conn, table_name="embed_vector", columns=["chunk", "embedding"], limit=100)
+        rows = pull_from_table(conn=conn, table_name="embed_vector", columns=["chunk", "embedding"], limit=None)
 
         chunks, embeddings = [], []
         for row in tqdm(rows, desc="Parsing Chunks & Embeddings"):
