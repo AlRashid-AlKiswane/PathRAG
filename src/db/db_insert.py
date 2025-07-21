@@ -1,40 +1,28 @@
 """
-Chunk Insertion Module for RAG Database
+Database Insert Operations Module.
 
-This module provides functionality to insert individual document chunks into the
-`chunks` table of an SQLite database. It is part of the document preprocessing
-pipeline for a Retrieval-Augmented Generation (RAG) application.
-
-Key Features:
-- Inserts a document chunk along with its source file and data group name
-- Handles database commit and rollback
-- Uses lazy logging for efficient and clear runtime feedback
-- Robust error handling to prevent data corruption
+This module provides functions to insert data into various tables
+of the SQLite database used by the application. It includes insertions
+for document chunks, embedding vectors, and chatbot interaction records.
 
 Functions:
-- insert_chunk(): Safely inserts a single chunk into the database
+- insert_chunk: Inserts a document chunk with its source file and data group.
+- insert_embed_vector: Inserts a document chunk along with its embedding vector and unique ID.
+- insert_chatbot_entry: Records chatbot interactions including user queries,
+  LLM responses, retrieval context, and ranking information.
 
-Intended Usage:
-- Used after document parsing and chunking to persist data
-- Can be integrated with pipelines or called standalone for testing
+All functions require a valid SQLite connection and perform
+robust error handling with transaction rollback on failure.
 
-Dependencies:
-- SQLite3
-- Custom settings and logging utilities from `src.helpers` and `src.infra`
-
-Example:
-    from src.db import insert_chunk
-    conn = get_sqlite_engine()
-    insert_chunk(conn, "chunk text", "file.pdf", "DocumentGroup")
+Logging:
+- Successful insertions are logged at INFO level.
+- Failures and invalid inputs are logged at ERROR or WARNING levels.
 """
 
-
-import json
 import logging
 import os
 import sys
 import sqlite3
-from typing import List, Optional
 
 # Set up the main directory for imports
 try:
@@ -47,7 +35,8 @@ except (ImportError, OSError) as e:
 # pylint: disable=wrong-import-position
 from src.infra import setup_logging
 
-logger = setup_logging()
+logger = setup_logging(name="DATABASE-INERT")
+
 
 def insert_chunk(conn: sqlite3.Connection,
                  chunk: str = None,
@@ -115,41 +104,6 @@ def insert_embed_vector(conn: sqlite3.Connection,
     except sqlite3.Error as e:
         logger.error("Failed to insert into 'embed_vector' table: %s", e)
         conn.rollback()
-        return False
-
-def insert_ner_entities(
-    conn: sqlite3.Connection,
-    chunk_id: Optional[str],
-    entities: List[str],
-) -> bool:
-    """
-    Insert or update the list of named entities associated with a chunk in the 'ner_entities' table.
-
-    Args:
-        conn (sqlite3.Connection): SQLite database connection.
-        chunk_id (Optional[str]): Reference to the source chunk. Must not be None.
-        entities (List[str]): List of named entity strings extracted from the chunk.
-
-    Returns:
-        bool: True if insertion/update is successful, False otherwise.
-    """
-    if not chunk_id:
-        logger.error("❌ chunk_id must be provided for inserting NER entities.")
-        return False
-
-    try:
-        entities_json = json.dumps(entities)
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO ner_entities (chunk_id, entities)
-            VALUES (?, ?)
-            ON CONFLICT(chunk_id) DO UPDATE SET entities=excluded.entities, created_at=CURRENT_TIMESTAMP
-        """, (chunk_id, entities_json))
-        conn.commit()
-        logger.debug("✅ Inserted/Updated NER entities for chunk_id: %s, entities: %s", chunk_id, entities)
-        return True
-    except sqlite3.Error as e:
-        logger.exception("❌ Failed to insert/update NER entities for chunk_id %s: %s", chunk_id, e)
         return False
 
 

@@ -1,10 +1,23 @@
 """
-Utility module for interacting with SQLite tables, including robust logging and error handling.
+Database Retrieval Module.
 
-Main Features:
-- Dynamic data retrieval from SQLite tables.
-- Structured logging of all DB operations.
-- Simplified, clean API with minimal arguments.
+This module provides a function to retrieve rows from specified SQLite tables,
+supporting selective columns and limiting the number of returned rows.
+
+Functions:
+- pull_from_table: Fetches data from a given table with optional column selection
+  and row limits. Returns results as a list of dictionaries mapping column names
+  to their respective values.
+
+Features:
+- Uses parameterized queries for dynamic column selection.
+- Handles SQLite operational and database errors with detailed logging.
+- Logs success and failure events with context.
+
+Usage Example:
+    >>> results = pull_from_table(conn, "documents", ["id", "title"], limit=5)
+    >>> for row in results:
+    ...     print(row["id"], row["title"])
 """
 
 import logging
@@ -25,7 +38,7 @@ except Exception as e:
     raise
 
 from src.infra import setup_logging
-logger = setup_logging()
+logger = setup_logging(name="DATABASE-SEARCH")
 
 def pull_from_table(
     conn: sqlite3.Connection,

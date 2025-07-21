@@ -1,8 +1,24 @@
 """
-SQLite Database Connection Module
+SQLite Database Engine Connector Module.
 
-This module provides robust functionality for creating and managing SQLite database connections
-with comprehensive error handling and automatic directory creation.
+This module provides a function to create and manage a connection
+to an SQLite database with robust error handling and detailed logging.
+
+It ensures:
+- The database path is configured correctly.
+- The directory for the database exists and is writable.
+- The connection uses Write-Ahead Logging (WAL) mode for better concurrency.
+
+Usage:
+    Import the `get_sqlite_engine` function and call it to obtain
+    an active SQLite connection or None if connection failed.
+
+Example:
+    >>> from src.infra.db_engine import get_sqlite_engine
+    >>> conn = get_sqlite_engine()
+    >>> if conn:
+    ...     # Use connection here
+    ...     conn.close()
 """
 
 import logging
@@ -25,7 +41,7 @@ from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 
 # Initialize application settings and logger
-logger = setup_logging()
+logger = setup_logging(name="DATABASE-ENGING")
 app_settings: Settings = get_settings()
 
 def get_sqlite_engine() -> Optional[sqlite3.Connection]:

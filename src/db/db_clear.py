@@ -1,11 +1,20 @@
 """
-Database Table Mangemnt Module
+Module for safely clearing tables in the SQLite database.
 
-Provides functions for safely clearing SQLite database tables with:
-- Input validation
-- Transaction managemnt
-- Comprehensive error handling 
-- Dettalied logging
+This module provides utility functions to remove all records from a specified table
+within a SQLite database connection. It includes rigorous validation of table names,
+error handling for SQLite exceptions, and detailed logging for operational transparency.
+
+Usage:
+    - Import `clear_table` and provide it with an active SQLite connection and a valid table name.
+    - Ensure that the table name is a valid identifier to prevent SQL injection risks.
+    - Logging is performed at various levels (DEBUG, INFO, ERROR) to trace execution and errors.
+
+Example:
+    >>> import sqlite3
+    >>> from src.infra.db_clear import clear_table
+    >>> conn = sqlite3.connect("mydatabase.db")
+    >>> clear_table(conn, "users")
 """
 
 import os
@@ -25,22 +34,31 @@ from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 
 # Initialize application settings and logger
-logger = setup_logging()
+logger = setup_logging(name="DATABASE-CLEAR")
 app_settings: Settings = get_settings()
 
 
 def clear_table(conn: sqlite3.Connection, table_name: str) -> None:
     """
-    Clears all records from the specified SQLite table.
+    Delete all records from a specified table within the given SQLite database connection.
+
+    This function validates the table name to ensure it is a proper identifier, avoiding SQL injection
+    vulnerabilities. It then executes a DELETE operation on the entire table and commits the transaction.
+    Extensive error handling is included to catch and log operational and database integrity issues,
+    as well as any unexpected exceptions.
 
     Args:
-        conn: An active database connection
-        table_name: The name of the table to clear
+        conn (sqlite3.Connection): An active SQLite database connection object.
+        table_name (str): The name of the table to clear. Must be a valid Python identifier.
 
     Raises:
-        ValueError: If the table name contains invalid characters
-        RuntimeError: If an error occurs during deletion
-        sqlite3.Error: For database-specific errors
+        ValueError: If the table name is invalid (e.g., contains special characters or is empty).
+        RuntimeError: If a database operational or integrity error occurs during deletion.
+        sqlite3.Error: For other SQLite-specific errors.
+
+    Side Effects:
+        Commits the transaction on successful deletion.
+        Logs messages at DEBUG, INFO, WARNING, and ERROR levels.
     """
     if not isinstance(table_name, str) or not table_name.isidentifier():
         error_msg = f"Invalid table name: {table_name}"

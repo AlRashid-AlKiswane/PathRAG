@@ -1,11 +1,23 @@
 """
-Database Initialization Module
+Database Retrieval Module.
 
-This module provides functionality for initializing SQLite database tables
-for saving chunks in a Retrieval-Augmented Generation (RAG) application.
+This module provides a function to retrieve rows from specified SQLite tables,
+supporting selective columns and limiting the number of returned rows.
 
-It handles the creation of:
-- chunks table: Stores document chunks with metadata
+Functions:
+- pull_from_table: Fetches data from a given table with optional column selection
+  and row limits. Returns results as a list of dictionaries mapping column names
+  to their respective values.
+
+Features:
+- Uses parameterized queries for dynamic column selection.
+- Handles SQLite operational and database errors with detailed logging.
+- Logs success and failure events with context.
+
+Usage Example:
+    >>> results = pull_from_table(conn, "documents", ["id", "title"], limit=5)
+    >>> for row in results:
+    ...     print(row["id"], row["title"])
 """
 
 import logging
@@ -25,7 +37,7 @@ except (ImportError, OSError) as e:
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 
-logger = setup_logging()
+logger = setup_logging(name="DATABASE-INIT-TABLES")
 app_settings: Settings = get_settings()
 
 
@@ -95,34 +107,6 @@ def init_embed_vector_table(conn: sqlite3.Connection) -> None:
         logger.error("Failed to create 'embed_vector' table: %s", e)
         raise
 
-def init_entities_table(conn: sqlite3.Connection) -> None:
-    """
-    Initialize the 'ner_entities' table in the SQLite database.
-
-    The table stores lists of named entities associated with each chunk.
-
-    Args:
-        conn (sqlite3.Connection): The SQLite database connection object.
-
-    Raises:
-        sqlite3.Error: If table creation fails.
-    """
-    try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS ner_entities (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                chunk_id TEXT UNIQUE NOT NULL,
-                entities TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        conn.commit()
-        logger.info("✅ 'ner_entities' table created or already exists.")
-    except sqlite3.Error as e:
-        logger.exception("❌ Failed to create 'ner_entities' table: %s", e)
-        raise
-
 def init_chatbot_table(conn: sqlite3.Connection) -> None:
     """
     Initializes the 'chatbot' table in the SQLite database if it doesn't already exist.
@@ -179,5 +163,3 @@ if __name__ == "__main__":
     else:
         logger.error("Database connection failed.")
         sys.exit(1)
-
-
