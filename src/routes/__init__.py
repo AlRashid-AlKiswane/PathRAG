@@ -7,7 +7,6 @@ Imported Routes:
 - upload_route: Handles file uploads.
 - chunking_route: Handles document chunking operations.
 - embedding_chunks_route: Handles embedding operations on chunks.
-- ner_route: Named Entity Recognition routes from LightRAG module.
 - live_retrieval_route: PathRAG live semantic retrieval endpoint.
 - storage_management_route: Storage management endpoints for database tables.
 - chatbot_route: Chatbot conversational interface routes.
