@@ -52,7 +52,7 @@ except (ImportError, OSError) as e:
 
 from src.infra import setup_logging
 from src.llms_providers import OllamaModel, HuggingFaceModel, NERModel
-from src.rag import FaissRAG, EntityLevelFiltering
+from src.rag import FaissRAG, EntityLevelFiltering, PathRAG
 logger = setup_logging()
 
 
@@ -198,6 +198,43 @@ def get_ner_model(request: Request) -> NERModel:
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unexpected internal server error while accessing the NER model."
+        ) from e
+
+def get_path_rag(request: Request) -> PathRAG:
+    """
+    Retrieve the PathRAG instance stored in the FastAPI application's state.
+
+    Args:
+        request (Request): The incoming FastAPI request containing application state.
+
+    Returns:
+        PathRAG: The initialized PathRAG instance.
+
+    Raises:
+        HTTPException: 
+            - 503 if the PathRAG instance is not initialized or unavailable.
+            - 500 for any unexpected internal server error.
+    """
+    try:
+        path_rag = getattr(request.app.state, "path_rag", None)
+        if not isinstance(path_rag, PathRAG):
+            logger.error("PathRAG instance is missing or invalid in app state.")
+            raise HTTPException(
+                status_code=HTTP_503_SERVICE_UNAVAILABLE,
+                detail="PathRAG service is not available. Please try again later."
+            )
+
+        logger.debug("PathRAG instance successfully retrieved from app state.")
+        return path_rag
+
+    except HTTPException:
+        raise  # Already handled above
+
+    except Exception as e:
+        logger.exception("Unexpected error while retrieving PathRAG instance from app state.")
+        raise HTTPException(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unexpected internal server error while accessing PathRAG."
         ) from e
 
 

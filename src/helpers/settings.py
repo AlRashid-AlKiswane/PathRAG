@@ -221,6 +221,22 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8"
     )
 
+    DECAY_RATE: float = Field(
+        default=0.8, ge=0.1, le=0.9999,
+        env="DECAY_RATE",
+        description="Decay rate used for path scoring. Controls how much weight decays across longer paths."
+    )
+    PRUNE_THRESH: float = Field(
+        default=0.5, ge=0.1, le=0.9999,
+        env="PRUNE_THRESH",
+        description="Threshold used to prune low-scoring paths in the semantic graph."
+    )
+    SIM_THRESHOLD: float = Field(
+        default=0.4, ge=0.1, le=0.9999,
+        env="SIM_THRESHOLD",
+        description="Similarity threshold for filtering node connections or candidate nodes."
+    )
+
 
 def get_settings() -> Settings:
     """

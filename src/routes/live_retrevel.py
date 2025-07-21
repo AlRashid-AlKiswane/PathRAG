@@ -39,13 +39,9 @@ except (ImportError, OSError) as e:
     sys.exit(1)
 
 # === Project Imports ===
-from src.rag import FaissRAG, EntityLevelFiltering, dual_level_retrieval
+from src.rag import  PathRAG
 from src.infra import setup_logging
-from src import (get_embedding_model,
-                 get_faiss_rag,
-                 get_entity_level_filtering,
-                 get_db_conn)
-from src.llms_providers import HuggingFaceModel
+from src import get_path_rag
 
 # === Logger Setup ===
 logger = setup_logging()
@@ -60,72 +56,71 @@ live_retrieval_route = APIRouter(
 
 @live_retrieval_route.post("", response_class=JSONResponse)
 async def retrieve(
-    query: str = Query(..., description="Query string to search relevant chunks"),
-    top_k: int = Query(3, ge=1, le=10, description="Number of top results to retrieve"),
-    mode: str = Query(
-        "intersection",
-        description="Mode of combining results: 'intersection', 'union', 'faiss_only', 'entity_only'",
-        pattern="^(intersection|union|faiss_only|entity_only)$"
-    ),
-    conn: Connection = Depends(get_db_conn),
-    embed_model: HuggingFaceModel = Depends(get_embedding_model),
-    faiss_rag: FaissRAG = Depends(get_faiss_rag),
-    entity_level_filtering: EntityLevelFiltering = Depends(get_entity_level_filtering)
-):
+    query: str = Query(..., description="Query string to search relevant chunks."),
+    top_k: int = Query(3, ge=1, le=10, description="Number of top similar chunks to retrieve."),
+    max_hop: int = Query(2, ge=1, le=10, description="Maximum number of hops to allow in path search."),
+    pathrag: PathRAG = Depends(get_path_rag)
+) -> JSONResponse:
     """
-    Handle live retrieval requests by querying FaissRAG and EntityLevelFiltering,
-    and returning results combined according to the specified mode.
+    Perform a live semantic retrieval query using PathRAG.
+
+    This endpoint retrieves semantically relevant document chunks from a pre-built
+    semantic graph using a path-aware approach, then generates a context-rich prompt.
 
     Args:
-        query (str): The user query string.
-        top_k (int): Number of top chunks to retrieve.
-        mode (str): Strategy to combine retrieval results.
-            Options:
-            - 'intersection': return common chunks only.
-            - 'union': return all chunks from both sources.
-            - 'faiss_only': return only FaissRAG results.
-            - 'entity_only': return only entity-level results.
-        embed_model (HuggingFaceModel): Embedding model injected by FastAPI.
-        faiss_rag (FaissRAG): FaissRAG retrieval instance injected by FastAPI.
-        entity_level_filtering (EntityLevelFiltering): Entity-level retrieval instance.
+        query (str): The user's query string.
+        top_k (int): Number of top similar nodes to retrieve initially.
+        max_hop (int): Max number of hops allowed when searching paths.
+        pathrag (PathRAG): The PathRAG engine injected from app state.
 
     Returns:
-        JSONResponse: JSON with retrieved chunk data.
+        JSONResponse: Contains the generated prompt and supporting path metadata.
 
     Raises:
-        HTTPException: For client errors (e.g., empty query) and server errors.
+        HTTPException: If an internal error occurs during retrieval.
     """
-    logger.info("📥 Received retrieval request | Query: '%s' | Top_k: %d | Mode: '%s'", query, top_k, mode)
-
     try:
-        filtered_results = dual_level_retrieval(
-            conn=conn,
-            query=query,
-            top_k=top_k,
-            mode=mode,
-            embed_model=embed_model,
-            faiss_rag=faiss_rag,
-            entity_level_filtering=entity_level_filtering
-        )
-        logger.info("📤 Returning %d chunks for mode '%s'.", len(filtered_results), mode)
+        logger.info("Received retrieval query: '%s'", query)
+
+        # Step 1: Retrieve top-K nodes semantically similar to query
+        logger.debug("Retrieving top-%d similar nodes...", top_k)
+        nodes = pathrag.retrieve_nodes(query=query, top_k=top_k)
+
+        # Step 2: Prune and validate semantic paths
+        logger.debug("Pruning paths with max_hop=%d...", max_hop)
+        paths = pathrag.prune_paths(nodes=nodes, max_hops=max_hop)
+
+        if not paths:
+            logger.warning("No valid paths found for query: %s", query)
+            return JSONResponse(
+                status_code=200,
+                content={"message": "[!] No valid paths found. Try lowering prune_thresh or increasing max_hops."}
+            )
+
+        # Step 3: Score and rank the retrieved paths
+        logger.debug("Scoring %d candidate paths...", len(paths))
+        scored_paths = pathrag.score_paths(paths=paths)
+
+        # Step 4: Generate final prompt
+        logger.debug("Generating prompt using scored paths.")
+        prompt = pathrag.generate_prompt(query=query, scored_paths=scored_paths)
+
+        logger.info("Prompt successfully generated for query.")
 
         return JSONResponse(
             status_code=200,
             content={
                 "query": query,
                 "top_k": top_k,
-                "mode": mode,
-                "results": filtered_results
+                "max_hop": max_hop,
+                "num_paths": len(scored_paths),
+                "prompt": prompt
             }
         )
 
-    except HTTPException as http_exc:
-        logger.warning("⚠️ Retrieval failed due to user input: %s", http_exc.detail)
-        raise http_exc
-
     except Exception as e:
-        logger.error("🔥 Unexpected retrieval failure: %s", e, exc_info=True)
+        logger.exception("Failed to complete retrieval for query: %s", query)
         raise HTTPException(
             status_code=500,
-            detail="Failed to perform dual-level retrieval."
+            detail="Internal server error while processing semantic retrieval query."
         ) from e

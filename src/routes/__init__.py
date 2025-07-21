@@ -7,3 +7,5 @@ from .live_retrevel import live_retrieval_route
 from .storage_management import storage_management_route
 from .chatbot import chatbot_route
 from .resource_monitor import resource_monitor_router
+from .build_path_rag import build_pathrag_route
+

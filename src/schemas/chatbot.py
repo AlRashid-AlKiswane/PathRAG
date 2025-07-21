@@ -39,7 +39,6 @@ class Chatbot(BaseModel):
         temperature (float): Sampling temperature for the LLM response.
         max_new_tokens (int): Maximum number of tokens to generate in response.
         max_input_tokens (int): Maximum tokens allowed in the prompt input.
-        mode_retrieval (str): Retrieval mode, e.g., 'semantic', 'entity', or 'hybrid'.
         user_id (str): Unique identifier for the user session or client.
         cache (bool): Whether to cache the query and response.
     """
@@ -48,6 +47,6 @@ class Chatbot(BaseModel):
     temperature: float = Field(0.7, ge=0.0, le=1.0, description="LLM sampling temperature.")
     max_new_tokens: int = Field(256, ge=1, le=1024, description="Max tokens to generate.")
     max_input_tokens: int = Field(1024, ge=1, le=4096, description="Max input tokens allowed.")
-    mode_retrieval: str = Field("semantic", description="Retrieval strategy: 'semantic', 'entity', or 'hybrid'.")
     user_id: str = Field(..., description="Unique user or session identifier.")
     cache: bool = Field(True, description="Flag to enable or disable caching.")
+    max_hop: int = Field(2, description="Max Number the Hop between the Paths.")

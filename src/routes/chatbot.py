@@ -19,12 +19,9 @@ from src.llms_providers import OllamaModel, HuggingFaceModel
 from src.db import insert_chatbot_entry, pull_from_table
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
-from src import (get_db_conn, get_llm,
-                 get_faiss_rag,
-                 get_embedding_model,
-                 get_entity_level_filtering)
+from src import (get_db_conn, get_llm, get_path_rag)
 
-from src.rag import dual_level_retrieval, FaissRAG, EntityLevelFiltering
+from src.rag import PathRAG
 from src.prompt import PromptOllama
 from src.schemas import Chatbot
 
@@ -45,33 +42,37 @@ async def chatbot(
     body: Chatbot,
     conn: Connection = Depends(get_db_conn),
     llm: OllamaModel = Depends(get_llm),
-    faiss_rag: FaissRAG = Depends(get_faiss_rag),
-    entity_level_filtering: EntityLevelFiltering = Depends(get_entity_level_filtering),
-    embed_model: HuggingFaceModel = Depends(get_embedding_model)
-):
+    pathrag: PathRAG = Depends(get_path_rag)
+) -> JSONResponse:
     """
     Handles chatbot requests using retrieval-augmented generation (RAG) and a local LLM.
-    Supports entity-level and semantic filtering. Uses cache if enabled.
+
+    Uses semantic graph traversal (PathRAG) to gather contextual information before generating
+    an answer using the local Ollama model. Caches responses if enabled.
 
     Args:
-        body (Chatbot): Chatbot request parameters including query, top_k, temperature, etc.
+        body (Chatbot): Input payload including query, top_k, temperature, max_tokens, user_id, and caching options.
+        conn (Connection): SQLite connection dependency.
+        llm (OllamaModel): Injected local LLM instance (Ollama).
+        pathrag (PathRAG): Path-aware RAG engine from app state.
 
     Returns:
-        JSONResponse: Response with the generated answer and cache status.
+        JSONResponse: Generated answer and cache status.
     """
     try:
+        # === Unpack request body ===
         query = body.query
         top_k = body.top_k
+        max_hop = body.max_hop or 2  # Ensure default
         temperature = body.temperature
         max_new_tokens = body.max_new_tokens
         max_input_tokens = body.max_input_tokens
-        mode_retrieval = body.mode_retrieval
         user_id = body.user_id
         cache = body.cache
 
         logger.info("🚀 Chatbot request | user_id='%s' | query='%s' | cache=%s", user_id, query, cache)
 
-        # === Cache Check ===
+        # === Step 1: Check Cache ===
         if cache:
             logger.debug("🔍 Checking cache for user_id='%s' and query='%s'", user_id, query)
             cursor = conn.cursor()
@@ -84,30 +85,29 @@ async def chatbot(
                 logger.info("📦 Cache hit. Returning cached response.")
                 return JSONResponse(content={"response": row[0], "cached": True})
 
-        # === Retrieval Phase ===
-        logger.debug("📡 Performing retrieval (mode='%s') for top_k=%d", mode_retrieval, top_k)
-        retrieval_result = dual_level_retrieval(
-            conn=conn,
-            embed_model=embed_model,
-            entity_level_filtering=entity_level_filtering,
-            faiss_rag=faiss_rag,
-            mode=mode_retrieval,
-            query=query,
-            top_k=top_k
-        )
+        # === Step 2: Semantic Retrieval ===
+        logger.debug("🔎 Performing semantic retrieval using PathRAG.")
+        nodes = pathrag.retrieve_nodes(query=query, top_k=top_k)
+        paths = pathrag.prune_paths(nodes=nodes, max_hops=max_hop)
 
-        if not retrieval_result:
-            logger.warning("⚠️ No relevant context found for query: '%s'", query)
-            raise HTTPException(status_code=404, detail="No retrieval context found.")
+        if not paths:
+            logger.warning("No valid paths found for query: %s", query)
+            return JSONResponse(
+                status_code=200,
+                content={"message": "[!] No valid paths found. Try lowering prune_thresh or increasing max_hops."}
+            )
 
-        logger.debug("📚 Retrieved %d context chunks.", len(retrieval_result))
+        scored_paths = pathrag.score_paths(paths)
+        logger.info("Retrieved and scored %d semantic paths.", len(scored_paths))
 
-        # === Prompt Construction ===
-        context_chunks = [ctx["chunk"] for ctx in retrieval_result]
+        # === Step 3: Prompt Generation ===
+        logger.debug("🧠 Generating prompt from top paths.")
+        prompt_chunks = [ctx["chunk"] for path in scored_paths for ctx in path if "chunk" in ctx]
         prompt_template = PromptOllama()
-        prompt = prompt_template.prompt(query=query, retrieval_context=context_chunks)
+        prompt = prompt_template.prompt(query=query, retrieval_context=prompt_chunks)
 
-        # === LLM Generation ===
+        # === Step 4: Generate LLM Response ===
+        logger.debug("💬 Calling Ollama LLM to generate response.")
         llm_response = llm.generate(
             prompt=prompt,
             temperature=temperature,
@@ -116,19 +116,19 @@ async def chatbot(
         )
 
         if not llm_response or llm_response.startswith("[ERROR]"):
-            logger.error("🚨 LLM returned invalid response: %s", llm_response)
-            raise HTTPException(status_code=500, detail="Failed to generate valid LLM response.")
+            logger.error("🚨 LLM failed to generate a valid response.")
+            raise HTTPException(status_code=500, detail="LLM failed to generate a valid response.")
 
-        logger.info("✅ LLM response generated.")
+        logger.info("✅ LLM response generated successfully.")
 
-        # === Store Results ===
-        for idx, ctx in enumerate(retrieval_result):
+        # === Step 5: Store in Cache/Log ===
+        for idx, chunk_text in enumerate(prompt_chunks):
             success = insert_chatbot_entry(
                 conn=conn,
                 user_id=user_id,
                 query=query,
                 llm_response=llm_response,
-                retrieval_context=ctx["chunk"],
+                retrieval_context=chunk_text,
                 retrieval_rank=idx + 1
             )
             if not success:
