@@ -1,17 +1,51 @@
 """
-Sentence Transformer Embedding Module.
+embedding.py
 
-This module provides a wrapper class for generating texts embeddings using
-SentenceTransformer models. It handles model initialization, texts embedding,
-and includes error handling and logging capabilities.
+Module implementing HuggingFaceModel: a wrapper for SentenceTransformer models to
+generate semantic vector embeddings for text inputs.
+
+Core functionality:
+- Load pre-trained SentenceTransformer models dynamically.
+- Generate high-quality dense embeddings for single strings or lists of texts.
+- Normalize, tensorize, or convert embeddings to numpy format as needed.
+- Handle errors and logging for robust embedding operations.
+
+Main classes and functions:
+- HuggingFaceModel: Primary class encapsulating model initialization, text encoding,
+  and metadata access.
+
+Key parameters and concepts:
+- convert_to_tensor: Whether embeddings are returned as PyTorch tensors.
+- convert_to_numpy: Whether embeddings are returned as NumPy arrays.
+- normalize_embeddings: Applies L2 normalization to output embeddings.
+
+Dependencies:
+- sentence-transformers for pre-trained embedding models.
+- numpy for data manipulation.
+- logging for operational transparency and debugging.
+- src.infra.setup_logging for logger configuration.
+- src.helpers.get_settings for configuration-driven model selection.
+
+Usage:
+Instantiate HuggingFaceModel with an optional model name (or fallback to settings).
+Call embed_texts() with string or list of strings to obtain embeddings.
+Use get_model_info() to inspect the loaded model's metadata.
+
+Example:
+    model = HuggingFaceModel()
+    embedding = model.embed_texts("This is a test sentence.")
+    info = model.get_model_info()
+
+Note:
+This module is a foundational component for semantic search, RAG, and graph-based
+reasoning pipelines where consistent and reliable embeddings are required.
 """
 
 import logging
 import os
 import sys
 from typing import List, Union, Optional
-# pylint: disable=import-error
-from sentence_transformers import SentenceTransformer  # type: ignore
+from sentence_transformers import SentenceTransformer
 
 try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -25,7 +59,7 @@ from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 
 # Initialize application settings and logger
-logger = setup_logging()
+logger = setup_logging(name="HUGGINGFACE-EMBEDDING-MODEL")
 app_settings: Settings = get_settings()
 
 
@@ -110,11 +144,3 @@ class HuggingFaceModel:
             "max_seq_length": self.model.max_seq_length,
             "embedding_dimension": self.model.get_sentence_embedding_dimension()
         }
-
-
-if __name__ == "__main__":
-    # Example usage
-    embedd = HuggingFaceModel()
-    sample_text = "This"
-    embedding = embedd.embed_texts(sample_text)
-    print("Embedding: %s" % embedding)
