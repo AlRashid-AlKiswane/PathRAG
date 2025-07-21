@@ -4,11 +4,9 @@ File Utility Module
 This module provides a utility function for calculating the size of a file in gigabytes (GB).
 It includes error handling and structured logging.
 
-Author: Alrashid Issa
+Author: Alrashid AlKiswane
 Date: 2025-07-07
 """
-# pylint: disable=redefined-outer-name
-# pylint: disable=wrong-import-position
 
 import os
 import sys
@@ -77,5 +75,6 @@ def get_size(path: str) -> Tuple[str, float]:
         raise
 
 if __name__ == "__main__":
-    msg, size = get_size("/home/alrashid/Desktop/PathRAG-LightRAG/assets/docs/sample.txt")
+    path = ...
+    msg, size = get_size(path=path)
     print(msg, size)
