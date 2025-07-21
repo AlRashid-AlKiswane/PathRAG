@@ -1,6 +1,17 @@
+"""
+rag package
 
+This package implements Retrieval-Augmented Generation (RAG) functionalities,
+including graph-based reasoning with the PathRAG module.
 
-from .faiss_rag import FaissRAG
-from .entities_level_filtering import EntityLevelFiltering
-from .dual_retrieval import dual_level_retrieval
+Modules:
+- pathrag: Contains the PathRAG class for semantic graph construction,
+  relational path retrieval, and decay-based path scoring for prompt generation.
+
+Imports:
+- PathRAG: Primary class implementing the Path-aware Retrieval-Augmented Generation logic.
+"""
+
 from .pathrag import PathRAG
+
+__all__ = ["PathRAG"]
