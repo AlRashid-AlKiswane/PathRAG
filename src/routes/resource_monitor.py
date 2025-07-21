@@ -1,15 +1,45 @@
 """
-System Resource Monitoring API Endpoint.
+resource_monitor_route.py
 
-This module exposes a FastAPI route to monitor current CPU, memory, disk,
-and optionally GPU usage using the ResourceMonitor utility.
+This module defines a FastAPI route for monitoring and reporting system resource usage.
+
+It leverages a custom `ResourceMonitor` utility to collect real-time statistics
+about the system's CPU, memory, disk, and (if available) GPU usage.
+
+Route:
+    GET /api/v1/resource/
+
+Returns:
+    JSONResponse: A structured dictionary containing usage metrics for:
+        - CPU (% utilization)
+        - Memory (% usage, total, available)
+        - Disk (% usage, total, used, free)
+        - GPU (% utilization, memory stats) if supported
+
+Features:
+    - Logs resource usage request and status.
+    - Warns if critical thresholds are exceeded (handled inside ResourceMonitor).
+    - Gracefully handles internal monitoring errors with structured HTTP exceptions.
+
+Raises:
+    - HTTPException (500): If an unexpected error occurs during monitoring.
+
+Dependencies:
+    - ResourceMonitor (from `src.infra`)
+    - FastAPI
+
+Author:
+    ALRashid AlKiswane
 """
 
 import os
 import sys
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (APIRouter,
+                     HTTPException,
+                     status)
+
 from fastapi.responses import JSONResponse
 
 # Set up project base directory
@@ -25,7 +55,7 @@ from src.infra import setup_logging, ResourceMonitor
 from src.helpers import get_settings, Settings
 
 # Initialize logger and settings
-logger = setup_logging()
+logger = setup_logging(name="RESOURCE-MONITOR")
 app_settings: Settings = get_settings()
 
 resource_monitor_router = APIRouter(

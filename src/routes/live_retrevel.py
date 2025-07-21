@@ -1,41 +1,58 @@
 """
-Live Retrieval API Module
+live_retrieval_route.py
 
-This module defines a FastAPI route that handles live semantic retrieval queries.
-It uses two retrieval mechanisms:
-1. FaissRAG: semantic vector similarity search
-2. EntityLevelFiltering: entity-based chunk filtering
+This module provides a FastAPI endpoint for real-time semantic retrieval using the PathRAG engine.
 
-The API combines retrieval results according to a specified mode:
-- intersection: common chunks only
-- union: all chunks from both sources
-- faiss_only: only FaissRAG results
-- entity_only: only entity-level results
+It enables users to submit a query string and receive a contextually relevant prompt
+generated from semantically related document chunks in a graph-based structure.
 
-Key Features:
-- Dependency injection for reusable components
-- Embedding generation with HuggingFaceModel
-- Flexible retrieval result combination modes
-- Comprehensive logging for traceability and debugging
-- Full error handling for robustness
+Route:
+    POST /api/v1/retrieval
 
-Typical Usage:
-    POST /api/v1/retrieval?query="What is AI?"&top_k=5&mode=intersection
+Query Parameters:
+    - query (str): User's natural language question or search query.
+    - top_k (int): Number of semantically closest nodes to retrieve from the graph (default: 3).
+    - max_hop (int): Maximum number of hops to allow for exploring evidence paths (default: 2).
+
+Core Logic:
+    1. Retrieve the top-K most relevant nodes based on query embedding similarity.
+    2. Identify and prune graph paths between those nodes using a maximum hop constraint.
+    3. Score the paths to prioritize coherent and meaningful reasoning chains.
+    4. Generate a prompt from the top-ranked paths that can be used for downstream QA or reasoning.
+
+Raises:
+    - HTTPException 500 if an error occurs during retrieval or prompt generation.
+
+Dependencies:
+    - PathRAG (semantic graph-based retrieval engine)
+    - FastAPI
+    - Custom helpers and dependency injection via `get_path_rag()`
+
+Logging:
+    - Logs all major steps including query receipt, retrieval progress, scoring, and prompt generation.
+
+Author:
+    ALRashid AlKiswane
 """
 
 import os
 import sys
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import (APIRouter,
+                     HTTPException,
+                     Depends,
+                     Query
+                     )
+
 from fastapi.responses import JSONResponse
-from sqlite3 import Connection
+
 # Setup project base path for imports
 try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     if MAIN_DIR not in sys.path:
         sys.path.append(MAIN_DIR)
 except (ImportError, OSError) as e:
-    logging.critical("🚨 Failed to configure project base directory: %s", e, exc_info=True)
+    logging.critical("Failed to configure project base directory: %s", e, exc_info=True)
     sys.exit(1)
 
 # === Project Imports ===
@@ -44,7 +61,7 @@ from src.infra import setup_logging
 from src import get_path_rag
 
 # === Logger Setup ===
-logger = setup_logging()
+logger = setup_logging(name="LIVE-RETREVAL")
 
 # === FastAPI Router ===
 live_retrieval_route = APIRouter(

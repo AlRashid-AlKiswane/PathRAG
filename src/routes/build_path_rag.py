@@ -1,7 +1,40 @@
+"""
+build_pathrag_route.py
+
+This module defines the FastAPI route for building the PathRAG semantic graph used in
+path-aware retrieval-augmented generation (RAG).
+
+The route `/api/v1/build_pathrag` provides functionality to load embedded document chunks
+from the SQLite database and construct a semantic similarity graph. The graph is used in 
+PathRAG to enable multi-hop reasoning, relationship-based retrieval, and structured context
+building for language model queries.
+
+Main Functionality:
+    - Pulls embedded text chunks from the `embed_vector` table.
+    - Parses and validates embeddings.
+    - Constructs a graph using cosine similarity and path-based logic.
+    - Returns the number of nodes and edges added to the graph.
+
+Dependencies:
+    - SQLite database connection (`get_db_conn`)
+    - PathRAG instance (`get_path_rag`)
+    - NumPy, TQDM, JSON, and FastAPI dependencies.
+
+Usage:
+    Send a POST request to `/api/v1/build_pathrag` to trigger graph construction.
+
+Example:
+    curl -X POST http://localhost:8000/api/v1/build_pathrag
+
+Author:
+    ALRashid AlKiswane
+"""
+
 import json
 import os
 import sys
 import logging
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlite3 import Connection
@@ -27,7 +60,7 @@ from src import (get_db_conn,
 from src.rag import PathRAG 
 
 # Initialize logger and settings
-logger = setup_logging()
+logger = setup_logging(name="BUILD-PathRAG")
 app_settings: Settings = get_settings()
 
 build_pathrag_route = APIRouter(
@@ -38,6 +71,7 @@ build_pathrag_route = APIRouter(
 
 @build_pathrag_route.post("", status_code=status.HTTP_201_CREATED)
 async def build_pathrag(
+    limit: Optional[int] = None,
     conn: Connection = Depends(get_db_conn),
     pathrag: PathRAG = Depends(get_path_rag)
 ) -> JSONResponse:
@@ -57,7 +91,7 @@ async def build_pathrag(
     """
     try:
         logger.info("Fetching embedded chunks from database...")
-        rows = pull_from_table(conn=conn, table_name="embed_vector", columns=["chunk", "embedding"], limit=None)
+        rows = pull_from_table(conn=conn, table_name="embed_vector", columns=["chunk", "embedding"], limit=limit)
 
         if not rows:
             logger.warning("No data found in 'embed_vector' table.")
@@ -111,4 +145,3 @@ async def build_pathrag(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal error while building the PathRAG semantic graph."
         ) from e
-

@@ -1,15 +1,45 @@
 """
-File Upload API Module
+upload_route.py
 
-This module provides FastAPI endpoints for handling file uploads with:
-- Single or multiple file upload support
-- File type validation
-- Filename sanitization
-- Secure file storage
-- Comprehensive error handling
+This module defines an API route for uploading multiple files into organized directories.
+It validates allowed file types, sanitizes directory names, and stores uploaded files 
+in a configured document location. 
 
-API Endpoints:
-    POST /upload/multi/ - Handles multiple file uploads with validation and directory organization
+Each uploaded file is assigned a unique filename to prevent overwriting, and results 
+are returned per file with status and metadata (size, path, etc.).
+
+Endpoint:
+    POST /api/v1/files/multi/
+
+Query Parameters:
+    - dir_name (str, optional): Custom directory name under the upload base path to store files.
+
+Body:
+    - files (List[UploadFile]): List of one or more files to upload via multipart/form-data.
+
+Returns:
+    JSONResponse: Dictionary with:
+        - success_count (int): Number of files uploaded successfully.
+        - failed_count (int): Number of files that failed to upload.
+        - details (List[Dict]): Metadata and error info for each file.
+
+Behavior:
+    - Allowed file extensions are enforced (via `app_settings.FILE_TYPES`).
+    - Directories are automatically created if not present.
+    - Each file is saved with a generated unique name using `generate_unique_filename`.
+    - Logs are written for each stage: validation, saving, and errors.
+
+Raises:
+    - HTTPException 400: If no files are provided or upload fails due to bad input.
+    - Any internal I/O errors are captured and logged per file without failing the entire batch.
+
+Dependencies:
+    - FastAPI
+    - Python standard libraries: os, shutil, pathlib
+    - Custom project modules: `generate_unique_filename`, `get_size`, settings, logging
+
+Author:
+    ALRashid AlKiswane
 """
 
 import os
@@ -36,8 +66,9 @@ from src.controllers import generate_unique_filename
 from src.utils import get_size
 
 # Initialize logger and settings
-logger = setup_logging(__name__)
+logger = setup_logging(name="UPLOAD-FILE(s)")
 app_settings: Settings = get_settings()
+
 
 upload_route = APIRouter(
     prefix="/api/v1/files",

@@ -1,3 +1,52 @@
+"""
+chatbot_route.py
+
+This module defines the FastAPI route for interacting with the chatbot using
+Retrieval-Augmented Generation (RAG) powered by a local Ollama LLM and a semantic
+graph engine (PathRAG).
+
+The route `/api/v1/chatbot` accepts user queries, retrieves semantically relevant
+context using a path-aware graph traversal strategy, constructs a prompt, and
+generates a response using a local language model.
+
+Main Functional Steps:
+    1. Optionally check the cache for an existing response (by user ID and query).
+    2. Retrieve relevant nodes and paths using the PathRAG semantic graph engine.
+    3. Score and filter paths to extract meaningful context.
+    4. Generate a prompt for the LLM based on the retrieved context.
+    5. Call the Ollama LLM to generate a response.
+    6. Cache/store the result in the database for future reuse.
+
+Route:
+    POST /api/v1/chatbot
+
+Expected Payload (schema: Chatbot):
+    - query: str
+    - user_id: str
+    - top_k: int
+    - max_hop: Optional[int]
+    - temperature: float
+    - max_new_tokens: int
+    - max_input_tokens: int
+    - cache: bool
+
+Response:
+    JSON with:
+        - "response": The generated text from the LLM.
+        - "cached": Whether the response came from cache.
+
+Modules & Dependencies:
+    - FastAPI
+    - SQLite3
+    - OllamaModel
+    - PathRAG
+    - PromptOllama
+    - App settings and logging via `infra` and `helpers`
+
+Author:
+    ALRashid AlKiswane
+"""
+
 import os
 import sys
 import logging
@@ -26,7 +75,7 @@ from src.prompt import PromptOllama
 from src.schemas import Chatbot
 
 # Initialize logger and settings
-logger = setup_logging()
+logger = setup_logging(name="CHATBOT-WORKFLOW")
 app_settings: Settings = get_settings()
 
 chatbot_route = APIRouter(
@@ -70,11 +119,11 @@ async def chatbot(
         user_id = body.user_id
         cache = body.cache
 
-        logger.info("🚀 Chatbot request | user_id='%s' | query='%s' | cache=%s", user_id, query, cache)
+        logger.info("Chatbot request | user_id='%s' | query='%s' | cache=%s", user_id, query, cache)
 
         # === Step 1: Check Cache ===
         if cache:
-            logger.debug("🔍 Checking cache for user_id='%s' and query='%s'", user_id, query)
+            logger.debug("Checking cache for user_id='%s' and query='%s'", user_id, query)
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT llm_response FROM chatbot WHERE user_id = ? AND query = ?",
@@ -82,11 +131,11 @@ async def chatbot(
             )
             row = cursor.fetchone()
             if row:
-                logger.info("📦 Cache hit. Returning cached response.")
+                logger.info("Cache hit. Returning cached response.")
                 return JSONResponse(content={"response": row[0], "cached": True})
 
         # === Step 2: Semantic Retrieval ===
-        logger.debug("🔎 Performing semantic retrieval using PathRAG.")
+        logger.debug("Performing semantic retrieval using PathRAG.")
         nodes = pathrag.retrieve_nodes(query=query, top_k=top_k)
         paths = pathrag.prune_paths(nodes=nodes, max_hops=max_hop)
 
@@ -98,16 +147,16 @@ async def chatbot(
             )
 
         scored_paths = pathrag.score_paths(paths)
+        final_retreval = pathrag.generate_prompt(query=query, scored_paths=scored_paths)
         logger.info("Retrieved and scored %d semantic paths.", len(scored_paths))
 
         # === Step 3: Prompt Generation ===
-        logger.debug("🧠 Generating prompt from top paths.")
-        prompt_chunks = [ctx["chunk"] for path in scored_paths for ctx in path if "chunk" in ctx]
+        logger.debug("Generating prompt from top paths.")
         prompt_template = PromptOllama()
-        prompt = prompt_template.prompt(query=query, retrieval_context=prompt_chunks)
+        prompt = prompt_template.prompt(query=query, retrieval_context=final_retreval)
 
         # === Step 4: Generate LLM Response ===
-        logger.debug("💬 Calling Ollama LLM to generate response.")
+        logger.debug("Calling Ollama LLM to generate response.")
         llm_response = llm.generate(
             prompt=prompt,
             temperature=temperature,
@@ -116,32 +165,37 @@ async def chatbot(
         )
 
         if not llm_response or llm_response.startswith("[ERROR]"):
-            logger.error("🚨 LLM failed to generate a valid response.")
+            logger.error("LLM failed to generate a valid response.")
             raise HTTPException(status_code=500, detail="LLM failed to generate a valid response.")
 
-        logger.info("✅ LLM response generated successfully.")
+        logger.info("LLM response generated successfully.")
 
         # === Step 5: Store in Cache/Log ===
-        for idx, chunk_text in enumerate(prompt_chunks):
+        try:
             success = insert_chatbot_entry(
                 conn=conn,
                 user_id=user_id,
                 query=query,
                 llm_response=llm_response,
-                retrieval_context=chunk_text,
-                retrieval_rank=idx + 1
+                retrieval_context=final_retreval,
+                retrieval_rank=0  # Single combined retrieval, not per-chunk
             )
             if not success:
-                logger.warning("⚠️ Failed to store chatbot entry for chunk #%d", idx + 1)
+                logger.warning("Failed to insert chatbot entry for user_id='%s'", user_id)
+            conn.commit()
+            logger.debug("💾 Chatbot entry committed to database.")
+        except Exception as db_err:
+            logger.exception("Failed to store chatbot entry in DB: %s", str(db_err))
 
+        # Final response after successful generation and DB storage
         return JSONResponse(content={"response": llm_response, "cached": False})
 
     except HTTPException as http_err:
-        logger.warning("❌ HTTPException: %s", http_err.detail)
+        logger.warning("HTTPException: %s", http_err.detail)
         raise
 
     except Exception as e:
-        logger.exception("💥 Unexpected error in chatbot route: %s", str(e))
+        logger.exception("Unexpected error in chatbot route: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during chatbot operation."

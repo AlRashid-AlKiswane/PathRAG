@@ -1,14 +1,37 @@
 """
-Chunking Route
+chunking_route.py
 
-This module defines a FastAPI route that accepts a file path or a directory name,
-performs document chunking, and inserts the chunks into a SQLite database.
+This module defines the API route for performing document chunking operations
+on either individual files or entire directories. It supports storing the resulting
+chunks into a SQLite database and optionally clearing existing entries before processing.
 
-Features:
-- Accepts an individual file path or a directory of documents
-- Uses `chunking_docs` to split text into metadata chunks
-- Inserts each chunk into the database via `insert_chunk`
-- Handles file existence and I/O errors gracefully
+Route:
+    POST /api/v1/chunk/
+
+Supported Query Parameters:
+    - file_path (str, optional): Full path to a single document file to process.
+    - dir_file (str, optional): Name of subdirectory inside `assets/docs/` to batch-process all files.
+    - reset_table (bool, default=False): If True, clears the `chunks` table before inserting new entries.
+
+Main Functional Steps:
+    1. Optionally reset the chunks table.
+    2. Chunk a single file (if `file_path` is provided).
+    3. Chunk all files in a directory (if `dir_file` is provided).
+    4. Insert the generated chunks into the `chunks` table.
+    5. Return a success message and count of inserted chunks.
+
+Raises:
+    - 404 if file or directory is not found.
+    - 400 if neither `file_path` nor `dir_file` is provided.
+
+Dependencies:
+    - FastAPI
+    - SQLite3
+    - Local chunking logic from `chunking_docs`
+    - Utility functions for database operations
+
+Author:
+    ALRashid AlKiswane
 """
 
 import os
@@ -35,7 +58,7 @@ from src.controllers import chunking_docs
 from src import get_db_conn
 
 # Initialize logger and settings
-logger = setup_logging()
+logger = setup_logging(name="CHUNKING-DOCS")
 app_settings: Settings = get_settings()
 
 chunking_route = APIRouter(

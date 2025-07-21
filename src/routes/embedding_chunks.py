@@ -1,19 +1,42 @@
 """
-Chunks to Embedding Vectors API - FastAPI Module
+embedding_chunks_route.py
 
-This module defines a FastAPI POST endpoint that retrieves chunked text data from
-a specified SQLite table and generates embeddings using a HuggingFace model. The
-embeddings are stored in the 'embed_vector' table for use in a graph-based RAG system.
+This module defines the FastAPI route for converting textual document chunks
+into vector embeddings and storing them in a database table (`embed_vector`).
 
-Features:
-- Dependency injection for SQLite connection and embedding model (HuggingFaceModel).
-- Flexible chunk extraction based on table and columns.
-- Embedding generation and insertion into the 'embed_vector' table.
-- Full-level error handling and structured logging for traceability.
+It uses a local HuggingFace embedding model to generate dense vector representations
+of preprocessed document segments retrieved from a SQLite database.
+
+Route:
+    POST /api/v1/chunks_to_embeddings/
+
+Query Parameters (defaults provided in code):
+    - columns (List[str]): Columns to fetch from the source table (default: ["id", "chunk", "dataName"])
+    - table_name (str): Name of the source table to retrieve chunks from (default: "chunks")
+
+Main Workflow:
+    1. Retrieve chunks (text segments) from the specified table and columns.
+    2. Filter out invalid or empty chunks.
+    3. Generate embeddings using a HuggingFace model.
+    4. Serialize the embedding vectors and insert them into the `embed_vector` table.
+    5. Return a count of successfully processed chunks.
 
 Raises:
-- HTTP 500 for database or processing errors.
-- HTTP 504 for embedding timeouts.
+    - 404 if no valid chunks are found.
+    - 500 for database errors or embedding/model failures.
+    - 504 if the embedding process times out.
+
+Dependencies:
+    - FastAPI
+    - HuggingFaceModel (custom embedding provider)
+    - SQLite (via Python’s built-in sqlite3 module)
+    - Custom DB logic from `insert_embed_vector` and `pull_from_table`
+
+Logging:
+    - Logs all major steps and errors with contextual information.
+
+Author:
+    ALRashid AlKiswane
 """
 
 import asyncio
@@ -22,9 +45,17 @@ import sys
 import logging
 import json
 from typing import List
-from sqlite3 import Connection, OperationalError, DatabaseError
+from sqlite3 import (Connection,
+                     OperationalError,
+                     DatabaseError,
+                     )
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import (APIRouter,
+                     HTTPException,
+                     status,
+                     Depends,
+                     )
+
 from fastapi.responses import JSONResponse
 
 # === Project Path Setup ===
@@ -33,7 +64,7 @@ try:
     if MAIN_DIR not in sys.path:
         sys.path.append(MAIN_DIR)
 except Exception as e:
-    logging.critical("🔴 Failed to configure project path: %s", e, exc_info=True)
+    logging.critical("Failed to configure project path: %s", e, exc_info=True)
     sys.exit(1)
 
 # === Project Imports ===
@@ -41,11 +72,10 @@ from src.llms_providers import HuggingFaceModel
 from src.db import pull_from_table, insert_embed_vector
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
-from src import get_db_conn, get_embedding_model, get_faiss_rag
-from src.rag import FaissRAG
+from src import get_db_conn, get_embedding_model
 
 # === Logger & Settings ===
-logger = setup_logging()
+logger = setup_logging(name="EMEBDDING-CHUNKS")
 app_settings: Settings = get_settings()
 
 # === API Router ===
@@ -58,12 +88,10 @@ embedding_chunks_route = APIRouter(
 
 @embedding_chunks_route.post("", response_class=JSONResponse)
 async def chunks_to_embeddings(
-    request: Request,
     columns: List[str] = ["id", "chunk", "dataName"],
     table_name: str = "chunks",
     conn: Connection = Depends(get_db_conn),
     embedding_model: HuggingFaceModel = Depends(get_embedding_model),
-    faiss_rag: FaissRAG = Depends(get_faiss_rag)
 ) -> JSONResponse:
     """
     Retrieve text chunks from a database, generate embeddings,
@@ -74,13 +102,12 @@ async def chunks_to_embeddings(
         table_name (str): Source table for chunks.
         conn (Connection): SQLite DB connection.
         embedding_model (HuggingFaceModel): Embedding model instance.
-        faiss_rag (FaissRAG): FAISS index manager.
 
     Returns:
         JSONResponse: Count of successfully embedded and stored chunks.
     """
     try:
-        logger.info("📦 Retrieving chunks from table '%s' with columns: %s", table_name, columns)
+        logger.info("Retrieving chunks from table '%s' with columns: %s", table_name, columns)
 
         meta_chunks = pull_from_table(conn=conn, columns=columns, table_name=table_name)
         if not meta_chunks:
@@ -96,7 +123,7 @@ async def chunks_to_embeddings(
                 detail="No usable chunk data found."
             )
 
-        logger.debug("🧩 %d valid chunks retrieved. Sample: %s...", len(valid_chunks), valid_chunks[0]['chunk'][:100])
+        logger.debug("%d valid chunks retrieved. Sample: %s...", len(valid_chunks), valid_chunks[0]['chunk'][:100])
 
         processed_count = 0
 
@@ -128,16 +155,12 @@ async def chunks_to_embeddings(
                 if success:
                     processed_count += 1
                 else:
-                    logger.warning("⚠️ Insertion failed for chunk ID %s", chunk_id)
+                    logger.warning("Insertion failed for chunk ID %s", chunk_id)
 
             except Exception as embed_err:
-                logger.error("💥 Embedding error on chunk ID %s: %s", chunk_id, embed_err, exc_info=True)
+                logger.error("Embedding error on chunk ID %s: %s", chunk_id, embed_err, exc_info=True)
 
         logger.info("✅ %d/%d chunks embedded and stored.", processed_count, len(valid_chunks))
-
-        # 🔄 Refresh FAISS internal state
-        faiss_rag.vectors_embedding, faiss_rag.chunk_ids = faiss_rag._fetch_embedding_vectors()
-        faiss_rag.index = faiss_rag._build_faiss_index()
 
         return JSONResponse(
             content={
@@ -149,7 +172,7 @@ async def chunks_to_embeddings(
 
     # --- Error Handling ---
     except (OperationalError, DatabaseError) as db_err:
-        logger.exception("❌ Database error during chunk processing.")
+        logger.exception("Database error during chunk processing.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error during embedding process."
@@ -163,14 +186,14 @@ async def chunks_to_embeddings(
         )
 
     except asyncio.CancelledError:
-        logger.error("🚫 Embedding process was cancelled.")
+        logger.error("Embedding process was cancelled.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Embedding operation was cancelled."
         )
 
     except HTTPException as http_err:
-        logger.warning("⚠️ HTTPException: %s", http_err.detail)
+        logger.warning("HTTPException: %s", http_err.detail)
         raise http_err
 
     except Exception as e:
