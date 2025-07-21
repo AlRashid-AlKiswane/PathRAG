@@ -1,16 +1,51 @@
 """
-System Resource Monitoring Module.
+resource_monitor.py
 
-This module provides the ResourceMonitor class which monitors CPU, memory,
-disk, and GPU usage. It uses psutil and pynvml libraries to gather system
-metrics and logs alerts when usage exceeds configured thresholds.
+System resource monitoring module for tracking CPU, memory, disk, and GPU usage.
 
-Usage:
+This module provides a `ResourceMonitor` class that continuously tracks system resource usage
+and logs warnings when predefined thresholds are exceeded. The monitor supports both CPU and
+GPU (if available) usage statistics using `psutil` and optionally `pynvml`.
+
+Core functionality:
+- Monitor CPU, memory, disk, and GPU utilization in real time.
+- Load usage thresholds and interval settings from a central Settings configuration.
+- Log usage data and alerts with full-color console output and rotating file logs.
+- Modular structure enables embedding into larger observability or watchdog systems.
+
+Main components:
+- `ResourceMonitor`: Central class for monitoring system resource usage.
+- `start_monitoring()`: Main loop for continuous monitoring at configurable intervals.
+- `check_cpu_usage()`, `check_memory_usage()`, `check_disk_usage()`, `check_gpu_usage()`: 
+  Individual resource check functions with threshold alerting and error handling.
+
+Key parameters from settings:
+- `CPU_THRESHOLD`: Float (0.0–1.0) indicating CPU usage alert threshold.
+- `MEMORY_THRESHOLD`: Float for memory usage alert threshold.
+- `DISK_THRESHOLD`: Float for disk usage alert threshold.
+- `GPUs_THRESHOLD`: Float for GPU usage alert threshold.
+- `GPU_AVAILABLE`: Boolean toggle for enabling GPU monitoring.
+- `MONITOR_INTERVAL`: Integer for time interval between resource checks (in seconds).
+
+Dependencies:
+- `psutil`: Used for retrieving CPU, memory, and disk statistics.
+- `pynvml`: Optional. Used for querying NVIDIA GPU utilization.
+- `src.helpers.Settings`: Application configuration loader.
+- `src.infra.setup_logging`: Colorful and rotating logger setup utility.
+
+Usage example:
     monitor = ResourceMonitor()
     monitor.start_monitoring()
 
-Note:
-    GPU monitoring requires NVIDIA drivers and pynvml package installed.
+Logging example:
+    2025-07-21 18:25:43,102 - RESOURCE-MONITOR-CORE - INFO - CPU Usage: 15.37%
+    2025-07-21 18:25:43,104 - RESOURCE-MONITOR-CORE - WARNING - High memory usage detected: 92.15%
+    2025-07-21 18:25:43,106 - RESOURCE-MONITOR-CORE - INFO - Disk Usage: 55.21%
+
+Notes:
+- GPU usage tracking requires `pynvml` and a supported NVIDIA GPU.
+- To gracefully stop monitoring, press Ctrl+C.
+- Designed to be used standalone or integrated into larger observability dashboards.
 """
 
 import time
@@ -32,7 +67,7 @@ except (ModuleNotFoundError, ImportError) as e:
 from src.helpers import Settings, get_settings
 from src.infra import setup_logging
 
-logger = setup_logging()
+logger = setup_logging(name="RESOURCE-MONITOR-CORE")
 
 
 class ResourceMonitor:
