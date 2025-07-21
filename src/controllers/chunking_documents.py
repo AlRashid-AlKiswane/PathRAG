@@ -1,21 +1,43 @@
 """
-Document Processing Module
+Document Chunking Module
 
-This module provides functionality to load and chunk documents (PDF and text) using LangChain.
-It supports loading documents, extracting metadata, and splitting text into manageable chunks
-for use in vector databases or LLM pipelines.
+This module provides functionality to load and chunk documents (PDF or text files)
+into smaller pieces suitable for downstream processing, such as embedding or
+retrieval-augmented generation (RAG).
 
-Features:
-- Supports `.pdf` and `.txt` file formats
-- Configurable chunking parameters via environment settings
-- Lazy logging and comprehensive error handling
+It leverages LangChain community loaders (`PyMuPDFLoader`, `TextLoader`) and
+the `RecursiveCharacterTextSplitter` for chunking.
+
+Main functionality:
+- Load documents from supported file types.
+- Split documents into chunks of configurable size with overlap.
+- Log progress and handle errors gracefully.
+
+Usage:
+- Call `chunking_docs(file_path: str)` with a valid file path to obtain chunked
+  document pieces along with metadata.
+
+Configuration:
+- Supported file extensions and chunk sizes are read from application settings.
+
+Raises:
+- `FileNotFoundError` if the specified file path does not exist.
+- `ValueError` if an unsupported file type is provided or no file path given.
+- `RuntimeError` if loading or chunking the document fails.
+
+Example:
+    result = chunking_docs("/path/to/document.pdf")
+    print(f"Total chunks created: {result['total_chunks']}")
+
+This module requires the `langchain_community` package and the application's
+configuration and logging infrastructure.
 """
 
 import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from langchain_community.document_loaders import PyMuPDFLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -32,7 +54,7 @@ except (ImportError, OSError) as e:
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 
-logger = setup_logging()
+logger = setup_logging(name="CHUNKING-DOCS-CORE")
 app_settings: Settings = get_settings()
 
 def chunking_docs(file_path: Optional[str] = None) -> Dict[str, Any]:

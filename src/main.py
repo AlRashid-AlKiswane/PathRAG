@@ -38,14 +38,12 @@ try:
         get_sqlite_engine,
         init_chunks_table,
         init_embed_vector_table,
-        init_entities_table,
         init_chatbot_table
     )
     from src.routes import (
         upload_route,
         chunking_route,
         embedding_chunks_route,
-        ner_route,
         live_retrieval_route,
         storage_management_route,
         chatbot_route,
@@ -80,7 +78,6 @@ async def lifespan(app: FastAPI):
         # Database table initialization
         init_chunks_table(conn)
         init_embed_vector_table(conn)
-        init_entities_table(conn)
         init_chatbot_table(conn)
         logger.info("✅ All database tables initialized successfully.")
 
@@ -131,7 +128,6 @@ try:
     app.include_router(upload_route)
     app.include_router(chunking_route)
     app.include_router(embedding_chunks_route)
-    app.include_router(ner_route)
     app.include_router(live_retrieval_route)
     app.include_router(storage_management_route)
     app.include_router(chatbot_route)

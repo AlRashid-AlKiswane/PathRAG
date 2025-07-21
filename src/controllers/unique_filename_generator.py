@@ -1,11 +1,32 @@
 """
-File Naming Utility Module
+Unique Filename Generation Module
 
-This module provides functionality to generate unique, sanitized filenames with proper extensions.
-It handles various edge cases and provides fallback mechanisms when filename generation fails.
+This module provides functionality to generate a sanitized and unique filename
+based on an original filename input. It ensures that filenames conform to
+allowed file types, removes or replaces special characters, and appends a
+unique suffix composed of a timestamp and a short UUID.
 
-Functions:
-    generate_unique_filename: Creates a unique sanitized filename with timestamp and UUID suffix.
+Features:
+- Validation of the input filename string.
+- Verification against allowed file extensions from app settings.
+- Sanitization of the filename by replacing non-alphanumeric characters.
+- Appending a timestamp and UUID to ensure uniqueness.
+- Fallback mechanism to generate a safe default filename in case of errors.
+- Detailed logging of processing steps and errors.
+
+Typical usage:
+    new_filename = generate_unique_filename("example document.pdf")
+
+Requirements:
+- Application settings providing allowed FILE_TYPES.
+- Logging configured via the app's infrastructure.
+
+Raises:
+- ValueError if the original filename is invalid.
+
+Example:
+    >>> generate_unique_filename("report 2025.pdf")
+    'report_2025_20250721_123456_a1b2c3d4.pdf'
 """
 
 import os
@@ -30,7 +51,7 @@ from src.helpers import get_settings, Settings
 
 # Initialize application settings and logger
 app_settings: Settings = get_settings()
-logger = setup_logging()
+logger = setup_logging(name="GET-UNIQUE-FILE-NAME")
 
 
 def generate_unique_filename(original_filename: str) -> str:
@@ -115,25 +136,3 @@ def generate_unique_filename(original_filename: str) -> str:
         )
         logger.warning("Using fallback filename: %s", fallback_name)
         return fallback_name
-
-if __name__ == "__main__":
-    # Example usage
-    test_filenames = [
-        "document.pdf",
-        "my file with spaces.txt",
-        "invalid@name.jpg",
-        "",
-        "noextension",
-        None,
-        12345  # invalid type
-    ]
-
-    for filename in test_filenames:
-        try:
-            print(f"Original: {filename!r}")
-            result = generate_unique_filename(
-                filename) if isinstance(filename, str) else "Invalid input"
-            print(f"Generated: {result}\n")
-        # pylint: disable=broad-exception-caught
-        except Exception as e:
-            print(f"Error processing {filename!r}: {e}\n")
