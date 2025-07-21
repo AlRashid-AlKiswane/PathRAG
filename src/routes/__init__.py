@@ -20,7 +20,6 @@ This module centralizes route imports to simplify app router registration.
 from .upload_files import upload_route
 from .chunking_docs import chunking_route
 from .embedding_chunks import embedding_chunks_route
-from ...LightRAG.chunks_intites import ner_route
 from .live_retrevel import live_retrieval_route
 from .storage_management import storage_management_route
 from .chatbot import chatbot_route
@@ -31,7 +30,6 @@ __all__ = [
     "upload_route",
     "chunking_route",
     "embedding_chunks_route",
-    "ner_route",
     "live_retrieval_route",
     "storage_management_route",
     "chatbot_route",
