@@ -8,7 +8,7 @@ It encapsulates reusable prompt formatting logic inside an enumeration class (`P
 which allows different types of structured prompts to be composed dynamically based on the use case.
 
 Classes:
-    PromptOllama (Enum): An enumeration of prompt types for LLM interactions.
+    PromptOllama (Enum-like): A class encapsulating prompt types for LLM interactions.
         - RAG_QA: Template for answering user questions using retrieved context from a knowledge base.
 
 Example usage:
@@ -44,9 +44,9 @@ class PromptOllama:
             str: A formatted prompt string for the LLM.
         """
         system_instruction = (
-            "You are a helpful chatbot assistant. Use the provided context to answer the user's question. "
-            "Be specific, accurate, and direct. "
-            "If the answer is not in the context, respond with: \"I don't know.\""
+            "You are a knowledgeable and helpful AI assistant. Use the provided context to help answer the user's question. "
+            "If the context is incomplete, make your best effort to provide a coherent and helpful response based on your general knowledge. "
+            "Never say 'I don't know'."
         )
 
         prompt_parts = [
