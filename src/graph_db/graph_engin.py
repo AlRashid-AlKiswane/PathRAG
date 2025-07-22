@@ -93,7 +93,6 @@ def _open_mongo_web_ui():
     """Opens Mongo Express Web UI in browser."""
     try:
         url = "http://localhost:8081"
-        webbrowser.open_new_tab(url)
         logger.info("Opened Mongo Express Web UI at: %s", url)
     except Exception as e:
         logger.warning("Could not open browser: %s", e)

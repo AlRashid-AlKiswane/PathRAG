@@ -40,6 +40,7 @@ from .graph_insert import (
     insert_embed_vector_to_mongo,
 )
 from .graph_engin import get_mongo_client
+from .graph_pull_from_collection import pull_from_collection
 
 __all__ = [
     "clear_collection",
@@ -50,4 +51,5 @@ __all__ = [
     "insert_chunk_to_mongo",
     "insert_embed_vector_to_mongo",
     "get_mongo_client",
+    "pull_from_collection"
 ]

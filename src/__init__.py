@@ -20,7 +20,7 @@ Imported here for convenient direct access:
 """
 
 from .dependencies import (
-    get_db_conn,
+    get_mongo_db,
     get_llm,
     get_embedding_model,
     get_path_rag

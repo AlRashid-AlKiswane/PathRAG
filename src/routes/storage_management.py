@@ -1,40 +1,43 @@
 """
 storage_management_route.py
 
-This module defines an API route for managing storage tables in the system's SQLite database.
-It provides options to clear specific tables or perform a full reset of all relevant data tables.
+This module defines an API route for managing storage tables in the system's MongoDB database.
+It provides options to clear specific collections or perform a full reset of all relevant data collections.
 
 Endpoint:
-    POST /api/v1/storage-management/
+    POST /api/v1/management-storage/
 
 Parameters:
-    - do_erase_all (bool): Clears all relevant tables: `chunks`, `embed_vector`, and `chatbot`.
-    - reset_chunks (bool): Clears only the `chunks` table (default: True).
-    - reset_embeddings (bool): Clears only the `embed_vector` table.
-    - reset_chatbot_history (bool): Clears only the `chatbot` table.
+    - do_erase_all (bool): Clears all relevant collections: `chunks`, `embed_vector`, and `chatbot`.
+    - reset_chunks (bool): Clears only the `chunks` collection (default: True).
+    - reset_embeddings (bool): Clears only the `embed_vector` collection.
+    - reset_chatbot_history (bool): Clears only the `chatbot` collection.
 
 Returns:
-    JSONResponse: A message indicating which tables were successfully reset.
-    - 200: Tables were cleared successfully.
+    JSONResponse: A message indicating which collections were successfully reset.
+    - 200: Collections were cleared successfully.
     - 400: No reset flags were provided; no action taken.
     - 500: A database or unexpected server error occurred.
 
 Functionality:
-    - Uses dependency-injected SQLite connection.
-    - Calls `clear_table()` utility from `src.db` to delete table contents.
+    - Uses dependency-injected MongoDB client.
+    - Calls `clear_collection()` utility from `src.graph_db` to delete collection contents.
     - Logs each operation at info/debug/warning levels.
     - Handles database and operational errors gracefully.
 
 Dependencies:
     - FastAPI
-    - SQLite
-    - Custom project utilities (`clear_table`, `setup_logging`, `get_db_conn`)
+    - MongoDB (via pymongo)
+    - Custom project utilities (`clear_collection`, `setup_logging`, `get_mongo_db`)
 """
 
 import os
 import sys
 import logging
-from sqlite3 import Connection, OperationalError, DatabaseError
+from typing import List
+
+from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import JSONResponse
@@ -49,9 +52,9 @@ except Exception as e:
     sys.exit(1)
 
 # === Project Imports ===
-from src.db import clear_table
+from src.graph_db import clear_collection
 from src.infra import setup_logging
-from src import get_db_conn
+from src import get_mongo_db
 
 # === Logger Setup ===
 logger = setup_logging(name="MANAGEMENT-STORAGE")
@@ -60,87 +63,86 @@ logger = setup_logging(name="MANAGEMENT-STORAGE")
 storage_management_route = APIRouter(
     prefix="/api/v1/management-storage",
     tags=["Management Storage"],
-    responses={404: {"description": "Not found"}}
+    responses={404: {"description": "Not found"}},
 )
 
 
-@storage_management_route.post("")
+@storage_management_route.post("", response_class=JSONResponse)
 async def storage_management(
     do_erase_all: bool = False,
     reset_chunks: bool = True,
     reset_embeddings: bool = False,
     reset_chatbot_history: bool = False,
-    conn: Connection = Depends(get_db_conn)
-):
+    db: MongoClient = Depends(get_mongo_db),
+) -> JSONResponse:
     """
-    Manage and optionally reset storage tables in the database.
+    Manage and optionally reset storage collections in the MongoDB database.
 
     Args:
-        do_erase_all (bool): If True, clears all relevant tables: 'chunks', 'embed_vector', 'chatbot'.
-        reset_chunks (bool): If True, clears only the 'chunks' table.
-        reset_embeddings (bool): If True, clears only the 'embed_vector' table.
-        reset_chatbot_history (bool): If True, clears only the 'chatbot' table.
-        conn (Connection): SQLite database connection, injected by dependency.
+        do_erase_all (bool): If True, clears all relevant collections: 'chunks', 'embed_vector', 'chatbot'.
+        reset_chunks (bool): If True, clears only the 'chunks' collection.
+        reset_embeddings (bool): If True, clears only the 'embed_vector' collection.
+        reset_chatbot_history (bool): If True, clears only the 'chatbot' collection.
+        db (MongoClient): MongoDB client, injected by dependency.
 
     Returns:
-        JSONResponse: Operation result with a list of affected tables and success message.
+        JSONResponse: Operation result with a list of affected collections and success message.
 
     Raises:
         HTTPException: With appropriate status code for database or unexpected errors.
     """
     try:
-        affected_tables = []
+        affected_collections: List[str] = []
 
         if do_erase_all:
-            tables = ["chunks", "embed_vector", "chatbot"]
-            logger.info("Initiating full reset of all storage tables.")
-            for table in tables:
-                clear_table(conn=conn, table_name=table)
-                affected_tables.append(table)
-                logger.debug("Cleared table: %s", table)
-
+            collections = ["chunks", "embed_vector", "chatbot"]
+            logger.info("Initiating full reset of all storage collections.")
+            for collection in collections:
+                clear_collection(db=db, collection_name=collection)
+                affected_collections.append(collection)
+                logger.debug("Cleared collection: %s", collection)
         else:
             if reset_chunks:
-                clear_table(conn=conn, table_name="chunks")
-                affected_tables.append("chunks")
-                logger.debug("Cleared table: chunks")
+                clear_collection(db=db, collection_name="chunks")
+                affected_collections.append("chunks")
+                logger.debug("Cleared collection: chunks")
 
             if reset_embeddings:
-                clear_table(conn=conn, table_name="embed_vector")
-                affected_tables.append("embed_vector")
-                logger.debug("Cleared table: embed_vector")
+                clear_collection(db=db, collection_name="embed_vector")
+                affected_collections.append("embed_vector")
+                logger.debug("Cleared collection: embed_vector")
 
             if reset_chatbot_history:
-                clear_table(conn=conn, table_name="chatbot")
-                affected_tables.append("chatbot")
-                logger.debug("Cleared table: chatbot")
+                clear_collection(db=db, collection_name="chatbot")
+                affected_collections.append("chatbot")
+                logger.debug("Cleared collection: chatbot")
 
-        if not affected_tables:
-            logger.warning("No table reset flags set. No tables were cleared.")
+        if not affected_collections:
+            logger.warning("No collection reset flags set. No collections were cleared.")
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                content={"detail": "No reset flag provided. Specify at least one table to reset."}
+                content={"detail": "No reset flag provided. Specify at least one collection to reset."},
             )
 
-        logger.info("Storage management operation completed. Tables affected: %s", affected_tables)
+        logger.info("Storage management operation completed. Collections affected: %s", affected_collections)
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content={
-                "message": "Tables reset successfully.",
-                "tables_affected": affected_tables
-            }
+                "message": "Collections reset successfully.",
+                "collections_affected": affected_collections,
+            },
         )
 
-    except (OperationalError, DatabaseError) as db_err:
-        logger.error("Database error during table reset: %s", db_err, exc_info=True)
+    except PyMongoError as mongo_err:
+        logger.error("Database error during collection reset: %s", mongo_err, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error occurred during table reset."
+            detail="Database error occurred during collection reset.",
         )
 
     except Exception as e:
         logger.critical("Unexpected error in storage management: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Unexpected error occurred during storage management."
+            detail="Unexpected error occurred during storage management.",
         )

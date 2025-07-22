@@ -38,7 +38,6 @@ class Settings(BaseSettings):
     Provides validation and type checking for all application parameters.
 
     Attributes:
-        SQLITE_DB (str): SQLite database file path or URI.
         FILE_TYPES (List[str]): Allowed file types for document processing.
         DOC_LOCATION_STORE (Path): Directory path where documents are stored.
         CHUNKS_SIZE (int): Max characters per document chunk.
@@ -65,12 +64,10 @@ class Settings(BaseSettings):
     # -----------------------------
     # Database Configuration
     # -----------------------------
-    SQLITE_DB: str = Field(
-        ...,
-        env="SQLITE_DB",
-        description="SQLite database file path or URI."
-    )
-
+    MONGO_USE_LOCAL: bool = Field(..., env="MONGO_USE_LOCAL")
+    MONGO_LOCAL_URI: str = Field(..., env="MONGO_LOCAL_URI")
+    MONGO_REMOTE_URI: str = Field(..., env="MONGO_REMOTE_URI")
+    MONGO_ENABLE_WEBUI: bool = Field(..., env="MONGO_ENABLE_WEBUI")
     # -----------------------------
     # Document Handling
     # -----------------------------

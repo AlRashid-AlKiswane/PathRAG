@@ -87,8 +87,6 @@ class TextCleaner:
         Raises:
             ValueError: If the input is not a string.
         """
-        logger.debug("Starting text cleaning...")
-
         if not isinstance(text, str):
             logger.error("Input must be a string, got %s", type(text))
             raise ValueError("Input must be a string.")
@@ -96,44 +94,33 @@ class TextCleaner:
         try:
             # Step 1: Unicode normalization
             text = unicodedata.normalize("NFKC", text)
-            logger.debug("Applied Unicode normalization.")
 
             # Step 2: Optional HTML stripping
             if self.remove_html:
                 text = BeautifulSoup(text, "html.parser").get_text()
-                logger.debug("Removed HTML content.")
 
             # Step 3: Lowercase (if configured)
             if self.lowercase:
                 text = text.lower()
-                logger.debug("Converted text to lowercase.")
 
             # Step 4: Remove URLs
             text = re.sub(r'https?://\S+|www\.\S+', ' ', text)
-            logger.debug("Removed URLs.")
 
             # Step 5: Remove file paths (Unix & Windows)
             text = re.sub(r'([a-zA-Z]:)?(\/|\\)[\w\/\\\.\-]+', ' ', text)
-            logger.debug("Removed file paths.")
 
             # Step 6: Remove bracketed citations like [1], [note]
             text = re.sub(r'\[\s*[^]]+\s*\]', ' ', text)
-            logger.debug("Removed bracketed citations.")
 
             # Step 7: Remove line breaks and tabs
             text = text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
-            logger.debug("Removed newlines and tabs.")
 
             # Step 8: Remove non-ASCII (optional)
             if self.remove_non_ascii:
                 text = re.sub(r'[^\x00-\x7F]+', ' ', text)
-                logger.debug("Removed non-ASCII characters.")
 
             # Step 9: Collapse redundant whitespace
             text = re.sub(r'\s+', ' ', text).strip()
-            logger.debug("Collapsed whitespace.")
-
-            logger.info("Text cleaning completed successfully.")
             return text
 
         except Exception as e:

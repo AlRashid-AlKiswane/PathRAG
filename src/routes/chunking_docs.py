@@ -1,34 +1,20 @@
 """
 chunking_route.py
 
-This module defines the API route for performing document chunking operations
-on either individual files or entire directories. It supports storing the resulting
-chunks into a SQLite database and optionally clearing existing entries before processing.
+API route for chunking documents from single files or directories,
+inserting chunks into MongoDB, with optional table reset.
 
 Route:
     POST /api/v1/chunk/
 
-Supported Query Parameters:
-    - file_path (str, optional): Full path to a single document file to process.
-    - dir_file (str, optional): Name of subdirectory inside `assets/docs/` to batch-process all files.
-    - reset_table (bool, default=False): If True, clears the `chunks` table before inserting new entries.
-
-Main Functional Steps:
-    1. Optionally reset the chunks table.
-    2. Chunk a single file (if `file_path` is provided).
-    3. Chunk all files in a directory (if `dir_file` is provided).
-    4. Insert the generated chunks into the `chunks` table.
-    5. Return a success message and count of inserted chunks.
+Query Params:
+    - file_path (str, optional): Full path to single document file.
+    - dir_file (str, optional): Subdirectory inside 'assets/docs' to process all files.
+    - reset_table (bool, default=False): Clear 'chunks' collection before inserting.
 
 Raises:
-    - 404 if file or directory is not found.
-    - 400 if neither `file_path` nor `dir_file` is provided.
-
-Dependencies:
-    - FastAPI
-    - SQLite3
-    - Local chunking logic from `chunking_docs`
-    - Utility functions for database operations
+    - 404 if file or directory not found.
+    - 400 if neither file_path nor dir_file provided.
 
 Author:
     ALRashid AlKiswane
@@ -36,8 +22,9 @@ Author:
 
 import os
 import sys
+import uuid
 from typing import Optional
-from sqlite3 import Connection
+from pymongo import MongoClient
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -53,11 +40,11 @@ except Exception as e:
     sys.exit(1)
 
 # === Project Imports ===
-from src.db import insert_chunk, clear_table
+from src.graph_db import insert_chunk_to_mongo, clear_collection
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 from src.controllers import chunking_docs, TextCleaner
-from src import get_db_conn
+from src import get_mongo_db
 
 # === Logger and Settings ===
 logger = setup_logging(name="CHUNKING-DOCS")
@@ -70,76 +57,106 @@ chunking_route = APIRouter(
     responses={404: {"description": "Not found"}}
 )
 
-
 @chunking_route.post("/", response_class=JSONResponse)
-async def chunking(file_path: Optional[str] = None,
-                   dir_file: Optional[str] = None,
-                   reset_table: bool = False,
-                   conn: Connection = Depends(get_db_conn)):
+async def chunking(
+    file_path: Optional[str] = None,
+    dir_file: Optional[str] = None,
+    reset_table: bool = False,
+    db: MongoClient = Depends(get_mongo_db)
+) -> JSONResponse:
     """
-    Process a single file or an entire directory for document chunking and store the chunks.
+    Chunk a single file or all files in a directory and store chunks in MongoDB.
 
     Args:
-        file_path (Optional[str]): Full path to a single document file to be chunked.
-        dir_file (Optional[str]): Subdirectory inside 'assets/docs' to process all contained files.
-        reset_table (bool): If True, clears the 'chunks' table before inserting.
-        conn (Connection): Active SQLite connection injected by FastAPI.
+        file_path (Optional[str]): Path to single document file to chunk.
+        dir_file (Optional[str]): Subdirectory inside 'assets/docs' for batch chunking.
+        reset_table (bool): If True, clears 'chunks' collection before inserting.
+        db (MongoClient): MongoDB database handle injected by FastAPI dependency.
 
     Returns:
-        JSONResponse: Summary message indicating the success and total processed chunks.
+        JSONResponse: Message with success status and total chunks inserted.
+
+    Raises:
+        HTTPException: If input parameters are invalid or files/directories not found.
     """
     total_chunks_inserted = 0
 
     if reset_table:
-        clear_table(conn=conn, table_name="chunks")
-        logger.info("Removed all entries from 'chunks' table before inserting new ones.")
+        try:
+            clear_collection(db=db, collection_name="chunks")
+            logger.info("Cleared 'chunks' collection before inserting new chunks.")
+        except Exception as e:
+            logger.error(f"Failed to clear 'chunks' collection: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail="Failed to reset chunks collection.")
 
-    # Single file processing
+    text_cleaner = TextCleaner(lowercase=True)
+
+    # Process a single file
     if file_path:
-        if not os.path.exists(file_path):
+        if not os.path.isfile(file_path):
+            logger.error(f"File not found: {file_path}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"File not found: {file_path}"
             )
 
-        meta = chunking_docs(file_path=file_path)
-        for chunk in tqdm(meta["chunks"], desc="Chunking Single File", unit="chunk"):
-            text_clear = TextCleaner(lowercase=True)
-            insert_chunk(conn=conn,
-                         chunk=text_clear.clean(chunk.page_content),
-                         file=file_path,
-                         dataName=dir_file or "unknown")
-            total_chunks_inserted += 1
+        logger.info(f"Starting chunking for single file: {file_path}")
+        try:
+            meta = chunking_docs(file_path=file_path)
+            for chunk in tqdm(meta["chunks"], desc="Chunking Single File", unit="chunk"):
+                cleaned_text = text_cleaner.clean(chunk.page_content)
+                doc_id = str(uuid.uuid4())
+                insert_chunk_to_mongo(
+                    db=db,
+                    chunk=cleaned_text,
+                    file=file_path,
+                    data_name="single_file",
+                    doc_id=doc_id
+                )
+                total_chunks_inserted += 1
+        except Exception as e:
+            logger.error(f"Error chunking file {file_path}: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Chunking failed for file {file_path}")
 
-    # Directory-based processing
+    # Process all files in directory
     elif dir_file:
         dir_path = os.path.join(MAIN_DIR, "assets/docs", dir_file)
-        if not os.path.exists(dir_path):
+        if not os.path.isdir(dir_path):
+            logger.error(f"Directory not found: {dir_path}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Directory not found: {dir_path}"
             )
 
+        logger.info(f"Starting chunking for directory: {dir_path}")
         files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
-
         for filename in tqdm(files, desc="Chunking Files in Directory", unit="file"):
             full_path = os.path.join(dir_path, filename)
             try:
                 meta = chunking_docs(file_path=full_path)
                 for chunk in meta["chunks"]:
-                    insert_chunk(conn=conn,
-                                 chunk=chunk.page_content,
-                                 file=full_path,
-                                 dataName=dir_file)
+                    cleaned_text = text_cleaner.clean(chunk.page_content)
+                    doc_id = str(uuid.uuid4())
+                    insert_chunk_to_mongo(
+                        db=db,
+                        chunk=cleaned_text,
+                        file=full_path,
+                        data_name=dir_file,
+                        doc_id=doc_id
+                    )
                     total_chunks_inserted += 1
             except Exception as e:
                 tqdm.write(f"[ERROR] Failed to process file {filename}: {e}")
+                logger.error(f"Failed to chunk file {filename} in directory {dir_path}: {e}", exc_info=True)
 
     else:
+        logger.error("Neither 'file_path' nor 'dir_file' was provided.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Either 'file_path' or 'dir_file' must be provided."
         )
+
+    logger.info(f"Chunking completed. Total chunks inserted: {total_chunks_inserted}")
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,

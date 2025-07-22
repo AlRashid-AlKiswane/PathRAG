@@ -1,74 +1,80 @@
 """
 chatbot_route.py
 
-This module defines the FastAPI route for interacting with the chatbot using
-Retrieval-Augmented Generation (RAG) powered by a local Ollama LLM and a semantic
-graph engine (PathRAG).
+This module implements the FastAPI endpoint for interacting with a chatbot powered by
+Retrieval-Augmented Generation (RAG). It leverages a local Ollama LLM along with a 
+semantic graph engine (PathRAG) to generate high-quality, context-aware answers to user queries.
 
-The route `/api/v1/chatbot` accepts user queries, retrieves semantically relevant
-context using a path-aware graph traversal strategy, constructs a prompt, and
-generates a response using a local language model.
+The endpoint accepts structured input (query, user ID, LLM parameters, etc.), optionally 
+checks for a cached response in MongoDB, performs semantic retrieval from a knowledge graph,
+constructs a prompt, and invokes a local language model to generate a relevant reply.
 
-Main Functional Steps:
-    1. Optionally check the cache for an existing response (by user ID and query).
-    2. Retrieve relevant nodes and paths using the PathRAG semantic graph engine.
-    3. Score and filter paths to extract meaningful context.
-    4. Generate a prompt for the LLM based on the retrieved context.
-    5. Call the Ollama LLM to generate a response.
-    6. Cache/store the result in the database for future reuse.
+Features:
+---------
+- Retrieval-augmented generation using PathRAG graph reasoning.
+- Prompt creation based on scored and pruned semantic paths.
+- Integration with a local Ollama LLM model.
+- Optional response caching in MongoDB.
+- Comprehensive logging and error handling.
 
 Route:
+------
     POST /api/v1/chatbot
 
-Expected Payload (schema: Chatbot):
-    - query: str
-    - user_id: str
-    - top_k: int
-    - max_hop: Optional[int]
-    - temperature: float
-    - max_new_tokens: int
-    - max_input_tokens: int
-    - cache: bool
+Input Schema (Chatbot):
+-----------------------
+- query: str - The user’s natural language question.
+- user_id: str - A unique identifier for the user (used for caching).
+- top_k: int - Number of top relevant chunks to retrieve.
+- max_hop: Optional[int] - Maximum hops allowed in graph traversal.
+- temperature: float - LLM response sampling temperature.
+- max_new_tokens: int - Max number of new tokens to generate.
+- max_input_tokens: int - Token limit for input prompt.
+- cache: bool - Whether to enable response caching.
 
-Response:
-    JSON with:
-        - "response": The generated text from the LLM.
-        - "cached": Whether the response came from cache.
+Output:
+-------
+JSON response containing:
+- "response": Generated text response from the LLM.
+- "cached": Boolean indicating if response came from cache.
 
-Modules & Dependencies:
-    - FastAPI
-    - SQLite3
-    - OllamaModel
-    - PathRAG
-    - PromptOllama
-    - App settings and logging via `infra` and `helpers`
+Dependencies:
+-------------
+- FastAPI
+- MongoDB (via PyMongo or Motor)
+- src.rag.PathRAG for graph-based retrieval
+- src.llms_providers.OllamaModel for local inference
+- src.prompt.PromptOllama for dynamic prompt formatting
+- src.graph_db for MongoDB storage
+- src.helpers and src.infra for configuration and logging
 
 Author:
-    ALRashid AlKiswane
+-------
+ALRashid AlKiswane
 """
 
 import os
 import sys
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
-from sqlite3 import Connection
+from pymongo import MongoClient
 
 # Set up project base directory
 try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-    sys.path.append(MAIN_DIR)
+    if MAIN_DIR not in sys.path:
+        sys.path.append(MAIN_DIR)
 except (ImportError, OSError) as e:
     logging.error("Failed to set up main directory path: %s", e)
     sys.exit(1)
 
-# pylint: disable=wrong-import-position
 from src.llms_providers import OllamaModel
-from src.db import insert_chatbot_entry
+from src.graph_db import insert_chatbot_entry_to_mongo
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
-from src import (get_db_conn, get_llm, get_path_rag)
+from src import get_mongo_db, get_llm, get_path_rag
 
 from src.rag import PathRAG
 from src.prompt import PromptOllama
@@ -85,23 +91,19 @@ chatbot_route = APIRouter(
 )
 
 
-# === Endpoint ===
 @chatbot_route.post("", response_class=JSONResponse)
 async def chatbot(
     body: Chatbot,
-    conn: Connection = Depends(get_db_conn),
+    db: MongoClient = Depends(get_mongo_db),
     llm: OllamaModel = Depends(get_llm),
     pathrag: PathRAG = Depends(get_path_rag)
 ) -> JSONResponse:
     """
     Handles chatbot requests using retrieval-augmented generation (RAG) and a local LLM.
 
-    Uses semantic graph traversal (PathRAG) to gather contextual information before generating
-    an answer using the local Ollama model. Caches responses if enabled.
-
     Args:
         body (Chatbot): Input payload including query, top_k, temperature, max_tokens, user_id, and caching options.
-        conn (Connection): SQLite connection dependency.
+        db (MongoClient): MongoDB client, injected by dependency.
         llm (OllamaModel): Injected local LLM instance (Ollama).
         pathrag (PathRAG): Path-aware RAG engine from app state.
 
@@ -109,10 +111,10 @@ async def chatbot(
         JSONResponse: Generated answer and cache status.
     """
     try:
-        # === Unpack request body ===
+        # Unpack request body
         query = body.query
         top_k = body.top_k
-        max_hop = body.max_hop or 2  # Ensure default
+        max_hop = body.max_hop or 2  # default hops
         temperature = body.temperature
         max_new_tokens = body.max_new_tokens
         max_input_tokens = body.max_input_tokens
@@ -121,20 +123,16 @@ async def chatbot(
 
         logger.info("Chatbot request | user_id='%s' | query='%s' | cache=%s", user_id, query, cache)
 
-        # === Step 1: Check Cache ===
+        # Step 1: Check Cache
         if cache:
-            logger.debug("Checking cache for user_id='%s' and query='%s'", user_id, query)
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT llm_response FROM chatbot WHERE user_id = ? AND query = ?",
-                (user_id, query)
-            )
-            row = cursor.fetchone()
-            if row:
-                logger.info("Cache hit. Returning cached response.")
-                return JSONResponse(content={"response": row[0], "cached": True})
+            cached_entry = await check_cache(db, user_id, query)
+            if cached_entry:
+                logger.info("Cache hit for user_id='%s' and query='%s'", user_id, query)
+                return JSONResponse(content={"response": cached_entry["llm_response"], "cached": True})
+            else:
+                logger.debug("Cache miss for user_id='%s' and query='%s'", user_id, query)
 
-        # === Step 2: Semantic Retrieval ===
+        # Step 2: Semantic Retrieval
         logger.debug("Performing semantic retrieval using PathRAG.")
         nodes = pathrag.retrieve_nodes(query=query, top_k=top_k)
         paths = pathrag.prune_paths(nodes=nodes, max_hops=max_hop)
@@ -147,15 +145,15 @@ async def chatbot(
             )
 
         scored_paths = pathrag.score_paths(paths)
-        final_retreval = pathrag.generate_prompt(query=query, scored_paths=scored_paths)
+        final_retrieval = pathrag.generate_prompt(query=query, scored_paths=scored_paths)
         logger.info("Retrieved and scored %d semantic paths.", len(scored_paths))
 
-        # === Step 3: Prompt Generation ===
+        # Step 3: Prompt Generation
         logger.debug("Generating prompt from top paths.")
         prompt_template = PromptOllama()
-        prompt = prompt_template.prompt(query=query, retrieval_context=final_retreval)
+        prompt = prompt_template.prompt(query=query, retrieval_context=final_retrieval)
 
-        # === Step 4: Generate LLM Response ===
+        # Step 4: Generate LLM Response
         logger.debug("Calling Ollama LLM to generate response.")
         llm_response = llm.generate(
             prompt=prompt,
@@ -170,24 +168,24 @@ async def chatbot(
 
         logger.info("LLM response generated successfully.")
 
-        # === Step 5: Store in Cache/Log ===
+        # Step 5: Store in Cache/Log
         try:
-            success = insert_chatbot_entry(
-                conn=conn,
+            success = insert_chatbot_entry_to_mongo(
+                db=db,
                 user_id=user_id,
                 query=query,
                 llm_response=llm_response,
-                retrieval_context=final_retreval,
-                retrieval_rank=0  # Single combined retrieval, not per-chunk
+                retrieval_context=final_retrieval,
+                retrieval_rank=0,  # single combined retrieval rank
+                doc_id=None,       # No specific doc id for combined retrieval
             )
             if not success:
                 logger.warning("Failed to insert chatbot entry for user_id='%s'", user_id)
-            conn.commit()
-            logger.debug("💾 Chatbot entry committed to database.")
+            else:
+                logger.debug("💾 Chatbot entry committed to database.")
         except Exception as db_err:
-            logger.exception("Failed to store chatbot entry in DB: %s", str(db_err))
+            logger.exception("Failed to store chatbot entry in DB: %s", db_err)
 
-        # Final response after successful generation and DB storage
         return JSONResponse(content={"response": llm_response, "cached": False})
 
     except HTTPException as http_err:
@@ -195,8 +193,28 @@ async def chatbot(
         raise
 
     except Exception as e:
-        logger.exception("Unexpected error in chatbot route: %s", str(e))
+        logger.exception("Unexpected error in chatbot route: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during chatbot operation."
         )
+
+
+async def check_cache(db: MongoClient, user_id: str, query: str) -> Optional[dict]:
+    """
+    Checks the database for a cached chatbot response matching user_id and query.
+
+    Args:
+        db (MongoClient): MongoDB client.
+        user_id (str): User identifier.
+        query (str): User query text.
+
+    Returns:
+        Optional[dict]: Cached entry document or None if not found.
+    """
+    try:
+        cached = await db.chatbot.find_one({"user_id": user_id, "query": query})
+        return cached
+    except Exception as e:
+        logger.error("Error checking cache for user_id='%s' query='%s': %s", user_id, query, e)
+        return None

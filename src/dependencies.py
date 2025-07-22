@@ -1,69 +1,46 @@
 """
-This module provides utility functions to retrieve core application components
-from the FastAPI application state during request handling. 
+dependents.py
 
-Specifically, it handles access to:
+This module provides dependency-injection functions for FastAPI routes to retrieve
+essential services stored in the application state (`app.state`). These services
+are initialized during application startup and reused across all endpoints.
 
-- SQLite database connection (`sqlite3.Connection`):  
-  Ensures a persistent connection is available for executing database queries.
+Services Provided:
+------------------
+- get_mongo_db: Retrieves the active MongoDB client/connection.
+- get_llm: Retrieves the OllamaModel instance for language generation.
+- get_embedding_model: Retrieves the HuggingFaceModel instance for embeddings.
+- get_path_rag: Retrieves the initialized PathRAG engine for semantic graph reasoning.
 
-- Ollama language model instance (`OllamaModel`):  
-  Provides access to the configured LLM backend for natural language generation.
-
-- HuggingFace embedding model instance (`HuggingFaceModel`):  
-  Used for embedding generation for semantic search or vector-based retrieval.
-
-- PathRAG instance (`PathRAG`):  
-  Supports Path-aware Retrieval-Augmented Generation for complex multi-hop reasoning.
-
-Each retrieval function accepts the current FastAPI `Request` object, extracts the 
-corresponding component from the `app.state` container, performs validation, and 
-raises an HTTPException with appropriate status codes and error messages in case 
-of missing or invalid components.
-
-Error Handling:
-- If a requested component is not found or invalid in the application state, 
-  a 503 Service Unavailable response is raised.
-- If an unexpected error occurs during retrieval, a 500 Internal Server Error 
-  is raised with logging of the exception details.
-
-Logging:
-- All retrieval attempts, successes, and failures are logged using the configured 
-  logger.
-- Critical failures during project path setup cause the application to exit 
-  with logged stack traces.
-
-Project Path Setup:
-- Adjusts the Python module search path to include the main project directory, 
-  enabling relative imports from the `src` package.
-
-Dependencies:
-- `fastapi.Request` and `fastapi.HTTPException` for request context and error handling.
-- `sqlite3` for database connection typing.
-- Project-specific modules:
-  - `src.infra.setup_logging` for logger configuration.
-  - `src.llms_providers.OllamaModel` and `HuggingFaceModel` for LLM and embedding models.
-  - `src.rag.PathRAG` for the Path-aware RAG system.
+Each function checks whether the component exists in app state and raises an
+appropriate HTTPException (503 if missing, 500 if error occurs during retrieval).
 
 Usage:
-These functions are intended to be used inside FastAPI route handlers or middleware
-to safely obtain core service instances from the application state, abstracting away
-direct state access and centralizing error handling.
+------
+These dependencies are designed for use with FastAPI's `Depends()` system. Example:
 
-Example:
-    def some_route_handler(request: Request):
-        db_conn = get_db_conn(request)
-        llm = get_llm(request)
-        embedding_model = get_embedding_model(request)
-        path_rag = get_path_rag(request)
-        # use these components to process the request...
+    from fastapi import Depends
+    from .dependents import get_mongo_db
 
+    @app.get("/documents")
+    async def get_documents(db=Depends(get_mongo_db)):
+        # Use db to query MongoDB
+        pass
+
+Raises:
+-------
+- HTTPException(503): If the component is missing in app state.
+- HTTPException(500): If an unexpected internal error occurs.
+
+Author:
+-------
+ALRashid AlKiswane
 """
 
 import logging
 import os
 import sys
-import sqlite3
+from  pymongo import MongoClient
 
 from fastapi import Request, HTTPException
 from starlette.status import (
@@ -86,38 +63,38 @@ from src.llms_providers import OllamaModel, HuggingFaceModel
 from src.rag import PathRAG
 logger = setup_logging(name="DEPENDENTS")
 
-def get_db_conn(request: Request) -> sqlite3.Connection:
+def get_mongo_db(request: Request) -> MongoClient:
     """
-    Retrieve the active SQLite database connection from the FastAPI app state.
+    Retrieve the active MongoDB client/database from the FastAPI app state.
 
     Args:
         request (Request): The current FastAPI request object.
 
     Returns:
-        sqlite3.Connection: A live SQLite database connection.
+        MongoClient: The MongoDB client or database instance stored in app state.
 
     Raises:
-        HTTPException: 
-            - 503 if the database connection is not available in app state.
+        HTTPException:
+            - 503 if the MongoDB client/database is not available in app state.
             - 500 if an unexpected internal error occurs.
     """
     try:
-        conn = getattr(request.app.state, "conn", None)
-        if not conn:
-            logger.error("Database connection not found in app state.")
+        db = getattr(request.app.state, "db", None)
+        if db is None:
+            logger.error("MongoDB database handle not found in app state.")
             raise HTTPException(
                 status_code=HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Database connection is unavailable."
+                detail="MongoDB connection is unavailable."
             )
-        logger.debug("Database connection retrieved successfully.")
-        return conn
+        logger.debug("MongoDB database handle retrieved successfully.")
+        return db
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception("Unexpected error retrieving database connection.")
+        logger.exception("Unexpected error retrieving MongoDB connection.")
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while accessing the database connection."
+            detail="Internal server error while accessing the MongoDB connection."
         ) from e
 
 

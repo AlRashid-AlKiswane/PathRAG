@@ -26,7 +26,6 @@ handling and descriptive logging for each step.
 import os
 import sys
 import logging
-from pathlib import Path
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
@@ -35,18 +34,17 @@ try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
     if MAIN_DIR not in sys.path:
         sys.path.append(MAIN_DIR)
-    logging.debug(f"Project base path configured: {MAIN_DIR}")
-except (ImportError, OSError) as e:
-    logging.critical("Failed to configure project path: %s", e, exc_info=True)
+except Exception as e:
+    logging.critical("❌ Failed to configure project path: %s", e, exc_info=True)
     sys.exit(1)
 
 # === Internal Imports ===
 try:
     from src.graph_db import (
-        get_sqlite_engine,
-        init_chunks_table,
-        init_embed_vector_table,
-        init_chatbot_table
+        get_mongo_client,
+        init_chatbot_collection,
+        init_chunks_collection,
+        init_embed_vector_collection,
     )
     from src.routes import (
         upload_route,
@@ -63,116 +61,111 @@ try:
     from src.rag import PathRAG
     from src.helpers import get_settings, Settings
 except ImportError as e:
-    logging.critical("Failed to import internal modules: %s", e, exc_info=True)
+    logging.critical("❌ Import error during module loading: %s", e, exc_info=True)
     sys.exit(1)
 
 # === Initialize Logging and Settings ===
 logger = setup_logging(name="MAIN")
 app_settings: Settings = get_settings()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    FastAPI lifespan context manager for application startup and shutdown.
+    FastAPI lifespan context manager for app startup and shutdown.
 
     On startup:
-    - Establish SQLite database connection
-    - Initialize required tables
+    - Connect to MongoDB and initialize collections
     - Load language and embedding models
-    - Initialize PathRAG system
+    - Set up the PathRAG reasoning system
 
     On shutdown:
-    - Close SQLite connection gracefully
+    - MongoDB does not require manual closure
 
     Args:
         app (FastAPI): The FastAPI application instance.
 
+    Yields:
+        None
+
     Raises:
-        ConnectionError: If database connection cannot be established.
-        Exception: For any critical startup error to prevent app launch.
+        RuntimeError: On failure of any critical component.
     """
-    conn = None
     try:
-        logger.info("Starting up Graph-RAG API.")
+        logger.info("🚀 Starting up Graph-RAG API...")
 
-        # Initialize SQLite connection
-        conn = get_sqlite_engine()
-        if not conn:
-            logger.error("Failed to get a valid SQLite connection.")
-            raise ConnectionError("Failed to get a valid SQLite connection.")
-        app.state.conn = conn
-        logger.info("SQLite database connection established.")
+        # === MongoDB Initialization ===
+        try:
+            client = get_mongo_client()
+            db = client["PathRAG-MongoDB"]
+            app.state.db = db
+            logger.info("✅ Connected to MongoDB: %s", db.name)
+        except Exception as mongo_err:
+            logger.critical("❌ Failed to connect to MongoDB: %s", mongo_err, exc_info=True)
+            raise RuntimeError("Database initialization failed.") from mongo_err
 
-        # Initialize required tables
-        init_chunks_table(conn)
-        init_embed_vector_table(conn)
-        init_chatbot_table(conn)
-        logger.info("Database tables initialized successfully.")
+        # === Initialize MongoDB Collections ===
+        try:
+            init_chunks_collection(db)
+            init_embed_vector_collection(db)
+            init_chatbot_collection(db)
+            logger.info("✅ MongoDB collections initialized.")
+        except Exception as coll_err:
+            logger.critical("❌ Failed to initialize MongoDB collections: %s", coll_err, exc_info=True)
+            raise RuntimeError("Collection setup failed.") from coll_err
 
-        # Load LLM and embedding models
+        # === Load Models ===
         try:
             app.state.llm = OllamaModel(app_settings.OLLAMA_MODEL)
             app.state.embedding_model = HuggingFaceModel(app_settings.EMBEDDING_MODEL)
-            logger.info("Language and embedding models loaded successfully.")
+            logger.info("✅ LLM and embedding models loaded.")
         except Exception as model_err:
-            logger.critical("Failed to load models: %s", model_err, exc_info=True)
-            raise
+            logger.critical("❌ Failed to load models: %s", model_err, exc_info=True)
+            raise RuntimeError("Model loading failed.") from model_err
 
-        # Initialize PathRAG
+        # === Initialize PathRAG ===
         try:
-            path_rag = PathRAG(
+            app.state.path_rag = PathRAG(
                 embedding_model=app.state.embedding_model,
                 decay_rate=app_settings.DECAY_RATE,
                 prune_thresh=app_settings.PRUNE_THRESH,
                 sim_should=app_settings.SIM_THRESHOLD
             )
-            app.state.path_rag = path_rag
-            logger.info("PathRAG initialized successfully.")
+            logger.info("✅ PathRAG initialized.")
         except Exception as rag_err:
-            logger.critical("Failed to initialize PathRAG: %s", rag_err, exc_info=True)
-            raise
+            logger.critical("❌ Failed to initialize PathRAG: %s", rag_err, exc_info=True)
+            raise RuntimeError("PathRAG initialization failed.") from rag_err
 
-        yield
+        yield  # Application runs here
 
     except Exception as startup_error:
-        logger.exception("Fatal error during FastAPI startup: %s", startup_error)
+        logger.exception("🔥 Fatal error during app startup: %s", startup_error)
         raise
 
     finally:
-        # Graceful shutdown
-        if conn:
-            try:
-                conn.close()
-                logger.info("SQLite connection closed.")
-            except Exception as close_err:
-                logger.warning("Error closing SQLite connection: %s", close_err, exc_info=True)
+        logger.info("🛑 Application shutdown complete.")
 
 
 # === FastAPI Application Instance ===
 app = FastAPI(
     title="Graph-RAG API",
     version="1.0.0",
-    description="A Path-aware Retrieval-Augmented Generation system using semantic graphs.",
+    description="Path-aware Retrieval-Augmented Generation system using semantic graphs.",
     lifespan=lifespan
 )
 
-# === Register API Routes ===
+# === Register Routes ===
 try:
-    # Register routes in logical workflow order:
-    # Upload → Chunking → Embedding → Retrieval → Chatbot
-
     app.include_router(upload_route)
     app.include_router(chunking_route)
     app.include_router(embedding_chunks_route)
     app.include_router(build_pathrag_route)
     app.include_router(live_retrieval_route)
     app.include_router(chatbot_route)
-
-    # Register management and monitoring routes last
     app.include_router(storage_management_route)
     app.include_router(resource_monitor_router)
 
-    logger.info("All API routes registered successfully.")
+    logger.info("✅ All API routes registered successfully.")
 except Exception as route_err:
-    logger.critical("Failed to register API routes: %s", route_err, exc_info=True)
+    logger.critical("❌ Failed to register API routes: %s", route_err, exc_info=True)
     sys.exit(1)

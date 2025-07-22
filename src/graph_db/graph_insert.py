@@ -69,7 +69,6 @@ def insert_chunk_to_mongo(
             "dataName": data_name
         }
         db[collection_name].insert_one(doc)
-        logger.info("✅ Inserted chunk into '%s' | ID: %s", collection_name, doc_id)
         return True
     except Exception as e:
         logger.error("❌ Failed to insert chunk into MongoDB: %s", e)
@@ -107,7 +106,6 @@ def insert_embed_vector_to_mongo(
             "embedding": embedding
         }
         db[collection_name].insert_one(doc)
-        logger.info("✅ Inserted embedding into '%s' | ID: %s", collection_name, doc_id)
         return True
     except Exception as e:
         logger.error("❌ Failed to insert embed vector: %s", e)
@@ -151,7 +149,6 @@ def insert_chatbot_entry_to_mongo(
             "retrieval_rank": retrieval_rank
         }
         db[collection_name].insert_one(doc)
-        logger.info("✅ Inserted chatbot entry into '%s' | ID: %s", collection_name, doc_id)
         return True
     except Exception as e:
         logger.error("❌ Failed to insert chatbot entry: %s", e)
