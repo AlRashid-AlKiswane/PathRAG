@@ -1,4 +1,4 @@
-## 🧠 Graph-RAG: Lightweight Retrieval-Augmented Generation System
+## 🧠 Graph-RAG: Lightweight Retrieval-Augmented Generation System (wiht Graph-Database)
 
 **Graph-RAG** is a modular, production-ready backend system built using **FastAPI**, designed for **document ingestion**, **semantic chunk retrieval**, and **contextual question answering** using both **FAISS-based vector search** and **entity-level filtering**.
 
