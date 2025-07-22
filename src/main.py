@@ -42,7 +42,7 @@ except (ImportError, OSError) as e:
 
 # === Internal Imports ===
 try:
-    from src.db import (
+    from src.graph_db import (
         get_sqlite_engine,
         init_chunks_table,
         init_embed_vector_table,
