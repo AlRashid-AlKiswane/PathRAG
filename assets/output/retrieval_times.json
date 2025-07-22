@@ -1,507 +1,507 @@
 [
   {
     "query": "What is supervised learning?",
-    "retrieval_time_seconds": 0.8864,
+    "retrieval_time_seconds": 0.8761,
     "response_length": 9944
   },
   {
     "query": "Explain unsupervised learning.",
-    "retrieval_time_seconds": 0.6754,
+    "retrieval_time_seconds": 0.6823,
     "response_length": 9689
   },
   {
     "query": "What is reinforcement learning?",
-    "retrieval_time_seconds": 0.6111,
+    "retrieval_time_seconds": 0.6442,
     "response_length": 43985
   },
   {
     "query": "How does a decision tree work?",
-    "retrieval_time_seconds": 0.5387,
+    "retrieval_time_seconds": 0.5415,
     "response_length": 18272
   },
   {
     "query": "What is overfitting in machine learning?",
-    "retrieval_time_seconds": 0.6979,
+    "retrieval_time_seconds": 0.7004,
     "response_length": 2502
   },
   {
     "query": "How can overfitting be prevented?",
-    "retrieval_time_seconds": 0.6939,
+    "retrieval_time_seconds": 0.6927,
     "response_length": 5302
   },
   {
     "query": "What is underfitting?",
-    "retrieval_time_seconds": 0.6082,
+    "retrieval_time_seconds": 0.6187,
     "response_length": 2567
   },
   {
     "query": "Explain the bias-variance tradeoff.",
-    "retrieval_time_seconds": 0.6361,
+    "retrieval_time_seconds": 0.6423,
     "response_length": 5369
   },
   {
     "query": "What are activation functions?",
-    "retrieval_time_seconds": 0.9911,
+    "retrieval_time_seconds": 0.976,
     "response_length": 9661
   },
   {
     "query": "Describe the sigmoid activation function.",
-    "retrieval_time_seconds": 1.002,
+    "retrieval_time_seconds": 0.9633,
     "response_length": 5282
   },
   {
     "query": "What is the ReLU activation function?",
-    "retrieval_time_seconds": 0.9764,
+    "retrieval_time_seconds": 0.9456,
     "response_length": 12423
   },
   {
     "query": "What is a neural network?",
-    "retrieval_time_seconds": 0.732,
+    "retrieval_time_seconds": 0.7403,
     "response_length": 14854
   },
   {
     "query": "How does backpropagation work?",
-    "retrieval_time_seconds": 0.9893,
+    "retrieval_time_seconds": 0.9415,
     "response_length": 11319
   },
   {
     "query": "What is gradient descent?",
-    "retrieval_time_seconds": 0.7244,
+    "retrieval_time_seconds": 0.7204,
     "response_length": 23388
   },
   {
     "query": "Explain stochastic gradient descent.",
-    "retrieval_time_seconds": 0.997,
+    "retrieval_time_seconds": 0.9909,
     "response_length": 17444
   },
   {
     "query": "What are epochs in training?",
-    "retrieval_time_seconds": 0.904,
+    "retrieval_time_seconds": 0.8853,
     "response_length": 20145
   },
   {
     "query": "What is a loss function?",
-    "retrieval_time_seconds": 0.6673,
+    "retrieval_time_seconds": 0.6514,
     "response_length": 1137
   },
   {
     "query": "Define cross-entropy loss.",
-    "retrieval_time_seconds": 0.5077,
+    "retrieval_time_seconds": 0.5195,
     "response_length": 4979
   },
   {
     "query": "What is mean squared error?",
-    "retrieval_time_seconds": 0.4092,
+    "retrieval_time_seconds": 0.4016,
     "response_length": 1956
   },
   {
     "query": "What is a support vector machine (SVM)?",
-    "retrieval_time_seconds": 0.6632,
+    "retrieval_time_seconds": 0.6626,
     "response_length": 27157
   },
   {
     "query": "How do kernels work in SVM?",
-    "retrieval_time_seconds": 0.6139,
+    "retrieval_time_seconds": 0.6346,
     "response_length": 13635
   },
   {
     "query": "What is clustering?",
-    "retrieval_time_seconds": 0.694,
+    "retrieval_time_seconds": 0.6822,
     "response_length": 3791
   },
   {
     "query": "Explain k-means clustering.",
-    "retrieval_time_seconds": 0.5764,
+    "retrieval_time_seconds": 0.5929,
     "response_length": 3946
   },
   {
     "query": "What is hierarchical clustering?",
-    "retrieval_time_seconds": 0.6086,
+    "retrieval_time_seconds": 0.5723,
     "response_length": 2500
   },
   {
     "query": "What is dimensionality reduction?",
-    "retrieval_time_seconds": 0.6636,
+    "retrieval_time_seconds": 0.642,
     "response_length": 16037
   },
   {
     "query": "Describe principal component analysis (PCA).",
-    "retrieval_time_seconds": 0.4069,
+    "retrieval_time_seconds": 0.4107,
     "response_length": 8319
   },
   {
     "query": "What is t-SNE?",
-    "retrieval_time_seconds": 0.5609,
+    "retrieval_time_seconds": 0.5469,
     "response_length": 1029
   },
   {
     "query": "What is feature scaling?",
-    "retrieval_time_seconds": 0.5535,
+    "retrieval_time_seconds": 0.5669,
     "response_length": 1159
   },
   {
     "query": "Explain normalization vs standardization.",
-    "retrieval_time_seconds": 0.423,
+    "retrieval_time_seconds": 0.4182,
     "response_length": 3987
   },
   {
     "query": "What is regularization?",
-    "retrieval_time_seconds": 0.678,
+    "retrieval_time_seconds": 0.696,
     "response_length": 11098
   },
   {
     "query": "Describe L1 regularization (Lasso).",
-    "retrieval_time_seconds": 0.5085,
+    "retrieval_time_seconds": 0.5134,
     "response_length": 12349
   },
   {
     "query": "Describe L2 regularization (Ridge).",
-    "retrieval_time_seconds": 0.6421,
+    "retrieval_time_seconds": 0.6498,
     "response_length": 8754
   },
   {
     "query": "What is dropout in neural networks?",
-    "retrieval_time_seconds": 0.845,
+    "retrieval_time_seconds": 0.8748,
     "response_length": 7966
   },
   {
     "query": "What is batch normalization?",
-    "retrieval_time_seconds": 0.9639,
+    "retrieval_time_seconds": 0.9781,
     "response_length": 19396
   },
   {
     "query": "Explain convolutional neural networks (CNNs).",
-    "retrieval_time_seconds": 0.8166,
+    "retrieval_time_seconds": 0.8286,
     "response_length": 51568
   },
   {
     "query": "What is pooling in CNNs?",
-    "retrieval_time_seconds": 0.7483,
+    "retrieval_time_seconds": 0.7612,
     "response_length": 27085
   },
   {
     "query": "What is a recurrent neural network (RNN)?",
-    "retrieval_time_seconds": 0.7462,
+    "retrieval_time_seconds": 0.7453,
     "response_length": 22835
   },
   {
     "query": "What is an LSTM?",
-    "retrieval_time_seconds": 0.6365,
+    "retrieval_time_seconds": 0.6371,
     "response_length": 13547
   },
   {
     "query": "Explain the vanishing gradient problem.",
-    "retrieval_time_seconds": 0.6589,
+    "retrieval_time_seconds": 0.6517,
     "response_length": 1127
   },
   {
     "query": "What is an embedding in NLP?",
-    "retrieval_time_seconds": 0.4548,
+    "retrieval_time_seconds": 0.4595,
     "response_length": 937
   },
   {
     "query": "Describe word2vec.",
-    "retrieval_time_seconds": 0.4108,
+    "retrieval_time_seconds": 0.4178,
     "response_length": 2431
   },
   {
     "query": "What is transfer learning?",
-    "retrieval_time_seconds": 1.0316,
+    "retrieval_time_seconds": 1.008,
     "response_length": 1134
   },
   {
     "query": "What is fine-tuning?",
-    "retrieval_time_seconds": 0.5287,
+    "retrieval_time_seconds": 0.5167,
     "response_length": 857
   },
   {
     "query": "Explain attention mechanisms.",
-    "retrieval_time_seconds": 0.4369,
+    "retrieval_time_seconds": 0.4345,
     "response_length": 1134
   },
   {
     "query": "What is the Transformer architecture?",
-    "retrieval_time_seconds": 0.4865,
+    "retrieval_time_seconds": 0.4828,
     "response_length": 1133
   },
   {
     "query": "Describe BERT model.",
-    "retrieval_time_seconds": 1.0925,
+    "retrieval_time_seconds": 1.0807,
     "response_length": 3660
   },
   {
     "query": "What is GPT?",
-    "retrieval_time_seconds": 0.7413,
+    "retrieval_time_seconds": 0.7369,
     "response_length": 1090
   },
   {
     "query": "What is the difference between classification and regression?",
-    "retrieval_time_seconds": 0.6626,
+    "retrieval_time_seconds": 0.6618,
     "response_length": 5606
   },
   {
     "query": "What is the confusion matrix?",
-    "retrieval_time_seconds": 0.6758,
+    "retrieval_time_seconds": 0.6923,
     "response_length": 7044
   },
   {
     "query": "Define precision, recall, and F1 score.",
-    "retrieval_time_seconds": 0.5463,
+    "retrieval_time_seconds": 0.5426,
     "response_length": 3484
   },
   {
     "query": "What is ROC curve?",
-    "retrieval_time_seconds": 0.5606,
+    "retrieval_time_seconds": 0.5688,
     "response_length": 7121
   },
   {
     "query": "Explain AUC.",
-    "retrieval_time_seconds": 0.5355,
+    "retrieval_time_seconds": 0.5353,
     "response_length": 8039
   },
   {
     "query": "What is cross-validation?",
-    "retrieval_time_seconds": 0.7166,
+    "retrieval_time_seconds": 0.7013,
     "response_length": 3428
   },
   {
     "query": "What is the curse of dimensionality?",
-    "retrieval_time_seconds": 0.7155,
+    "retrieval_time_seconds": 0.7136,
     "response_length": 12866
   },
   {
     "query": "What is ensemble learning?",
-    "retrieval_time_seconds": 0.5823,
+    "retrieval_time_seconds": 0.5836,
     "response_length": 30050
   },
   {
     "query": "Describe bagging.",
-    "retrieval_time_seconds": 0.39,
+    "retrieval_time_seconds": 0.3717,
     "response_length": 2499
   },
   {
     "query": "Describe boosting.",
-    "retrieval_time_seconds": 0.7663,
+    "retrieval_time_seconds": 0.7372,
     "response_length": 8654
   },
   {
     "query": "What is random forest?",
-    "retrieval_time_seconds": 0.7215,
+    "retrieval_time_seconds": 0.6861,
     "response_length": 25037
   },
   {
     "query": "What is XGBoost?",
-    "retrieval_time_seconds": 0.7047,
+    "retrieval_time_seconds": 0.6834,
     "response_length": 1815
   },
   {
     "query": "Explain the difference between parametric and non-parametric models.",
-    "retrieval_time_seconds": 0.4867,
+    "retrieval_time_seconds": 0.4943,
     "response_length": 1166
   },
   {
     "query": "What is a generative adversarial network (GAN)?",
-    "retrieval_time_seconds": 0.9636,
+    "retrieval_time_seconds": 0.9709,
     "response_length": 7109
   },
   {
     "query": "What is reinforcement learning policy?",
-    "retrieval_time_seconds": 0.7766,
+    "retrieval_time_seconds": 0.7454,
     "response_length": 36987
   },
   {
     "query": "Explain Q-learning.",
-    "retrieval_time_seconds": 0.7017,
+    "retrieval_time_seconds": 0.6939,
     "response_length": 34225
   },
   {
     "query": "What is the exploration vs exploitation dilemma?",
-    "retrieval_time_seconds": 0.6285,
+    "retrieval_time_seconds": 0.6275,
     "response_length": 28277
   },
   {
     "query": "What is the Markov decision process?",
-    "retrieval_time_seconds": 0.3961,
+    "retrieval_time_seconds": 0.4054,
     "response_length": 7514
   },
   {
     "query": "What are autoencoders?",
-    "retrieval_time_seconds": 0.8215,
+    "retrieval_time_seconds": 0.8562,
     "response_length": 54399
   },
   {
     "query": "What is unsupervised pretraining?",
-    "retrieval_time_seconds": 0.7948,
+    "retrieval_time_seconds": 0.8171,
     "response_length": 12521
   },
   {
     "query": "What is the difference between AI, ML, and Deep Learning?",
-    "retrieval_time_seconds": 0.6469,
+    "retrieval_time_seconds": 0.6473,
     "response_length": 2592
   },
   {
     "query": "Explain the concept of feature engineering.",
-    "retrieval_time_seconds": 0.8138,
+    "retrieval_time_seconds": 0.8533,
     "response_length": 3607
   },
   {
     "query": "What is a confusion matrix?",
-    "retrieval_time_seconds": 0.7606,
+    "retrieval_time_seconds": 0.7004,
     "response_length": 7040
   },
   {
     "query": "What is data augmentation?",
-    "retrieval_time_seconds": 1.0882,
+    "retrieval_time_seconds": 0.9529,
     "response_length": 5359
   },
   {
     "query": "What is early stopping?",
-    "retrieval_time_seconds": 0.6532,
+    "retrieval_time_seconds": 0.5554,
     "response_length": 5224
   },
   {
     "query": "What are embeddings used for?",
-    "retrieval_time_seconds": 0.5349,
+    "retrieval_time_seconds": 0.4601,
     "response_length": 939
   },
   {
     "query": "Explain how k-nearest neighbors (KNN) works.",
-    "retrieval_time_seconds": 0.8815,
+    "retrieval_time_seconds": 0.7784,
     "response_length": 1062
   },
   {
     "query": "What is the role of a validation set?",
-    "retrieval_time_seconds": 0.5783,
+    "retrieval_time_seconds": 0.5203,
     "response_length": 3462
   },
   {
     "query": "What is data leakage?",
-    "retrieval_time_seconds": 0.4185,
+    "retrieval_time_seconds": 0.3703,
     "response_length": 89
   },
   {
     "query": "What is a hyperparameter?",
-    "retrieval_time_seconds": 0.876,
+    "retrieval_time_seconds": 0.7888,
     "response_length": 7845
   },
   {
     "query": "Explain grid search.",
-    "retrieval_time_seconds": 0.7266,
+    "retrieval_time_seconds": 0.6532,
     "response_length": 3931
   },
   {
     "query": "Explain random search.",
-    "retrieval_time_seconds": 0.5956,
+    "retrieval_time_seconds": 0.5259,
     "response_length": 1118
   },
   {
     "query": "What is batch size?",
-    "retrieval_time_seconds": 1.1027,
+    "retrieval_time_seconds": 1.0633,
     "response_length": 10666
   },
   {
     "query": "What is learning rate?",
-    "retrieval_time_seconds": 1.0266,
+    "retrieval_time_seconds": 1.0418,
     "response_length": 12479
   },
   {
     "query": "What is an optimizer?",
-    "retrieval_time_seconds": 1.04,
+    "retrieval_time_seconds": 1.0964,
     "response_length": 777
   },
   {
     "query": "Describe the Adam optimizer.",
-    "retrieval_time_seconds": 1.1322,
+    "retrieval_time_seconds": 1.1308,
     "response_length": 7935
   },
   {
     "query": "What is the difference between classification and clustering?",
-    "retrieval_time_seconds": 0.7483,
+    "retrieval_time_seconds": 0.7498,
     "response_length": 6902
   },
   {
     "query": "What is the elbow method in clustering?",
-    "retrieval_time_seconds": 1.0602,
+    "retrieval_time_seconds": 1.0605,
     "response_length": 952
   },
   {
     "query": "What is a confusion matrix?",
-    "retrieval_time_seconds": 0.7695,
+    "retrieval_time_seconds": 0.7662,
     "response_length": 7040
   },
   {
     "query": "What is meant by model interpretability?",
-    "retrieval_time_seconds": 0.6753,
+    "retrieval_time_seconds": 0.6683,
     "response_length": 1105
   },
   {
     "query": "What is explainable AI (XAI)?",
-    "retrieval_time_seconds": 0.6055,
+    "retrieval_time_seconds": 0.5885,
     "response_length": 3384
   },
   {
     "query": "What is a time series forecasting?",
-    "retrieval_time_seconds": 0.7375,
+    "retrieval_time_seconds": 0.7352,
     "response_length": 1099
   },
   {
     "query": "Explain the difference between stationary and non-stationary time series.",
-    "retrieval_time_seconds": 0.4956,
+    "retrieval_time_seconds": 0.4868,
     "response_length": 89
   },
   {
     "query": "What is a Markov chain?",
-    "retrieval_time_seconds": 0.4914,
+    "retrieval_time_seconds": 0.4829,
     "response_length": 4392
   },
   {
     "query": "What is a hidden Markov model?",
-    "retrieval_time_seconds": 0.4924,
+    "retrieval_time_seconds": 0.4828,
     "response_length": 8172
   },
   {
     "query": "What is a probabilistic graphical model?",
-    "retrieval_time_seconds": 0.7993,
+    "retrieval_time_seconds": 0.7909,
     "response_length": 831
   },
   {
     "query": "What is reinforcement learning reward function?",
-    "retrieval_time_seconds": 0.6365,
+    "retrieval_time_seconds": 0.6314,
     "response_length": 43174
   },
   {
     "query": "Explain the difference between batch and online learning.",
-    "retrieval_time_seconds": 0.8679,
+    "retrieval_time_seconds": 0.8905,
     "response_length": 12003
   },
   {
     "query": "What is a precision-recall tradeoff?",
-    "retrieval_time_seconds": 0.4993,
+    "retrieval_time_seconds": 0.5149,
     "response_length": 6620
   },
   {
     "query": "What is the difference between sample and population?",
-    "retrieval_time_seconds": 0.3956,
+    "retrieval_time_seconds": 0.4028,
     "response_length": 1117
   },
   {
     "query": "What is hypothesis testing?",
-    "retrieval_time_seconds": 0.6816,
+    "retrieval_time_seconds": 0.675,
     "response_length": 89
   },
   {
     "query": "What is p-value?",
-    "retrieval_time_seconds": 0.7085,
+    "retrieval_time_seconds": 0.7103,
     "response_length": 89
   },
   {
     "query": "What is bootstrapping?",
-    "retrieval_time_seconds": 0.726,
+    "retrieval_time_seconds": 0.7211,
     "response_length": 6074
   },
   {
     "query": "What is a confusion matrix?",
-    "retrieval_time_seconds": 0.7647,
+    "retrieval_time_seconds": 0.7627,
     "response_length": 7040
   }
 ]
