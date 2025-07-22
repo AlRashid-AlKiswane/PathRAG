@@ -56,7 +56,7 @@ except Exception as e:
 from src.db import insert_chunk, clear_table
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
-from src.controllers import chunking_docs
+from src.controllers import chunking_docs, TextCleaner
 from src import get_db_conn
 
 # === Logger and Settings ===
@@ -104,8 +104,9 @@ async def chunking(file_path: Optional[str] = None,
 
         meta = chunking_docs(file_path=file_path)
         for chunk in tqdm(meta["chunks"], desc="Chunking Single File", unit="chunk"):
+            text_clear = TextCleaner(lowercase=True)
             insert_chunk(conn=conn,
-                         chunk=chunk.page_content,
+                         chunk=text_clear.clean(chunk.page_content),
                          file=file_path,
                          dataName=dir_file or "unknown")
             total_chunks_inserted += 1
