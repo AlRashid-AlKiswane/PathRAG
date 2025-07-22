@@ -64,8 +64,8 @@ except (ImportError, OSError) as e:
     sys.exit(1)
 
 # pylint: disable=wrong-import-position
-from src.llms_providers import OllamaModel, HuggingFaceModel
-from src.db import insert_chatbot_entry, pull_from_table
+from src.llms_providers import OllamaModel
+from src.db import insert_chatbot_entry
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 from src import (get_db_conn, get_llm, get_path_rag)

@@ -35,7 +35,7 @@ except (ImportError, OSError) as e:
 # pylint: disable=wrong-import-position
 from src.infra import setup_logging
 
-logger = setup_logging(name="DATABASE-INERT")
+logger = setup_logging(name="DATABASE-INSERT")
 
 
 def insert_chunk(conn: sqlite3.Connection,
@@ -64,7 +64,6 @@ def insert_chunk(conn: sqlite3.Connection,
             {"chunk": chunk, "file": file, "dataName": dataName}
         )
         conn.commit()
-        logger.info("Inserted chunk into 'chunks' table from file: %s", file)
         return True
 
     except sqlite3.Error as e:
@@ -98,7 +97,6 @@ def insert_embed_vector(conn: sqlite3.Connection,
             {"chunk": chunk, "embedding": embedding, "chunk_id": chunk_id}
         )
         conn.commit()
-        logger.info("Inserted chunk with chunk_id: %s into 'embed_vector' table.", chunk_id)
         return True
 
     except sqlite3.Error as e:
@@ -147,7 +145,6 @@ def insert_chatbot_entry(conn: sqlite3.Connection,
             }
         )
         conn.commit()
-        logger.info("✅ Inserted chatbot entry for user_id: %s", user_id)
         return True
 
     except sqlite3.Error as e:
@@ -169,4 +166,3 @@ if __name__ == "__main__":
         )
         logger.info("Insertion success: %s", success)
         conn.close()
-

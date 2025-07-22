@@ -57,6 +57,7 @@ from fastapi import (APIRouter,
                      )
 
 from fastapi.responses import JSONResponse
+from tqdm import tqdm
 
 # === Project Path Setup ===
 try:
@@ -127,13 +128,12 @@ async def chunks_to_embeddings(
 
         processed_count = 0
 
-        for meta in valid_chunks:
+        # Wrap loop with tqdm to show a progress bar
+        for meta in tqdm(valid_chunks, desc="Embedding Chunks", unit="chunk"):
             chunk = meta["chunk"]
             chunk_id = meta["id"]
 
             try:
-                logger.debug("🔄 Embedding chunk ID: %s | Text: %.50s...", chunk_id, chunk)
-
                 embedding_vector = embedding_model.embed_texts(
                     texts=chunk,
                     convert_to_tensor=True,
@@ -154,12 +154,9 @@ async def chunks_to_embeddings(
 
                 if success:
                     processed_count += 1
-                else:
-                    logger.warning("Insertion failed for chunk ID %s", chunk_id)
 
             except Exception as embed_err:
-                logger.error("Embedding error on chunk ID %s: %s", chunk_id, embed_err, exc_info=True)
-
+                tqdm.write(f"[ERROR] Embedding failed on chunk ID {chunk_id}: {embed_err}")
         logger.info("✅ %d/%d chunks embedded and stored.", processed_count, len(valid_chunks))
 
         return JSONResponse(

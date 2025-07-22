@@ -43,5 +43,3 @@ __all__ = [
     "pull_from_table",
     "clear_table",
 ]
-
-

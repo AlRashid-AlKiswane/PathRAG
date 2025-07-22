@@ -302,8 +302,7 @@ class PathRAG:
             ]
             base = np.prod(weights)
             flow = base * (self.decay_rate ** (len(path) - 1))
-            if flow < self.prune_thresh:
-                logger.debug("Pruned path %s with low flow %.6f", path, flow)
+
             return flow
         except Exception as e:
             logger.warning("Failed to compute flow for path %s: %s", path, e)

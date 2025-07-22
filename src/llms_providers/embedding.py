@@ -124,7 +124,6 @@ class HuggingFaceModel:
             )
 
             preview_texts = texts if isinstance(texts, str) else texts[0]
-            logger.info("Embedding generated successfully for: %s", preview_texts)
             return embedding.tolist()
         # pylint: disable=broad-exception-caught
         except Exception as e:

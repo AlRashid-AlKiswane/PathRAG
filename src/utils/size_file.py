@@ -25,7 +25,7 @@ except (ImportError, OSError) as e:
 
 from src.infra import setup_logging
 
-logger = setup_logging()
+logger = setup_logging(name="SIZE-FILE")
 
 
 def get_size(path: str) -> Tuple[str, float]:

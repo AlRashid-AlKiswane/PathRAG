@@ -1,32 +1,63 @@
 """
-Connection Utilities
+This module provides utility functions to retrieve core application components
+from the FastAPI application state during request handling. 
 
-This module provides utility functions for retrieving shared application resources
-from the FastAPI app state, including:
+Specifically, it handles access to:
 
-- The active SQLite database connection.
-- The initialized OllamaModel used for large language model inference.
-- The HuggingFaceModel instance used for embedding generation.
+- SQLite database connection (`sqlite3.Connection`):  
+  Ensures a persistent connection is available for executing database queries.
 
-These utilities help centralize access to app-scoped resources while enforcing robust
-error handling, observability through structured logging, and a clean separation of concerns.
+- Ollama language model instance (`OllamaModel`):  
+  Provides access to the configured LLM backend for natural language generation.
 
-Usage Example:
---------------
-    from fastapi import Request
-    from src.db.connection_utils import get_db_conn, get_llm, get_embedding_model
+- HuggingFace embedding model instance (`HuggingFaceModel`):  
+  Used for embedding generation for semantic search or vector-based retrieval.
 
-    @app.get("/example")
-    def example_endpoint(request: Request):
-        conn = get_db_conn(request)
+- PathRAG instance (`PathRAG`):  
+  Supports Path-aware Retrieval-Augmented Generation for complex multi-hop reasoning.
+
+Each retrieval function accepts the current FastAPI `Request` object, extracts the 
+corresponding component from the `app.state` container, performs validation, and 
+raises an HTTPException with appropriate status codes and error messages in case 
+of missing or invalid components.
+
+Error Handling:
+- If a requested component is not found or invalid in the application state, 
+  a 503 Service Unavailable response is raised.
+- If an unexpected error occurs during retrieval, a 500 Internal Server Error 
+  is raised with logging of the exception details.
+
+Logging:
+- All retrieval attempts, successes, and failures are logged using the configured 
+  logger.
+- Critical failures during project path setup cause the application to exit 
+  with logged stack traces.
+
+Project Path Setup:
+- Adjusts the Python module search path to include the main project directory, 
+  enabling relative imports from the `src` package.
+
+Dependencies:
+- `fastapi.Request` and `fastapi.HTTPException` for request context and error handling.
+- `sqlite3` for database connection typing.
+- Project-specific modules:
+  - `src.infra.setup_logging` for logger configuration.
+  - `src.llms_providers.OllamaModel` and `HuggingFaceModel` for LLM and embedding models.
+  - `src.rag.PathRAG` for the Path-aware RAG system.
+
+Usage:
+These functions are intended to be used inside FastAPI route handlers or middleware
+to safely obtain core service instances from the application state, abstracting away
+direct state access and centralizing error handling.
+
+Example:
+    def some_route_handler(request: Request):
+        db_conn = get_db_conn(request)
         llm = get_llm(request)
         embedding_model = get_embedding_model(request)
-        # Use these resources as needed...
+        path_rag = get_path_rag(request)
+        # use these components to process the request...
 
-Raises:
--------
-- HTTPException with status 503 if a required resource is not initialized.
-- HTTPException with status 500 if an unexpected internal error occurs.
 """
 
 import logging
@@ -53,8 +84,7 @@ except (ImportError, OSError) as e:
 from src.infra import setup_logging
 from src.llms_providers import OllamaModel, HuggingFaceModel
 from src.rag import PathRAG
-logger = setup_logging()
-
+logger = setup_logging(name="DEPENDENTS")
 
 def get_db_conn(request: Request) -> sqlite3.Connection:
     """

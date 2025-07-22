@@ -30,7 +30,7 @@ except Exception as e:
 
 from src.infra import setup_logging
 
-logger = setup_logging()
+logger = setup_logging(name="OLLAMA-MANEGER")
 
 class OllamaManager:
     """

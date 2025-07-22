@@ -1,18 +1,26 @@
 """
-Graph-RAG API Entry Point
+main.py
 
-This module sets up and runs the FastAPI application for the Graph-RAG system.
+This is the main entry point for the Graph-RAG FastAPI application, which implements
+a Path-aware Retrieval-Augmented Generation system using semantic graphs.
 
-Key responsibilities:
-- Configure project base directory for imports
-- Initialize structured logging
-- Manage application lifecycle (startup/shutdown)
-- Connect to and initialize the SQLite database
-- Load and initialize core NLP models
-- Mount route modules for RAG processing
+Responsibilities:
+- Configure project path and imports for internal modules
+- Initialize application settings and logging
+- Manage application lifespan including startup and graceful shutdown:
+    - Setup SQLite database connection and tables
+    - Load language models (OllamaModel and HuggingFaceModel)
+    - Initialize PathRAG reasoning engine
+- Register API routes in logical workflow order:
+    1. File upload
+    2. Chunking of documents
+    3. Embedding generation for chunks
+    4. Live retrieval of relevant information
+    5. Chatbot interface for user interaction
+- Handle critical errors during startup or route registration with logging and termination
 
-Author: [Your Name]
-Created: [YYYY-MM-DD]
+This module aims for robustness, clarity, and maintainability with thorough error
+handling and descriptive logging for each step.
 """
 
 import os
@@ -27,9 +35,9 @@ try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
     if MAIN_DIR not in sys.path:
         sys.path.append(MAIN_DIR)
-    logging.debug(f"📁 Project base path configured: {MAIN_DIR}")
+    logging.debug(f"Project base path configured: {MAIN_DIR}")
 except (ImportError, OSError) as e:
-    logging.critical("🔴 Failed to configure project path: %s", e, exc_info=True)
+    logging.critical("Failed to configure project path: %s", e, exc_info=True)
     sys.exit(1)
 
 # === Internal Imports ===
@@ -45,8 +53,8 @@ try:
         chunking_route,
         embedding_chunks_route,
         live_retrieval_route,
-        storage_management_route,
         chatbot_route,
+        storage_management_route,
         resource_monitor_router,
         build_pathrag_route
     )
@@ -55,67 +63,92 @@ try:
     from src.rag import PathRAG
     from src.helpers import get_settings, Settings
 except ImportError as e:
-    logging.critical("🔴 Failed to import internal modules: %s", e, exc_info=True)
+    logging.critical("Failed to import internal modules: %s", e, exc_info=True)
     sys.exit(1)
 
 # === Initialize Logging and Settings ===
-logger = setup_logging()
+logger = setup_logging(name="MAIN")
 app_settings: Settings = get_settings()
 
-# === Lifespan Event Manager ===
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        logger.info("🚀 Starting up Graph-RAG API...")
+    """
+    FastAPI lifespan context manager for application startup and shutdown.
 
-        # Database connection
+    On startup:
+    - Establish SQLite database connection
+    - Initialize required tables
+    - Load language and embedding models
+    - Initialize PathRAG system
+
+    On shutdown:
+    - Close SQLite connection gracefully
+
+    Args:
+        app (FastAPI): The FastAPI application instance.
+
+    Raises:
+        ConnectionError: If database connection cannot be established.
+        Exception: For any critical startup error to prevent app launch.
+    """
+    conn = None
+    try:
+        logger.info("Starting up Graph-RAG API.")
+
+        # Initialize SQLite connection
         conn = get_sqlite_engine()
         if not conn:
-            raise ConnectionError("❌ Failed to get a valid SQLite connection.")
+            logger.error("Failed to get a valid SQLite connection.")
+            raise ConnectionError("Failed to get a valid SQLite connection.")
         app.state.conn = conn
-        logger.info("🔗 SQLite database connection established.")
+        logger.info("SQLite database connection established.")
 
-        # Database table initialization
+        # Initialize required tables
         init_chunks_table(conn)
         init_embed_vector_table(conn)
         init_chatbot_table(conn)
-        logger.info("✅ All database tables initialized successfully.")
+        logger.info("Database tables initialized successfully.")
 
-        # Load LLM and embedding model
-        app.state.llm = OllamaModel(app_settings.OLLAMA_MODEL)
-        app.state.embedding_model = HuggingFaceModel(app_settings.EMBEDDING_MODEL)
-        logger.info("✅ All models loaded successfully.")
-
-        # Initialize RAG
+        # Load LLM and embedding models
         try:
-            path_rag = PathRAG(embedding_model=app.state.embedding_model,
-                               decay_rate=app_settings.DECAY_RATE,
-                               prune_thresh=app_settings.PRUNE_THRESH,
-                               sim_should=app_settings.SIM_THRESHOLD)
+            app.state.llm = OllamaModel(app_settings.OLLAMA_MODEL)
+            app.state.embedding_model = HuggingFaceModel(app_settings.EMBEDDING_MODEL)
+            logger.info("Language and embedding models loaded successfully.")
+        except Exception as model_err:
+            logger.critical("Failed to load models: %s", model_err, exc_info=True)
+            raise
 
+        # Initialize PathRAG
+        try:
+            path_rag = PathRAG(
+                embedding_model=app.state.embedding_model,
+                decay_rate=app_settings.DECAY_RATE,
+                prune_thresh=app_settings.PRUNE_THRESH,
+                sim_should=app_settings.SIM_THRESHOLD
+            )
             app.state.path_rag = path_rag
-            logger.info("🔍 PathRAG initialized and ready.")
+            logger.info("PathRAG initialized successfully.")
         except Exception as rag_err:
-            logger.critical("❌ Failed to initialize PathRAG: %s", rag_err, exc_info=True)
+            logger.critical("Failed to initialize PathRAG: %s", rag_err, exc_info=True)
             raise
 
         yield
 
-    except Exception as e:
-        logger.exception("💥 Fatal error during FastAPI startup: %s", e)
+    except Exception as startup_error:
+        logger.exception("Fatal error during FastAPI startup: %s", startup_error)
         raise
 
     finally:
         # Graceful shutdown
-        conn = getattr(app.state, "conn", None)
         if conn:
             try:
                 conn.close()
-                logger.info("🛑 SQLite connection closed.")
-            except Exception as e:
-                logger.warning("⚠️ Error closing DB connection: %s", e, exc_info=True)
+                logger.info("SQLite connection closed.")
+            except Exception as close_err:
+                logger.warning("Error closing SQLite connection: %s", close_err, exc_info=True)
 
-# === FastAPI Application ===
+
+# === FastAPI Application Instance ===
 app = FastAPI(
     title="Graph-RAG API",
     version="1.0.0",
@@ -123,17 +156,23 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# === Register Routes ===
+# === Register API Routes ===
 try:
+    # Register routes in logical workflow order:
+    # Upload → Chunking → Embedding → Retrieval → Chatbot
+
     app.include_router(upload_route)
     app.include_router(chunking_route)
     app.include_router(embedding_chunks_route)
-    app.include_router(live_retrieval_route)
-    app.include_router(storage_management_route)
-    app.include_router(chatbot_route)
-    app.include_router(resource_monitor_router)
     app.include_router(build_pathrag_route)
-    logger.info("✅ All API routes registered successfully.")
+    app.include_router(live_retrieval_route)
+    app.include_router(chatbot_route)
+
+    # Register management and monitoring routes last
+    app.include_router(storage_management_route)
+    app.include_router(resource_monitor_router)
+
+    logger.info("All API routes registered successfully.")
 except Exception as route_err:
-    logger.critical("❌ Failed to register API routes: %s", route_err, exc_info=True)
+    logger.critical("Failed to register API routes: %s", route_err, exc_info=True)
     sys.exit(1)
