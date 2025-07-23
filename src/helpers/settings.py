@@ -246,6 +246,8 @@ class Settings(BaseSettings):
         extra="forbid"  # Forbid unknown environment variables
     )
 
+    STORGE_GRAPH: str = Field(..., env="STORGE_GRAPH")
+
 
 def get_settings() -> Settings:
     """

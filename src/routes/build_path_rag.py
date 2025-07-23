@@ -66,6 +66,8 @@ build_pathrag_route = APIRouter(
 
 @build_pathrag_route.post("", status_code=status.HTTP_201_CREATED)
 async def build_pathrag(
+    do_save: bool = False,
+    build_graph: bool = False,
     limit: Optional[int] = Query(None, description="Optional limit on the number of chunks to load."),
     db: MongoClient = Depends(get_mongo_db),
     pathrag: PathRAG = Depends(get_path_rag)
@@ -82,51 +84,54 @@ async def build_pathrag(
         JSONResponse: Success message with the number of nodes and edges built.
     """
     try:
-        logger.info("Pulling embedded chunks from MongoDB collection 'embed_vector'...")
-        rows = pull_from_collection(
-            db=db,
-            collection_name="embed_vector",
-            fields=["chunk", "embedding"],
-            limit=limit
-        )
-
-        if not rows:
-            logger.warning("No documents found in 'embed_vector' collection.")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No embedded chunks found in MongoDB."
+        if build_graph:
+            logger.info("Pulling embedded chunks from MongoDB collection 'embed_vector'...")
+            rows = pull_from_collection(
+                db=db,
+                collection_name="embed_vector",
+                fields=["chunk", "embedding"],
+                limit=limit
             )
 
-        chunks, embeddings = [], []
+            if not rows:
+                logger.warning("No documents found in 'embed_vector' collection.")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="No embedded chunks found in MongoDB."
+                )
 
-        for row in tqdm(rows, desc="Parsing Embeddings"):
-            try:
-                chunk_text = row["chunk"].strip().replace("\n", " ")
-                embedding = json.loads(row["embedding"])
-                embedding_vector = np.array(embedding, dtype=np.float32)
+            chunks, embeddings = [], []
 
-                chunks.append(chunk_text)
-                embeddings.append(embedding_vector)
-            except (json.JSONDecodeError, TypeError, ValueError) as e:
-                logger.warning("Skipping malformed embedding row: %s", e)
-                continue
+            for row in tqdm(rows, desc="Parsing Embeddings"):
+                try:
+                    chunk_text = row["chunk"].strip().replace("\n", " ")
+                    embedding = json.loads(row["embedding"])
+                    embedding_vector = np.array(embedding, dtype=np.float32)
 
-        if not chunks or not embeddings:
-            logger.error("No valid chunks or embeddings parsed from MongoDB.")
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="No valid embeddings were found to construct the graph."
-            )
+                    chunks.append(chunk_text)
+                    embeddings.append(embedding_vector)
+                except (json.JSONDecodeError, TypeError, ValueError) as e:
+                    logger.warning("Skipping malformed embedding row: %s", e)
+                    continue
 
-        embeddings_np = np.vstack(embeddings)
+            if not chunks or not embeddings:
+                logger.error("No valid chunks or embeddings parsed from MongoDB.")
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="No valid embeddings were found to construct the graph."
+                )
 
-        logger.info("Building semantic graph with %d valid chunks.", len(chunks))
-        pathrag.build_graph(chunks=chunks, embeddings=embeddings_np)
+            embeddings_np = np.vstack(embeddings)
 
-        node_count = len(pathrag.g.nodes)
-        edge_count = len(pathrag.g.edges)
-        logger.info("Graph built successfully: %d nodes, %d edges", node_count, edge_count)
+            logger.info("Building semantic graph with %d valid chunks.", len(chunks))
+            pathrag.build_graph(chunks=chunks, embeddings=embeddings_np)
 
+            node_count = len(pathrag.g.nodes)
+            edge_count = len(pathrag.g.edges)
+            logger.info("Graph built successfully: %d nodes, %d edges", node_count, edge_count)
+
+        if do_save:
+            pathrag.save_graph(file_path=app_settings.STORGE_GRAPH)
         return JSONResponse(
             status_code=status.HTTP_201_CREATED,
             content={

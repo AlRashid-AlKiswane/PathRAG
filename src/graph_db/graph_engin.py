@@ -46,9 +46,9 @@ def _launch_mongodb_docker() -> None:
     try:
         subprocess.run(["docker", "--version"], check=True, capture_output=True)
 
-        # Check if MongoDB container running
+        # Check if MongoDB container exists (running or stopped)
         result_db = subprocess.run(
-            ["docker", "ps", "--filter", "name=mongodb", "--format", "{{.Names}}"],
+            ["docker", "ps", "-a", "--filter", "name=mongodb", "--format", "{{.Names}}"],
             capture_output=True, text=True
         )
         if "mongodb" not in result_db.stdout.strip():
@@ -62,10 +62,23 @@ def _launch_mongodb_docker() -> None:
             ], check=True)
             time.sleep(5)
             logger.info("MongoDB started successfully.")
+        else:
+            # Container exists, check if it's running
+            result_running = subprocess.run(
+                ["docker", "ps", "--filter", "name=mongodb", "--format", "{{.Names}}"],
+                capture_output=True, text=True
+            )
+            if "mongodb" not in result_running.stdout.strip():
+                logger.info("Starting existing MongoDB container...")
+                subprocess.run(["docker", "start", "mongodb"], check=True)
+                time.sleep(5)
+                logger.info("MongoDB started successfully.")
+            else:
+                logger.info("MongoDB container is already running.")
 
-        # Check if Mongo Express container running
+        # Check if Mongo Express container exists (running or stopped)
         result_express = subprocess.run(
-            ["docker", "ps", "--filter", "name=mongo-express", "--format", "{{.Names}}"],
+            ["docker", "ps", "-a", "--filter", "name=mongo-express", "--format", "{{.Names}}"],
             capture_output=True, text=True
         )
         if "mongo-express" not in result_express.stdout.strip():
@@ -80,13 +93,26 @@ def _launch_mongodb_docker() -> None:
             ], check=True)
             time.sleep(3)
             logger.info("Mongo Express started successfully.")
+        else:
+            # Container exists, check if it's running
+            result_express_running = subprocess.run(
+                ["docker", "ps", "--filter", "name=mongo-express", "--format", "{{.Names}}"],
+                capture_output=True, text=True
+            )
+            if "mongo-express" not in result_express_running.stdout.strip():
+                logger.info("Starting existing Mongo Express container...")
+                subprocess.run(["docker", "start", "mongo-express"], check=True)
+                time.sleep(3)
+                logger.info("Mongo Express started successfully.")
+            else:
+                logger.info("Mongo Express container is already running.")
 
     except subprocess.CalledProcessError as e:
-        logger.error("Failed to run Docker: %s", e.stderr if hasattr(e, 'stderr') else e)
+        logger.error("Failed to run Docker: %s", e.stderr if e.stderr else str(e))
     except FileNotFoundError:
         logger.error("Docker is not installed or not in PATH.")
     except Exception as e:
-        logger.error("Unexpected error while launching Docker: %s", e)
+        logger.error("Unexpected error while launching Docker: %s", str(e))
 
 
 def _open_mongo_web_ui():

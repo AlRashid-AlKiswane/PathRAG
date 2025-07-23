@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PathRAG Knowledge Graph</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    #graph {
+      height: 700px;
+      width: 100%;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .controls {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    input[type="range"] {
+      width: 300px;
+    }
+
+    #loading {
+      text-align: center;
+      margin: 10px 0;
+      color: #666;
+      font-style: italic;
+    }
+
+    #nodeInfoBox {
+      display: none;
+      position: absolute;
+      top: 120px;
+      left: 40px;
+      width: 350px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      z-index: 9999;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      border-radius: 6px;
+    }
+
+    #nodeInfoBox h3 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    pre {
+      background-color: #f4f4f4;
+      padding: 8px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>PathRAG Knowledge Graph</h1>
+    <div id="loading">Loading graph...</div>
+    <div id="graph"></div>
+
+    <div class="controls">
+      <label>Nodes: <span id="nodeValue">100</span></label><br/>
+      <input type="range" id="nodeSlider" min="10" max="100000" value="100"/>
+      <button onclick="refreshGraph()">Refresh</button>
+    </div>
+  </div>
+
+  <div id="nodeInfoBox"></div>
+
+  <script>
+    const graphDiv = document.getElementById("graph");
+    const loading = document.getElementById("loading");
+    const slider = document.getElementById("nodeSlider");
+    const valueLabel = document.getElementById("nodeValue");
+    const infoBox = document.getElementById("nodeInfoBox");
+
+    let originalGraphData = [];
+
+    slider.addEventListener("input", () => {
+      valueLabel.textContent = slider.value;
+    });
+
+    async function loadGraph(maxNodes = 100) {
+      loading.style.display = "block";
+      graphDiv.style.display = "none";
+      infoBox.style.display = "none";
+      infoBox.innerHTML = "";
+
+      try {
+        const res = await fetch(`/graph?max_nodes=${maxNodes}`);
+        const graphResponse = await res.json();
+        originalGraphData = graphResponse.data;
+
+        // Hide all edge traces (lines)
+        for (let trace of originalGraphData) {
+          if (trace.mode === "lines") {
+            trace.visible = false;
+          }
+        }
+
+        await Plotly.newPlot("graph", originalGraphData, graphResponse.layout, { responsive: true });
+
+        graphDiv.on('plotly_click', handlePlotClick);
+
+        loading.style.display = "none";
+        graphDiv.style.display = "block";
+      } catch (err) {
+        loading.textContent = "Error loading graph: " + err.message;
+        console.error(err);
+      }
+    }
+
+    function refreshGraph() {
+      const max = slider.value;
+      loadGraph(max);
+    }
+
+    window.onload = () => loadGraph();
+
+    async function handlePlotClick(eventData) {
+      const point = eventData.points[0];
+      if (!point || !point.text) return;
+
+      let nodeId = null;
+      const lines = point.text.split("<br>");
+      for (let line of lines) {
+        if (line.startsWith("Node:")) {
+          nodeId = line.replace("Node:", "").trim();
+          break;
+        }
+      }
+
+      if (!nodeId) {
+        infoBox.innerHTML = `<p style="color:gray;">Node ID not found in label.</p>`;
+        infoBox.style.display = "block";
+        return;
+      }
+
+      // Hide all edge lines
+      for (let trace of originalGraphData) {
+        if (trace.mode === "lines") {
+          trace.visible = false;
+        }
+      }
+
+      // Show only edges that mention this node in their name
+      for (let trace of originalGraphData) {
+        if (trace.mode === "lines" && trace.name && trace.name.includes(`(${nodeId})`)) {
+          trace.visible = true;
+        }
+      }
+
+      await Plotly.react("graph", originalGraphData, {}, { responsive: true });
+
+      // Fetch and display node info
+      try {
+        const res = await fetch(`/graph/node/${encodeURIComponent(nodeId)}`);
+        const nodeData = await res.json();
+
+        if (nodeData.error) {
+          infoBox.innerHTML = `<p style="color:red;">${nodeData.error}</p>`;
+        } else {
+          infoBox.innerHTML = `
+            <h3>🧠 Node Info</h3>
+            <table style="width:100%; font-size:14px;">
+              <tr><td><strong>ID</strong></td><td>${nodeData.node_id}</td></tr>
+              <tr><td><strong>Label</strong></td><td>${nodeData.label}</td></tr>
+              <tr><td><strong>Text</strong></td><td>${nodeData.text}</td></tr>
+            </table>
+            <pre>${JSON.stringify(nodeData.metadata, null, 2)}</pre>
+          `;
+        }
+
+        infoBox.style.display = "block";
+      } catch (err) {
+        console.error("Error fetching node data:", err);
+        infoBox.innerHTML = `<p style="color:red;">Error loading node data: ${err.message}</p>`;
+        infoBox.style.display = "block";
+      }
+    }
+
+    // Hide node info box when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!infoBox.contains(event.target) && !graphDiv.contains(event.target)) {
+        infoBox.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>

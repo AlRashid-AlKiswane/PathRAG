@@ -55,9 +55,14 @@ from typing import Any, Dict, List
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
+from typing import Optional, Union
 from tqdm import tqdm
-
+from pathlib import Path
+import pickle
+import json
+import plotly.graph_objects as go
 
 # Set up project base directory
 try:
@@ -366,4 +371,220 @@ class PathRAG:
         prompt = "\n".join(lines)
         logger.info("Prompt generated with %d paths (%d characters)", len(scored_paths), len(prompt))
         return prompt
+    
+    def save_graph(self, file_path: Union[str, Path], format: str = "pickle") -> None:
+        """
+        Save the graph to disk in the specified format. If file exists, merges
+        new data without duplicating nodes or edges.
 
+        Args:
+            file_path: Path to save the graph.
+            format: "pickle" or "json".
+
+        Raises:
+            ValueError: For unsupported formats.
+            IOError: On save failure.
+        """
+        if not isinstance(file_path, Path):
+            file_path = Path(file_path)
+
+        # Ensure the parent directory exists
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            if file_path.exists():
+                # Load existing graph
+                if format == "pickle":
+                    with open(file_path, 'rb') as f:
+                        existing_graph = pickle.load(f)
+                elif format == "json":
+                    with open(file_path, 'r') as f:
+                        existing_data = json.load(f)
+                    existing_graph = nx.node_link_graph(existing_data)
+                else:
+                    raise ValueError(f"Unsupported format: {format}. Use 'pickle' or 'json'")
+
+                # Merge without duplication
+                for node, attrs in self.g.nodes(data=True):
+                    if not existing_graph.has_node(node):
+                        existing_graph.add_node(node, **attrs)
+
+                for u, v, attrs in self.g.edges(data=True):
+                    if not existing_graph.has_edge(u, v):
+                        existing_graph.add_edge(u, v, **attrs)
+
+                # Save back
+                if format == "pickle":
+                    with open(file_path, 'wb') as f:
+                        pickle.dump(existing_graph, f)
+                elif format == "json":
+                    with open(file_path, 'w') as f:
+                        json.dump(nx.node_link_data(existing_graph), f)
+
+            else:
+                # First save — just write the graph
+                if format == "pickle":
+                    with open(file_path, 'wb') as f:
+                        pickle.dump(self.g, f)
+                elif format == "json":
+                    with open(file_path, 'w') as f:
+                        json.dump(nx.node_link_data(self.g), f)
+                else:
+                    raise ValueError(f"Unsupported format: {format}. Use 'pickle' or 'json'")
+
+            logger.info(f"Graph saved to {file_path} in {format} format")
+
+        except Exception as e:
+            logger.error(f"Failed to save graph: {e}")
+            raise
+
+    def load_graph(self, file_path: Union[str, Path], format: str = "pickle") -> None:
+        """
+        Load graph from disk.
+        
+        Args:
+            file_path: Path to load graph from
+            format: Format of the saved file ("pickle" or "json")
+            
+        Raises:
+            ValueError: If invalid format specified
+            IOError: If load operation fails
+        """
+        if format == "pickle":
+            with open(file_path, 'rb') as f:
+                self.g = pickle.load(f)
+        elif format == "json":
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            self.g = nx.node_link_graph(data)
+        else:
+            raise ValueError(f"Unsupported format: {format}. Use 'pickle' or 'json'")
+            
+        logger.info(f"Graph loaded from {file_path} ({self.g.number_of_nodes()} nodes, "
+                   f"{self.g.number_of_edges()} edges)")
+
+    def visualize_graph(self, max_nodes: int = 100) -> go.Figure:
+        """
+        Generate a 3D interactive visualization of the semantic graph.
+
+        Nodes represent document chunks or concepts. Edges represent semantic similarity.
+        Node color indicates degree; node type (chunk vs concept) can be differentiated.
+
+        Args:
+            max_nodes (int): Maximum number of nodes to visualize (for performance).
+        
+        Returns:
+            plotly.graph_objects.Figure: A 3D Plotly figure.
+        """
+        if self.g.number_of_nodes() == 0:
+            raise ValueError("Graph is empty - nothing to visualize")
+
+        # Reduce size for performance if needed
+        g = self.g
+        if g.number_of_nodes() > max_nodes:
+            sampled_nodes = list(g.nodes())[:max_nodes]
+            g = g.subgraph(sampled_nodes).copy()
+
+        # Layout in 3D
+        pos = nx.spring_layout(g, dim=3, seed=42)
+
+        # Edge trace
+        edge_x, edge_y, edge_z = [], [], []
+        for src, tgt in g.edges():
+            x0, y0, z0 = pos[src]
+            x1, y1, z1 = pos[tgt]
+            edge_x.extend([x0, x1, None])
+            edge_y.extend([y0, y1, None])
+            edge_z.extend([z0, z1, None])
+
+        edge_trace = go.Scatter3d(
+            x=edge_x, y=edge_y, z=edge_z,
+            mode='lines',
+            line=dict(width=1, color='gray'),
+            hoverinfo='none'
+        )
+
+        # Node trace
+        node_x, node_y, node_z = [], [], []
+        node_text = []
+        node_color = []
+        node_size = []
+
+        degrees = dict(g.degree())
+
+        for node in g.nodes():
+            x, y, z = pos[node]
+            node_x.append(x)
+            node_y.append(y)
+            node_z.append(z)
+
+            # Chunk text preview
+            node_data = g.nodes[node]
+            label = node_data.get("label", "chunk")
+            text = node_data.get("text", "")[:50] + "..." if "text" in node_data else label
+            degree = degrees.get(node, 1)
+
+            node_text.append(f"Node: {node}<br>Degree: {degree}<br>Type: {label}<br>{text}")
+
+            # Node color by type
+            if label == "chunk":
+                node_color.append("blue")
+            elif label == "concept":
+                node_color.append("green")
+            elif label == "query":
+                node_color.append("red")
+            else:
+                node_color.append("gray")
+
+            # Node size by degree
+            node_size.append(5 + 10 * (degree / max(degrees.values())))
+
+        node_trace = go.Scatter3d(
+            x=node_x, y=node_y, z=node_z,
+            mode='markers',
+            marker=dict(
+                size=node_size,
+                color=node_color,
+                line=dict(width=1, color='black'),
+                opacity=0.8
+            ),
+            hoverinfo='text',
+            text=node_text
+        )
+
+        # Build figure
+        fig = go.Figure(
+            data=[edge_trace, node_trace],
+            layout=go.Layout(
+                title="PathRAG Semantic Graph",
+                margin=dict(l=0, r=0, t=50, b=0),
+                scene=dict(
+                    xaxis=dict(showbackground=False),
+                    yaxis=dict(showbackground=False),
+                    zaxis=dict(showbackground=False)
+                ),
+                showlegend=False,
+                hovermode='closest'
+            )
+        )
+
+        return fig
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """
+        Convert the graph to a pandas DataFrame representation.
+        
+        Returns:
+            pd.DataFrame: DataFrame with columns ['source', 'target', 'weight', 'source_text', 'target_text']
+        """
+        rows = []
+        for u, v, data in self.g.edges(data=True):
+            rows.append({
+                'source': u,
+                'target': v,
+                'weight': data['weight'],
+                'source_text': self.g.nodes[u]['text'][:100],  # Truncate for display
+                'target_text': self.g.nodes[v]['text'][:100]
+            })
+            
+        return pd.DataFrame(rows)
