@@ -2,7 +2,7 @@
 
 A **Path-aware Retrieval-Augmented Generation** system using semantic graphs, built with FastAPI and MongoDB.
 
-![Path-RAG Architecture](https://via.placeholder.com/800x400?text=Graph-RAG+System+Diagram)  
+![Path-RAG Architecture]([https://via.placeholder.com/800x400?text=Graph-RAG+System+Diagram](https://github.com/AlRashid-AlKiswane/PathRAG-LightRAG/blob/gragh-database/assets/images/0_6On8J9d9wHU5LiE4.webp))  
 *(Diagram placeholder - replace with actual architecture image)*
 
 ## Features
