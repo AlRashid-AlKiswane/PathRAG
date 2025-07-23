@@ -1,88 +1,109 @@
-## 🧠 Graph-RAG: Lightweight Retrieval-Augmented Generation System (wiht Graph-Database)
+# Graph-RAG API 
 
-**Graph-RAG** is a modular, production-ready backend system built using **FastAPI**, designed for **document ingestion**, **semantic chunk retrieval**, and **contextual question answering** using both **FAISS-based vector search** and **entity-level filtering**.
+A **Path-aware Retrieval-Augmented Generation** system using semantic graphs, built with FastAPI and MongoDB.
 
----
+![Path-RAG Architecture](https://via.placeholder.com/800x400?text=Graph-RAG+System+Diagram)  
+*(Diagram placeholder - replace with actual architecture image)*
 
-### 🚧 Key System Components
+## Features
 
-#### 📦 1. Document Preprocessing & Storage Pipeline
+- **Document Processing Pipeline**:
+  - File upload with validation
+  - Intelligent document chunking
+  - Vector embedding generation
+- **Path-aware RAG**:
+  - Semantic graph construction
+  - Contextual path retrieval
+  - Dynamic relevance scoring
+- **Multi-Model Support**:
+  - Ollama LLM integration
+  - HuggingFace embedding models
+- **Monitoring**:
+  - Resource usage tracking
+  - Storage management
 
-The FastAPI backend exposes a multi-route workflow to:
-
-* 📤 **Upload documents** via API
-* ✂️ **Chunk documents** intelligently
-* 🔡 **Generate embedding vectors** using HuggingFace models
-* 🧠 **Run Named Entity Recognition (NER)** to extract entity labels
-* 💾 **Store chunks, vectors, and entities** into a structured SQLite database
-
-**Routes include:**
-
-* `/upload`: Accepts PDF or text input
-* `/chunk`: Splits docs into overlapping semantic chunks
-* `/embed`: Converts chunks to vector embeddings
-* `/ner`: Extracts named entities from each chunk
-* `/live-query`: Executes real-time semantic + entity-level RAG
-
----
-
-#### 🗃️ 2. SQLite + FAISS Hybrid Storage Layer
-
-* Uses **SQLite** to persist all chunk data, embeddings, and named entities.
-* **FAISS index** is dynamically built over the embedding vectors for fast approximate search.
-* Chunk metadata (like entities) is used for **filtering results** at retrieval time.
-
-Tables:
-
-* `chunks`: Original and chunked text content
-* `embed_vector`: Vector embeddings
-* `entities`: Named entity labels for chunks
-
----
-
-#### 🤖 3. Ollama Integration (LLM Inference)
-
-* Implements **OllamaModel**, a wrapper for generating language responses using Ollama-hosted LLMs.
-* Used at the final stage to **generate answers** conditioned on top-k retrieved chunks.
-* Supports configurable model names (e.g., `mistral`, `llama3`, `phi3`, etc.).
-
----
-
-#### 🧬 4. NERModel Module
-
-* Custom `NERModel` wraps a HuggingFace transformer-based NER pipeline.
-* Extracts named entities (e.g., PERSON, ORG, DATE) for each chunk.
-* Enables **entity-level retrieval** by matching entity filters from user queries.
-
----
-
-### ⚙️ Core Technologies
-
-| Area            | Tooling                                            |
-| --------------- | -------------------------------------------------- |
-| API Server      | FastAPI                                            |
-| DB              | SQLite (via `sqlite3`)                             |
-| Semantic Search | FAISS                                              |
-| Embedding Model | HuggingFace Transformers (`sentence-transformers`) |
-| LLM             | Ollama (local or remote models)                    |
-| NER             | HuggingFace NER pipeline (`bert`, `roberta`, etc.) |
-| Logging         | Custom `setup_logging()` with multi-level support  |
-
----
-
-### 🧪 Example Workflow
+## System Workflow
 
 ```mermaid
 graph TD
-    A[Upload Document] --> B[Chunk into Passages]
-    B --> C[Generate Embeddings]
-    C --> D[Store in DB + FAISS]
-    D --> E[Run NER & Store Entities]
+    A[File Upload] --> B[Document Chunking]
+    B --> C[Embedding Generation]
+    C --> D[Graph Construction]
+    D --> E[Live Retrieval]
+    E --> F[Chatbot Interface]
+    F --> G[User Feedback]
+    G --> D
+```
 
-    F[User Query] --> G[Embed Query]
-    G --> H[FAISS Top-K Retrieval]
-    G --> I[Extract Query Entities]
-    H --> J[Filter Results by Entities]
-    J --> K[Pass to OllamaModel]
-    K --> L[Generate Final Answer]
+## Tech Stack
+
+| Component          | Technology               |
+|--------------------|--------------------------|
+| Backend Framework  | FastAPI (Python 3.13.5)  |
+| Database           | MongoDB                  |
+| Language Models    | Ollama, HuggingFace      |
+| Embeddings         | HuggingFace Transformers |
+| Monitoring         | Custom Resource Tracker  |
+
+## Installation
+
+1. **Prerequisites**:
+   - Python 3.13.5
+   - MongoDB (v7.0+)
+   - Ollama server (for local LLMs)
+
+2. **Setup**:
+   ```bash
+   git clone https://github.com/yourusername/graph-rag.git
+   cd graph-rag
+   python -m venv venv
+   source venv/bin/activate  # Linux/Mac
+   # OR
+   venv\Scripts\activate    # Windows
+
+   pip install -r requirements.txt
+   ```
+
+3. **Configuration**:
+   Copy `.env.example` to `.env` and modify:
+   ```env
+   OLLAMA_MODEL=llama3
+   EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
+   MONGO_URI=mongodb://localhost:27017
+   ```
+
+## API Endpoints
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/upload` | POST | File upload endpoint |
+| `/chunk` | POST | Document chunking |
+| `/embed` | POST | Generate embeddings |
+| `/build-graph` | POST | Construct semantic graph |
+| `/retrieve` | GET | Path-aware retrieval |
+| `/chat` | POST | Chatbot interface |
+| `/storage` | GET | Storage management |
+| `/monitor` | GET | Resource metrics |
+
+## Running the System 🏃
+
+```bash
+uvicorn main:app --reload
+```
+
+Access the API at `http://localhost:8000` and docs at `http://localhost:8000/docs`
+
+## Development Structure 📂
+
+```
+graph-rag/
+├── src/
+│   ├── graph_db/          # MongoDB operations
+│   ├── llms_providers/    # Model integrations
+│   ├── rag/               # PathRAG core logic
+│   ├── routes/            # API endpoints
+│   └── helpers/           # Utilities
+├── tests/                 # Test cases
+├── main.py                # Application entrypoint
+└── requirements.txt       # Dependencies
 ```
