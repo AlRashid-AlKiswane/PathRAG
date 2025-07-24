@@ -3,12 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PathRAG Knowledge Graph</title>
+  <title>🌌 PathRAG Knowledge Graph</title>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <style>
+    :root {
+      --bg-dark: #121212;
+      --card-dark: #1e1e1e;
+      --text-light: #e0e0e0;
+      --border: #333;
+      --highlight: #00bcd4;
+    }
+
     body {
-      font-family: sans-serif;
-      background-color: #f9f9f9;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
       margin: 0;
       padding: 0;
     }
@@ -16,20 +25,22 @@
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 30px 20px;
     }
 
     h1 {
       text-align: center;
-      color: #333;
+      font-weight: 600;
+      font-size: 2rem;
+      color: var(--highlight);
     }
 
     #graph {
       height: 700px;
       width: 100%;
-      background-color: white;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      background-color: var(--card-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
     }
 
     .controls {
@@ -41,10 +52,25 @@
       width: 300px;
     }
 
+    button {
+      background-color: var(--highlight);
+      border: none;
+      color: white;
+      padding: 8px 14px;
+      font-size: 14px;
+      margin-left: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #019caf;
+    }
+
     #loading {
       text-align: center;
       margin: 10px 0;
-      color: #666;
+      color: #aaa;
       font-style: italic;
     }
 
@@ -54,37 +80,58 @@
       top: 120px;
       left: 40px;
       width: 350px;
-      background-color: #ffffff;
-      border: 1px solid #ccc;
+      background-color: var(--card-dark);
+      border: 1px solid var(--border);
       padding: 15px;
       z-index: 9999;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      border-radius: 8px;
+      color: var(--text-light);
     }
 
     #nodeInfoBox h3 {
       margin-top: 0;
-      color: #333;
+      color: var(--highlight);
     }
 
     pre {
-      background-color: #f4f4f4;
-      padding: 8px;
-      border-radius: 4px;
+      background-color: #212121;
+      color: #ccc;
+      padding: 10px;
+      border-radius: 5px;
       overflow-x: auto;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      font-size: 14px;
+      border-collapse: collapse;
+    }
+
+    td {
+      padding: 5px 0;
+      vertical-align: top;
+    }
+
+    td:first-child {
+      font-weight: bold;
+      color: #bbb;
+      width: 80px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>PathRAG Knowledge Graph</h1>
+    <h1>🌌 PathRAG Knowledge Graph</h1>
     <div id="loading">Loading graph...</div>
     <div id="graph"></div>
 
     <div class="controls">
       <label>Nodes: <span id="nodeValue">100</span></label><br/>
-      <input type="range" id="nodeSlider" min="10" max="100000" value="100"/>
+      <input type="range" id="nodeSlider" min="10" max="10000" value="100"/>
       <button onclick="refreshGraph()">Refresh</button>
+      <button id="toggleLinesBtn" onclick="toggleLines()">Show Lines</button>
     </div>
   </div>
 
@@ -96,8 +143,10 @@
     const slider = document.getElementById("nodeSlider");
     const valueLabel = document.getElementById("nodeValue");
     const infoBox = document.getElementById("nodeInfoBox");
+    const toggleBtn = document.getElementById("toggleLinesBtn");
 
     let originalGraphData = [];
+    let linesVisible = false;
 
     slider.addEventListener("input", () => {
       valueLabel.textContent = slider.value;
@@ -112,9 +161,8 @@
       try {
         const res = await fetch(`/graph?max_nodes=${maxNodes}`);
         const graphResponse = await res.json();
-        originalGraphData = graphResponse.data;
+        originalGraphData = colorizeNodes(graphResponse.data);  // 🎨 Add colors
 
-        // Hide all edge traces (lines)
         for (let trace of originalGraphData) {
           if (trace.mode === "lines") {
             trace.visible = false;
@@ -122,7 +170,6 @@
         }
 
         await Plotly.newPlot("graph", originalGraphData, graphResponse.layout, { responsive: true });
-
         graphDiv.on('plotly_click', handlePlotClick);
 
         loading.style.display = "none";
@@ -134,11 +181,19 @@
     }
 
     function refreshGraph() {
-      const max = slider.value;
-      loadGraph(max);
+      loadGraph(slider.value);
     }
 
-    window.onload = () => loadGraph();
+    function toggleLines() {
+      linesVisible = !linesVisible;
+      for (let trace of originalGraphData) {
+        if (trace.mode === "lines") {
+          trace.visible = linesVisible;
+        }
+      }
+      toggleBtn.textContent = linesVisible ? "Hide Lines" : "Show Lines";
+      Plotly.react("graph", originalGraphData, {}, { responsive: true });
+    }
 
     async function handlePlotClick(eventData) {
       const point = eventData.points[0];
@@ -159,23 +214,16 @@
         return;
       }
 
-      // Hide all edge lines
-      for (let trace of originalGraphData) {
-        if (trace.mode === "lines") {
-          trace.visible = false;
+      // Show only edges connected to this node
+      if (linesVisible) {
+        for (let trace of originalGraphData) {
+          if (trace.mode === "lines") {
+            trace.visible = trace.name && trace.name.includes(`(${nodeId})`);
+          }
         }
+        await Plotly.react("graph", originalGraphData, {}, { responsive: true });
       }
 
-      // Show only edges that mention this node in their name
-      for (let trace of originalGraphData) {
-        if (trace.mode === "lines" && trace.name && trace.name.includes(`(${nodeId})`)) {
-          trace.visible = true;
-        }
-      }
-
-      await Plotly.react("graph", originalGraphData, {}, { responsive: true });
-
-      // Fetch and display node info
       try {
         const res = await fetch(`/graph/node/${encodeURIComponent(nodeId)}`);
         const nodeData = await res.json();
@@ -185,10 +233,10 @@
         } else {
           infoBox.innerHTML = `
             <h3>🧠 Node Info</h3>
-            <table style="width:100%; font-size:14px;">
-              <tr><td><strong>ID</strong></td><td>${nodeData.node_id}</td></tr>
-              <tr><td><strong>Label</strong></td><td>${nodeData.label}</td></tr>
-              <tr><td><strong>Text</strong></td><td>${nodeData.text}</td></tr>
+            <table>
+              <tr><td>ID</td><td>${nodeData.node_id}</td></tr>
+              <tr><td>Label</td><td>${nodeData.label}</td></tr>
+              <tr><td>Text</td><td>${nodeData.text}</td></tr>
             </table>
             <pre>${JSON.stringify(nodeData.metadata, null, 2)}</pre>
           `;
@@ -202,12 +250,29 @@
       }
     }
 
-    // Hide node info box when clicking outside
-    document.addEventListener('click', function(event) {
+    // Hide info box when clicking outside
+    document.addEventListener("click", (event) => {
       if (!infoBox.contains(event.target) && !graphDiv.contains(event.target)) {
         infoBox.style.display = "none";
       }
     });
+
+    // Assign random colors for multiple collections/categories
+    function colorizeNodes(data) {
+      const colors = ['#00BCD4', '#FFC107', '#FF5722', '#8BC34A', '#E91E63', '#9C27B0', '#03A9F4', '#FF9800'];
+      let colorIndex = 0;
+
+      return data.map(trace => {
+        if (trace.mode === "markers") {
+          trace.marker = trace.marker || {};
+          trace.marker.color = colors[colorIndex % colors.length];
+          colorIndex++;
+        }
+        return trace;
+      });
+    }
+
+    window.onload = () => loadGraph();
   </script>
 </body>
 </html>
