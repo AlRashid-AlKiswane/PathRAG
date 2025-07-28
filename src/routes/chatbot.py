@@ -213,7 +213,7 @@ async def check_cache(db: MongoClient, user_id: str, query: str) -> Optional[dic
         Optional[dict]: Cached entry document or None if not found.
     """
     try:
-        cached = await db.chatbot.find_one({"user_id": user_id, "query": query})
+        cached = db.chatbot.find_one({"user_id": user_id, "query": query})
         return cached
     except Exception as e:
         logger.error("Error checking cache for user_id='%s' query='%s': %s", user_id, query, e)
