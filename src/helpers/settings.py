@@ -26,7 +26,7 @@ import os
 import sys
 import logging
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Optional
 from pydantic import Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     # -----------------------------
     MONGO_USE_LOCAL: bool = Field(..., env="MONGO_USE_LOCAL")
     MONGO_LOCAL_URI: str = Field(..., env="MONGO_LOCAL_URI")
-    MONGO_REMOTE_URI: str = Field(..., env="MONGO_REMOTE_URI")
+    MONGO_REMOTE_URI: Optional[str] = Field(default=None, env="MONGO_REMOTE_URI")
     MONGO_ENABLE_WEBUI: bool = Field(..., env="MONGO_ENABLE_WEBUI")
     # -----------------------------
     # Document Handling
@@ -99,6 +99,7 @@ class Settings(BaseSettings):
         description="Number of overlapping characters between consecutive chunks."
     )
 
+    DOCLING_ARTIFACTS_PATH: str = Field(..., env="DOCLING_ARTIFACTS_PATH")
     # -----------------------------
     # Model Configuration
     # -----------------------------
@@ -280,4 +281,3 @@ def get_settings() -> Settings:
     except OSError as oe:
         logging.critical("Filesystem setup error: %s", oe)
         sys.exit(1)
-
