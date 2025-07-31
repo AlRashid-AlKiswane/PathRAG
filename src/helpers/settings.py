@@ -99,7 +99,7 @@ class Settings(BaseSettings):
         description="Number of overlapping characters between consecutive chunks."
     )
 
-    DOCLING_ARTIFACTS_PATH: str = Field(..., env="DOCLING_ARTIFACTS_PATH")
+    # DOCLING_ARTIFACTS_PATH: str = Field(..., env="DOCLING_ARTIFACTS_PATH")
     # -----------------------------
     # Model Configuration
     # -----------------------------
