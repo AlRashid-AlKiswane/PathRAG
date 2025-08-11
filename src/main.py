@@ -51,16 +51,7 @@ try:
         init_chunks_collection,
         init_embed_vector_collection,
     )
-    from src.routes import (
-        upload_route,
-        chunking_route,
-        embedding_chunks_route,
-        live_retrieval_route,
-        chatbot_route,
-        storage_management_route,
-        resource_monitor_router,
-        build_pathrag_route
-    )
+    from src.routes import *
     from src.infra import setup_logging
     from src.llms_providers import OllamaModel, HuggingFaceModel
     from src.rag import PathRAG
@@ -278,7 +269,7 @@ try:
     app.include_router(chatbot_route)
     app.include_router(storage_management_route)
     app.include_router(resource_monitor_router)
-
+    app.include_router(md_chunker_routes)
     logger.info("✅ All API routes registered successfully.")
 except Exception as route_err:
     logger.critical("❌ Failed to register API routes: %s", route_err, exc_info=True)

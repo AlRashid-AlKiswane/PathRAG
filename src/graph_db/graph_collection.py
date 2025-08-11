@@ -47,6 +47,7 @@ def init_chunks_collection(db) -> None:
     - chunk: str
     - file: str
     - dataName: str
+    - size: int
     """
     try:
         if "chunks" not in db.list_collection_names():

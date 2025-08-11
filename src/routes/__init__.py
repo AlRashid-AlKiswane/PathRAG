@@ -24,6 +24,7 @@ from .storage_management import storage_management_route
 from .chatbot import chatbot_route
 from .resource_monitor import resource_monitor_router
 from .build_path_rag import build_pathrag_route
+from .route_chunker_md_files import md_chunker_routes
 
 __all__ = [
     "upload_route",
@@ -34,4 +35,5 @@ __all__ = [
     "chatbot_route",
     "resource_monitor_router",
     "build_pathrag_route",
+    "md_chunker_routes"
 ]

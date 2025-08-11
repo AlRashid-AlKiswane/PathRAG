@@ -43,6 +43,7 @@ def insert_chunk_to_mongo(
     chunk: str,
     file: str,
     data_name: str,
+    size: int,
     collection_name: str = "chunks",
     doc_id: Optional[str] = None
 ) -> bool:
@@ -66,7 +67,8 @@ def insert_chunk_to_mongo(
             "_id": doc_id,
             "chunk": chunk,
             "file": file,
-            "dataName": data_name
+            "dataName": data_name,
+            "size": size
         }
         db[collection_name].insert_one(doc)
         return True
