@@ -15,9 +15,13 @@ This allows users to import controller functions conveniently from the package.
 from .chunking_documents import chunking_docs
 from .unique_filename_generator import generate_unique_filename
 from .text_operation import TextCleaner
+from .ex_images_pdf import ExtractionImagesFromPDF
+from .ocr import AdvancedOCRProcessor
 
 __all__ = [
     "chunking_docs",
     "generate_unique_filename",
-    "TextCleaner"
+    "TextCleaner",
+    "ExtractionImagesFromPDF",
+    "AdvancedOCRProcessor"
 ]

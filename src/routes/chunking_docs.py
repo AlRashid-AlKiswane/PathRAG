@@ -43,8 +43,15 @@ except Exception as e:
 from src.graph_db import insert_chunk_to_mongo, clear_collection
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
-from src.controllers import chunking_docs, TextCleaner
+from src.controllers import (
+    chunking_docs, 
+    TextCleaner,
+    AdvancedOCRProcessor,
+    ExtractionImagesFromPDF
+)
 from src import get_mongo_db
+
+ocr = AdvancedOCRProcessor()
 
 # === Logger and Settings ===
 logger = setup_logging(name="CHUNKING-DOCS")
@@ -66,21 +73,11 @@ async def chunking(
 ) -> JSONResponse:
     """
     Chunk a single file or all files in a directory and store chunks in MongoDB.
-
-    Args:
-        file_path (Optional[str]): Path to single document file to chunk.
-        dir_file (Optional[str]): Subdirectory inside 'assets/docs' for batch chunking.
-        reset_table (bool): If True, clears 'chunks' collection before inserting.
-        db (MongoClient): MongoDB database handle injected by FastAPI dependency.
-
-    Returns:
-        JSONResponse: Message with success status and total chunks inserted.
-
-    Raises:
-        HTTPException: If input parameters are invalid or files/directories not found.
     """
+
     total_chunks_inserted = 0
 
+    # Reset collection if requested
     if reset_table:
         try:
             clear_collection(db=db, collection_name="chunks")
@@ -91,7 +88,7 @@ async def chunking(
 
     text_cleaner = TextCleaner(lowercase=True)
 
-    # Process a single file
+    # === Single file processing ===
     if file_path:
         if not os.path.isfile(file_path):
             logger.error(f"File not found: {file_path}")
@@ -110,15 +107,41 @@ async def chunking(
                     db=db,
                     chunk=cleaned_text,
                     file=file_path,
-                    data_name="single_file",
-                    doc_id=doc_id
+                    data_name=dir_file,
+                    doc_id=doc_id,
+                    size=len(cleaned_text)
                 )
                 total_chunks_inserted += 1
+            
+            # Process images from PDF
+            if file_path.lower().endswith('.pdf'):
+                extract_image = ExtractionImagesFromPDF(pdf_path=file_path)
+                paths_images = extract_image.extract_images()
+                logger.info(f"Extracted {len(paths_images)} images from PDF {file_path}")
+
+                content_image = ""
+                for path in paths_images:
+                    full_pdf_path = os.path.join(MAIN_DIR, path)
+                    result = ocr.extract_text(image=full_pdf_path)  # FIXED: use full path
+                    content_image += "".join(result.text)
+
+                if content_image.strip():
+                    cleaned_content = text_cleaner.clean(content_image)
+                    insert_chunk_to_mongo(
+                        db=db,
+                        chunk=cleaned_content,
+                        file=", ".join(paths_images),
+                        data_name=dir_file,
+                        doc_id=str(uuid.uuid4()),
+                        size=len(cleaned_content)
+                    )
+                    total_chunks_inserted += 1
+
         except Exception as e:
             logger.error(f"Error chunking file {file_path}: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail=f"Chunking failed for file {file_path}")
 
-    # Process all files in directory
+    # === Directory processing ===
     elif dir_file:
         dir_path = os.path.join(MAIN_DIR, "assets/docs", dir_file)
         if not os.path.isdir(dir_path):
@@ -142,9 +165,35 @@ async def chunking(
                         chunk=cleaned_text,
                         file=full_path,
                         data_name=dir_file,
-                        doc_id=doc_id
+                        doc_id=doc_id,
+                        size=len(cleaned_text)
                     )
                     total_chunks_inserted += 1
+
+                # Process images from PDF
+                if full_path.lower().endswith('.pdf'):
+                    extract_image = ExtractionImagesFromPDF(pdf_path=full_path)
+                    paths_images = extract_image.extract_images()
+                    logger.info(f"Extracted {len(paths_images)} images from PDF {full_path}")
+
+                    content_image = ""
+                    for path in paths_images:
+                        full_pdf_path = os.path.join(MAIN_DIR, path)
+                        result = ocr.extract_text(image=full_pdf_path)
+                        content_image += "".join(result.text)
+                    
+                    if content_image.strip():
+                        cleaned_content = text_cleaner.clean(content_image)
+                        insert_chunk_to_mongo(
+                            db=db,
+                            chunk=cleaned_content,
+                            file=", ".join(paths_images),
+                            data_name=dir_file,
+                            doc_id=str(uuid.uuid4()),
+                            size=len(cleaned_content)
+                        )
+                        total_chunks_inserted += 1
+                        
             except Exception as e:
                 tqdm.write(f"[ERROR] Failed to process file {filename}: {e}")
                 logger.error(f"Failed to chunk file {filename} in directory {dir_path}: {e}", exc_info=True)
