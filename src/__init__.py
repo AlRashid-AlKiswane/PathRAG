@@ -27,6 +27,7 @@ from .dependencies import (
 )
 
 __all__ = [
+    "get_mongo_db",
     "get_db_conn",
     "get_llm",
     "get_embedding_model",

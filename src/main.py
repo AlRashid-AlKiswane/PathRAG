@@ -270,6 +270,7 @@ try:
     app.include_router(storage_management_route)
     app.include_router(resource_monitor_router)
     app.include_router(md_chunker_routes)
+    app.include_router(user_file_route)
     logger.info("✅ All API routes registered successfully.")
 except Exception as route_err:
     logger.critical("❌ Failed to register API routes: %s", route_err, exc_info=True)

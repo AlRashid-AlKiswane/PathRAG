@@ -23,7 +23,7 @@ Route:
 
 Input Schema (Chatbot):
 -----------------------
-- query: str - The user’s natural language question.
+- query: str - The user's natural language question.
 - user_id: str - A unique identifier for the user (used for caching).
 - top_k: int - Number of top relevant chunks to retrieve.
 - max_hop: Optional[int] - Maximum hops allowed in graph traversal.
@@ -132,6 +132,12 @@ async def chatbot(
             else:
                 logger.debug("Cache miss for user_id='%s' and query='%s'", user_id, query)
 
+        # User upload docker retrieval
+        GRAPH_DIR = os.path.join(MAIN_DIR, "storage_graph")
+        user_graph = os.path.join(GRAPH_DIR, user_id+".pickle")
+        if os.path.exists(user_graph):
+            pathrag.load_graph(file_path=user_graph)
+
         # Step 2: Semantic Retrieval
         logger.debug("Performing semantic retrieval using PathRAG.")
         nodes = pathrag.retrieve_nodes(query=query, top_k=top_k)
@@ -198,7 +204,6 @@ async def chatbot(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during chatbot operation."
         )
-
 
 async def check_cache(db: MongoClient, user_id: str, query: str) -> Optional[dict]:
     """
