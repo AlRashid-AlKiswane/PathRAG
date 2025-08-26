@@ -99,6 +99,14 @@ class Settings(BaseSettings):
         description="Number of overlapping characters between consecutive chunks."
     )
 
+    FILE_SIZE_BYTES: int = Field(
+        default=int(5e6),
+        ge=int(1e1),
+        lt=int(9e100),
+        env="FILE_SIZE_BYTES",
+        description="Maximum file size in bytes (default 5 MB)"
+    )
+
     # DOCLING_ARTIFACTS_PATH: str = Field(..., env="DOCLING_ARTIFACTS_PATH")
     # -----------------------------
     # Model Configuration
@@ -247,8 +255,28 @@ class Settings(BaseSettings):
         extra="forbid"  # Forbid unknown environment variables
     )
 
-    STORGE_GRAPH: str = Field(..., env="STORGE_GRAPH")
+    STORAGE_GRAPH: str = Field(
+        ...,
+        env="STORAGE_GRAPH",
+        description="Path or URI to the storage location of the semantic graph"
+    )
 
+    # Multiprocessing Config
+    MAX_WORKERS: int = Field(
+        default=4,
+        ge=1,
+        le=8,
+        env="MAX_WORKERS",
+        description="Maximum number of parallel workers (1-8, default 4)"
+    )
+
+    BATCH_SIZE: int = Field(
+        default=16,
+        ge=8,
+        le=1024,
+        env="BATCH_SIZE",
+        description="Batch size for processing tasks (default 8, range 2-1024)"
+    )
 
 def get_settings() -> Settings:
     """

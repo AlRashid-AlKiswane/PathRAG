@@ -18,6 +18,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 import os
 import sys
 import cv2
+import logging
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter
 import logging
@@ -34,21 +35,21 @@ try:
     TESSERACT_AVAILABLE = True
 except ImportError:
     TESSERACT_AVAILABLE = False
-    print("Tesseract not available. Install with: pip install pytesseract")
+    logging.error("Tesseract not available. Install with: pip install pytesseract")
 
 try:
     import easyocr
     EASYOCR_AVAILABLE = True
 except ImportError:
     EASYOCR_AVAILABLE = False
-    print("EasyOCR not available. Install with: pip install easyocr")
+    logging.error("EasyOCR not available. Install with: pip install easyocr")
 
 try:
     from paddleocr import PaddleOCR
     PADDLEOCR_AVAILABLE = True
 except ImportError:
     PADDLEOCR_AVAILABLE = False
-    print("PaddleOCR not available. Install with: pip install paddlepaddle paddleocr")
+    logging.error("PaddleOCR not available. Install with: pip install paddlepaddle paddleocr")
 
 try:
     from transformers import TrOCRProcessor, VisionEncoderDecoderModel
@@ -56,39 +57,28 @@ try:
     TROCR_AVAILABLE = True
 except ImportError:
     TROCR_AVAILABLE = False
-    print("TrOCR not available. Install with: pip install transformers torch")
+    logging.error("TrOCR not available. Install with: pip install transformers torch")
 
 try:
-    from surya.ocr import run_ocr
-    from surya.model.detection.segformer import load_model as load_det_model, load_processor as load_det_processor
-    from surya.model.recognition.model import load_model as load_rec_model
-    from surya.model.recognition.processor import load_processor as load_rec_processor
+    from surya.ocr import run_ocr # type: ignore
+    from surya.model.detection.segformer import load_model as load_det_model, load_processor as load_det_processor # type: ignore
+    from surya.model.recognition.model import load_model as load_rec_model # type: ignore
+    from surya.model.recognition.processor import load_processor as load_rec_processor # type: ignore
     SURYA_AVAILABLE = True
+
+    MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    if MAIN_DIR not in sys.path:
+        sys.path.append(MAIN_DIR)
+    
+    from src.schemas import OCRResult, OCREngine
+    from src.infra import setup_logging
 except ImportError:
     SURYA_AVAILABLE = False
-    print("Surya OCR not available. Install with: pip install surya-ocr")
+    logging.error("Surya OCR not available. Install with: pip install surya-ocr")
 
-
-class OCREngine(Enum):
-    """Available OCR engines"""
-    TESSERACT = "tesseract"
-    EASYOCR = "easyocr"
-    PADDLEOCR = "paddleocr"
-    TROCR = "trocr"
-    SURYA = "surya"
-
-
-@dataclass
-class OCRResult:
-    """Standardized OCR result structure"""
-    text: str
-    confidence: float
-    bbox: Optional[List[Tuple[int, int, int, int]]] = None
-    word_boxes: Optional[List[Dict]] = None
-    processing_time: Optional[float] = None
-    engine: Optional[str] = None
-    error: Optional[str] = None
-
+logger = setup_logging(
+    name="OCR-OPERATIONS"
+)
 
 class AdvancedOCRProcessor:
     """
@@ -99,8 +89,8 @@ class AdvancedOCRProcessor:
                  primary_engine: OCREngine = OCREngine.EASYOCR,
                  fallback_engines: List[OCREngine] = None,
                  language: Union[str, List[str]] = 'en',
-                 gpu: bool = True,
-                 enable_logging: bool = True):
+                 gpu: bool = True
+) -> None:
         """
         Initialize Advanced OCR processor
         
@@ -115,14 +105,6 @@ class AdvancedOCRProcessor:
         self.fallback_engines = fallback_engines or [OCREngine.TESSERACT]
         self.language = language if isinstance(language, list) else [language]
         self.gpu = gpu and torch.cuda.is_available()
-        
-        # Setup logging
-        if enable_logging:
-            logging.basicConfig(level=logging.INFO)
-            self.logger = logging.getLogger(__name__)
-        else:
-            self.logger = logging.getLogger(__name__)
-            self.logger.addHandler(logging.NullHandler())
         
         # Initialize engines
         self.engines = {}
@@ -142,9 +124,9 @@ class AdvancedOCRProcessor:
                     gpu=self.gpu,
                     verbose=False
                 )
-                self.logger.info(f"EasyOCR initialized with GPU: {self.gpu}")
+                logger.info(f"EasyOCR initialized with GPU: {self.gpu}")
             except Exception as e:
-                self.logger.error(f"Failed to initialize EasyOCR: {e}")
+                logger.error(f"Failed to initialize EasyOCR: {e}")
         
         # Initialize PaddleOCR
         if PADDLEOCR_AVAILABLE and OCREngine.PADDLEOCR in [self.primary_engine] + self.fallback_engines:
@@ -156,22 +138,22 @@ class AdvancedOCRProcessor:
                     use_gpu=self.gpu,
                     show_log=False
                 )
-                self.logger.info(f"PaddleOCR initialized with GPU: {self.gpu}")
+                logger.info(f"PaddleOCR initialized with GPU: {self.gpu}")
             except Exception as e:
-                self.logger.error(f"Failed to initialize PaddleOCR: {e}")
+                logger.error(f"Failed to initialize PaddleOCR: {e}")
         
         # Initialize TrOCR
         if TROCR_AVAILABLE and OCREngine.TROCR in [self.primary_engine] + self.fallback_engines:
             try:
                 device = "cuda" if self.gpu else "cpu"
                 self.engines[OCREngine.TROCR] = {
-                    'processor': TrOCRProcessor.from_pretrained('microsoft/trocr-large-printed'),
-                    'model': VisionEncoderDecoderModel.from_pretrained('microsoft/trocr-large-printed').to(device),
+                    'processor': TrOCRProcessor.from_pretrained('microsoft/trocr-large-logging.errored'),
+                    'model': VisionEncoderDecoderModel.from_pretrained('microsoft/trocr-large-logging.errored').to(device),
                     'device': device
                 }
-                self.logger.info(f"TrOCR initialized on device: {device}")
+                logger.info(f"TrOCR initialized on device: {device}")
             except Exception as e:
-                self.logger.error(f"Failed to initialize TrOCR: {e}")
+                logger.error(f"Failed to initialize TrOCR: {e}")
         
         # Initialize Surya OCR
         if SURYA_AVAILABLE and OCREngine.SURYA in [self.primary_engine] + self.fallback_engines:
@@ -182,9 +164,9 @@ class AdvancedOCRProcessor:
                     'rec_model': load_rec_model(),
                     'rec_processor': load_rec_processor()
                 }
-                self.logger.info("Surya OCR initialized")
+                logger.info("Surya OCR initialized")
             except Exception as e:
-                self.logger.error(f"Failed to initialize Surya OCR: {e}")
+                logger.error(f"Failed to initialize Surya OCR: {e}")
         
         # Initialize Tesseract (fallback)
         if TESSERACT_AVAILABLE and OCREngine.TESSERACT in [self.primary_engine] + self.fallback_engines:
@@ -192,9 +174,9 @@ class AdvancedOCRProcessor:
                 # Auto-detect tesseract
                 self._detect_tesseract()
                 self.engines[OCREngine.TESSERACT] = True
-                self.logger.info("Tesseract initialized")
+                logger.info("Tesseract initialized")
             except Exception as e:
-                self.logger.error(f"Failed to initialize Tesseract: {e}")
+                logger.error(f"Failed to initialize Tesseract: {e}")
     
     def _detect_tesseract(self):
         """Auto-detect tesseract installation"""
@@ -594,7 +576,7 @@ class AdvancedOCRProcessor:
         # Try fallback engines
         for fallback_engine in self.fallback_engines:
             if fallback_engine in self.engines and fallback_engine != target_engine:
-                self.logger.info(f"Trying fallback engine: {fallback_engine.value}")
+                logger.info(f"Trying fallback engine: {fallback_engine.value}")
                 
                 if fallback_engine == OCREngine.EASYOCR:
                     result = self._extract_with_easyocr(processed_img)
@@ -630,8 +612,8 @@ if __name__ == "__main__":
     results = []
     chunk = ""
     for img_path in image_paths:
-        print(f"Processing: {img_path}")
+        logging.error(f"Processing: {img_path}")
         result = ocr.extract_text(img_path, preprocess=True)
         chunk += "".join(result.text,)
 
-    print(chunk)
+    logging.info(chunk)
