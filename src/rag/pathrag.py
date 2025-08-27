@@ -47,11 +47,15 @@ This module is intended for integration into retrieval-augmented generation pipe
 where reasoning over multi-hop semantic relations enhances context retrieval quality.
 """
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import lru_cache
 import heapq
 import logging
 import os
 import sys
-from typing import Any, Dict, List
+import threading
+from time import time
+from typing import Any, Dict, List, Tuple
 
 import networkx as nx
 import numpy as np
@@ -72,7 +76,11 @@ except (ImportError, OSError) as e:
     logging.error("Failed to set up main directory path: %s", e)
     sys.exit(1)
 
-from src.infra import setup_logging
+from src.infra import setup_logging, MemoryMonitor
+from src.schemas import PathRAGConfig
+from src.utils import timer
+from .graph_cache import GraphCache
+from .path_rag_metrics import PathRAGMetrics
 from src.helpers import get_settings, Settings
 from src.llms_providers import HuggingFaceModel
 
@@ -82,509 +90,619 @@ app_settings: Settings = get_settings()
 
 class PathRAG:
     """
-    Path-aware Retrieval-Augmented Generation (PathRAG) class implementing graph-based
-    relational reasoning for information retrieval and prompt construction.
-
-    This class builds a semantic directed graph from embedded text chunks, computes
-    similarity edges between nodes, and supports retrieving relevant nodes and relational
-    paths between them. Paths are scored with decay-weighted flow to prune and prioritize
-    the most relevant chains of evidence.
-
-    Attributes:
-        g (nx.DiGraph): Directed graph storing nodes as chunk indices and edges weighted by cosine similarity.
-        decay_rate (float): Multiplicative decay applied per hop in path scoring (0 < decay_rate ≤ 1).
-        prune_thresh (float): Minimum flow score threshold below which paths are discarded.
-        sim_should (float): Similarity threshold for creating edges between nodes (0 ≤ sim_should ≤ 1).
-        embedding_model (HuggingFaceModel): Model instance used to embed query texts.
+    Production-ready Path-aware Retrieval-Augmented Generation system.
+    
+    Features:
+    - Thread-safe operations
+    - Memory monitoring and limits
+    - Intelligent caching
+    - Batch processing
+    - Progress tracking
+    - Graceful error handling
+    - Performance metrics
     """
-
+    
     def __init__(
         self,
         embedding_model: HuggingFaceModel,
-        decay_rate: float = 0.8,
-        prune_thresh: float = 0.01,
-        sim_should: float = 0.1
+        config: Optional[PathRAGConfig] = None
+    ):
+        """
+        Initialize PathRAG with production-ready configuration.
+        
+        Args:
+            embedding_model: Model for text embedding
+            config: Configuration object with parameters
+        """
+        self.config = config or PathRAGConfig()
+        self.embedding_model: HuggingFaceModel = embedding_model
+        self.g = nx.DiGraph()
+        self.metrics = PathRAGMetrics()
+        self.memory_monitor = MemoryMonitor(self.config.memory_limit_gb)
+        self.cache = GraphCache(self.config)
+        self._lock = threading.Lock()
+        
+        # Setup logging        
+        logger.info(f"PathRAG initialized with config: {self.config}")
+    
+    @timer('graph_build_time')
+    def build_graph(
+        self, 
+        chunks: List[str], 
+        embeddings: np.ndarray,
+        checkpoint_callback: Optional[callable] = None
     ) -> None:
         """
-        Initialize PathRAG with specified parameters and an embedding model.
-
+        Build semantic graph with production optimizations.
+        
         Args:
-            embedding_model (HuggingFaceModel): Pretrained model to generate vector embeddings from text.
-            decay_rate (float, optional): Decay factor per hop in path scoring; must be in (0, 1]. Defaults to 0.8.
-            prune_thresh (float, optional): Minimum path flow score to retain path; must be non-negative. Defaults to 0.01.
-            sim_should (float, optional): Cosine similarity threshold to create edges between nodes. Defaults to 0.1.
-
-        Raises:
-            ValueError: If decay_rate is not in (0,1] or prune_thresh is negative.
+            chunks: List of text chunks
+            embeddings: Corresponding embeddings
+            checkpoint_callback: Optional callback for progress checkpoints
         """
-        if not 0 < decay_rate <= 1:
-            raise ValueError("decay_rate must be between 0 (exclusive) and 1 (inclusive)")
-        if prune_thresh < 0:
-            raise ValueError("prune_thresh must be non-negative")
+        if not self._validate_inputs(chunks, embeddings):
+            raise ValueError("Invalid inputs provided")
+        
+        if len(chunks) > self.config.max_graph_size:
+            logger.warning(
+                f"Input size {len(chunks)} exceeds max_graph_size"
+                f"{self.config.max_graph_size}, truncating"
+            )
+            chunks = chunks[:self.config.max_graph_size]
+            embeddings = embeddings[:self.config.max_graph_size]
+        
+        with self.memory_monitor.memory_guard():
+            self._build_graph_optimized(chunks, embeddings, checkpoint_callback)
 
-        self.g = nx.DiGraph()
-        self.decay_rate = decay_rate
-        self.prune_thresh = prune_thresh
-        self.sim_should = sim_should
-        self.embedding_model: HuggingFaceModel = embedding_model
-
-        logger.info(
-            "Initialized PathRAG (decay=%.2f, prune_thresh=%.3f, sim_thresh=%.3f)",
-            decay_rate, prune_thresh, sim_should
-        )
-
-    def build_graph(self, chunks: List[str], embeddings: np.ndarray) -> None:
-        """
-        Construct a semantic graph where nodes represent text chunks and edges represent
-        cosine similarity above a threshold between chunk embeddings.
-
-        Nodes store the chunk text and embedding. Edges are bidirectional with weights
-        equal to cosine similarity between node embeddings.
-
-        Args:
-            chunks (List[str]): List of text chunks to include as graph nodes.
-            embeddings (np.ndarray): 2D numpy array where each row is the embedding vector for a chunk.
-
-        Raises:
-            ValueError: If chunks is empty, not a list, or if embeddings is not a numpy array,
-                        or if the number of chunks does not match number of embeddings.
-            RuntimeError: If an unexpected error occurs during graph construction.
-        """
+    def _validate_inputs(self, chunks: List[str], embeddings: np.ndarray) -> bool:
+        """Comprehensive input validation."""
         if not chunks or not isinstance(chunks, list):
-            raise ValueError("Invalid or empty chunk list provided.")
+            logger.error("Invalid chunks provided")
+            return False
+
         if not isinstance(embeddings, np.ndarray):
-            raise ValueError("Embeddings must be a numpy ndarray.")
+            logger.error("Embeddings must be numpy array")
+        
         if len(chunks) != embeddings.shape[0]:
-            raise ValueError("Chunks and embeddings size mismatch.")
+            logger.error("Chunks and embeddings length mismatch")
+            return False
+        
+        if embeddings.ndim != 2:
+            logger.error("Embeddings must be 2D array")
+            return False
+        
+        return True
 
+    def _build_graph_optimized(
+            self,
+            chunks: List[str],
+            embeddings: np.ndarray,
+            checkpoint_callback: Optional[callable]
+    ) -> None:
+        """Optimized graph building with batching and concurrency."""
         self.g.clear()
-        logger.info("Building semantic graph for %d chunks...", len(chunks))
+        logger.info("Building graph for %d chunks", int(len(chunks)))
 
-        try:
-            # Add nodes with associated chunk text and embeddings
+        # Add nodes efficiently
+        with self._lock:
             for idx, (chunk, emb) in enumerate(zip(chunks, embeddings)):
                 self.g.add_node(idx, text=chunk, emb=emb)
+        
+        # Build adges in batches with concurrent processing
+        total_pairs = len(chunks) * (len(chunks) -1) // 2
+        processed_pairs = 0
+        edge_count = 0
 
-            edge_count = 0
-            # Add edges for pairs with similarity above threshold
-            for i in tqdm(range(len(embeddings)), desc="Building edges"):
-                for j in range(i + 1, len(embeddings)):
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = []
+            
+            # Submit batch jobs
+            for i in range(0, len(chunks), self.config.batch_size):
+                batch_end = min(i + self.config.batch_size, len(chunks))
+                future = executor.submit(
+                    self._process_batch,
+                    embeddings,
+                    i,
+                    batch_end,
+                    len(chunks)
+                )
+                futures.append(future)
+
+            # Collect results wiht progress tracking
+            with tqdm(total=len(futures), desc="Processing batches") as pbar:
+                for future in as_completed(futures):
                     try:
-                        sim = cosine_similarity(
-                            embeddings[i].reshape(1, -1),
-                            embeddings[j].reshape(1, -1)
-                        )[0, 0]
-                        if sim > self.sim_should:
-                            self.g.add_edge(i, j, weight=sim)
-                            self.g.add_edge(j, i, weight=sim)
-                            edge_count += 2
+                        batch_edges = future.result()
+
+                        # Add edges thread-safely
+                        with self._lock:
+                            for i, j, sim in batch_edges:
+                                self.g.add_edge(i, j, weight=sim)
+                                self.g.add_edge(j, i, weight=sim)
+                                edge_count += 2
+                        
+                        pbar.update(1)
+
+                        # Checkpoint if callback provided
+                        if checkpoint_callback and processed_pairs % self.config.checkpoint_interval == 0:
+                            checkpoint_callback(processed_pairs, total_pairs)
+
                     except Exception as e:
-                        logger.warning("Similarity calculation failed for nodes (%d, %d): %s", i, j, e)
+                        logger.error(f"Batch processing failed: {e}")
 
-            logger.info("Graph constructed with %d nodes and %d edges", self.g.number_of_nodes(), edge_count)
-        except Exception as e:
-            logger.error("Graph construction failed: %s", e)
-            raise RuntimeError("Failed to build semantic graph.") from e
+        self.metrics.set_metric('nodes_processed', len(chunks))
+        self.metrics.set_metric('edges_created', edge_count)
+        logger.info(f"Graph built: {len(chunks)} nodes, {edge_count} edges")
+    
+    def _process_batch(
+        self,
+        embeddings: np.ndarray,
+        start_idx: int,
+        end_idx: int,
+        total_size: int
+    ) -> List[Tuple[int, int, float]]:
+        """Process a batch of similarity computations."""
+        batch_edges = []
 
-    def retrieve_nodes(self, query: str, top_k: int = 5) -> List[int]:
+        for i in tqdm(range(start_idx, end_idx)):
+            # Check memory periodically
+            if i % 100 == 0 and not self.memory_monitor.check_memory_limit():
+                logger.warning("Memory limit approached, reducing batch processing")
+                break
+            for j in range(i + 1, total_size):
+                try:
+                    sim = cosine_similarity(
+                        embeddings[i:i+1],
+                        embeddings[j:j+1]
+                    )[0, 0]
+                    
+                    if sim > self.config.sim_threshold:
+                        batch_edges.append((i, j, float(sim)))
+                
+                except Exception as e:
+                    logger.debug(f"Similarity computation failed for ({i}, {j}): {e}")
+                    continue
+        
+        return batch_edges
+    
+    @timer('retrieval_time')
+    def retrieve_nodes(
+        self,
+        query: str,
+        top_k: int = 5,
+        use_cache: bool = True
+    ) -> List[int]:
         """
-        Retrieve indices of the top_k graph nodes most semantically similar to the query.
-
-        The query text is embedded and cosine similarity is computed with each node embedding.
-
+        Retrieve top-k most similar nodes with caching.
+        
         Args:
-            query (str): Text query string to retrieve relevant nodes for.
-            top_k (int, optional): Number of top similar nodes to return. Must be > 0. Defaults to 5.
-
+            query: Query string
+            top_k: Number of top nodes to return
+            use_cache: Whether to use caching
+            
         Returns:
-            List[int]: List of node indices ranked by descending similarity to the query.
-
-        Raises:
-            ValueError: If query is empty or not a string, or if top_k ≤ 0.
-            RuntimeError: If the graph is empty or query embedding fails, or no similarities computed.
+            List of node indices ranked by similarity
         """
-        if not query or not isinstance(query, str):
-            raise ValueError("Query must be a non-empty string.")
-        if top_k <= 0:
-            raise ValueError("top_k must be a positive integer.")
-        if self.g.number_of_nodes() == 0:
-            raise RuntimeError("Graph is empty - please call build_graph() before retrieval.")
-
+        if not self._validate_query(query, top_k):
+            raise ValueError("Invalid query parameters")
+        
+        # Check cache first
+        cache_key = f"retrieve_{hash(query)}_{top_k}" if use_cache else None
+        if cache_key:
+            cached_result = self.cache.get(cache_key)
+            if cached_result is not None:
+                self.metrics.increment("cache_hist")
+                return cached_result
+            self.metrics.increment("cache_hist")
+        
         try:
-            q_emb = self.embedding_model.embed_texts(texts=query, convert_to_numpy=True)
-            if isinstance(q_emb, list):
-                q_emb = np.array(q_emb)
-            if q_emb.ndim == 2 and q_emb.shape[0] == 1:
-                q_emb = q_emb[0]
-            if q_emb.ndim != 1:
-                raise RuntimeError(f"Unexpected query embedding shape: {q_emb.shape}")
+            # Embed quyer with error handling
+            q_emb = self._embed_query_safe(query)
+
+            # compute similarites efficiently
+            similarities = self._compute_similarities_batch(q_emb)
+
+            # Get top-k results
+            top_nodes = heapq.nlargest(
+                top_k,
+                similarities.items(),
+                key=lambda x: x[1]
+            )
+            result = [node_id for node_id, _ in top_nodes]
+
+            # Cache result
+            if cache_key:
+                self.cache.set(cache_key, result)
+            
+            logger.info(f"Retrieved top-{top_k} nodes: {result}")
+            return result
+            
         except Exception as e:
-            logger.error("Query embedding failed: %s", e)
-            raise RuntimeError(f"Query embedding failed: {e}") from e
+            logger.error(f"Node retrieval failed: {e}")
+            raise RuntimeError(f"Retrieval failed: {e}") from e
 
-        sims = {}
-        for nid, data in self.g.nodes(data=True):
+    def _validate_query(self, query: str, top_k: int) -> bool:
+        """Validate query parameters."""
+        if not query or not isinstance(query, str) or not query.strip():
+            return False
+        if top_k <= 0 or not isinstance(top_k, int):
+            return False
+        if self.g.number_of_nodes() == 0:
+            return False
+        return True
+    
+    def _embed_query_safe(self, query: str) -> np.ndarray:
+        """Safely embed query with retries."""
+        max_retries = 3
+        for attempt in range(max_retries):
             try:
-                similarity = cosine_similarity(
-                    q_emb.reshape(1, -1),
-                    data["emb"].reshape(1, -1)
-                )[0, 0]
-                sims[nid] = float(similarity)
+                q_emb = self.embedding_model.embed_texts(
+                    texts=query,
+                    convert_to_numpy=True
+                )
+                
+                if isinstance(q_emb, list):
+                    q_emb = np.array(q_emb)
+                if q_emb.ndim == 2 and q_emb.shape[0] == 1:
+                    q_emb = q_emb[0]
+                
+                return q_emb
+                
             except Exception as e:
-                logger.warning("Similarity computation failed for node %d: %s", nid, e)
+                logger.warning(f"Query embedding attempt {attempt + 1} failed: {e}")
+                if attempt == max_retries - 1:
+                    raise
+                time.sleep(0.1 * (attempt + 1)) 
+    
+    @lru_cache(maxsize=1000)
+    def _compute_similarities_batch(self, q_emb_tuple: tuple) -> Dict[int, float]:
+        """Compute similarities with caching (using tuple for hashability)."""
+        q_emb = np.array(q_emb_tuple)
+        similarities = {}
 
-        if not sims:
-            raise RuntimeError("No valid node similarities computed.")
+        # Batch process similarites
+        node_ids = list(self.g.nodes())
+        embedding_martix = np.vstack([
+            self.g.nodes[ndi]['emb'] for ndi in node_ids
+        ])
 
-        ranked = heapq.nlargest(top_k, sims.items(), key=lambda x: x[1])
-        ranked_nodes = [nid for nid, _ in ranked]
-        logger.info("Top %d retrieved nodes: %s", top_k, ranked_nodes)
-        return ranked_nodes
+        # Vectorized similarity computation
+        sims = cosine_similarity(q_emb.reshape(1, -1), embedding_martix)[0]
 
-    def prune_paths(self, nodes: List[int], max_hops: int = 4) -> List[List[int]]:
+        for node_id, sim in zip(node_ids, sims):
+            similarities[node_id] = float(sim)
+        
+        return similarities
+    
+
+    @timer('path_pruning_time')
+    def prune_paths(
+        self,
+        nodes: List[int],
+        max_hops: int = 4,
+        max_paths_per_pair: int = 10
+    ) -> List[List[int]]:
         """
-        Find and prune relational paths between specified nodes using decay-weighted scoring.
-
-        Enumerates all simple paths between each pair of nodes up to max_hops length.
-        Each path's flow score is computed and only those above prune_thresh are retained.
-
+        Prune paths with production optimizations.
+        
         Args:
-            nodes (List[int]): List of node indices to consider as start/end points for paths.
-            max_hops (int, optional): Maximum path length (number of edges) to consider. Must be ≥ 1. Defaults to 4.
-
+            nodes: List of node indices
+            max_hops: Maximum path length
+            max_paths_per_pair: Limit paths per node pair for performance
+            
         Returns:
-            List[List[int]]: List of valid paths (each a list of node indices) passing the pruning threshold.
-
-        Raises:
-            ValueError: If nodes is empty or not a list, or if max_hops < 1.
+            List of valid paths
         """
-        if not nodes or not isinstance(nodes, list):
-            raise ValueError("Invalid node list.")
-        if max_hops < 1:
-            raise ValueError("max_hops must be ≥ 1.")
+        if not self._validate_path_inputs(nodes, max_hops):
+            raise ValueError("Invalid path pruning parameters")
 
         valid_paths = []
-        logger.info("Starting path pruning over %d nodes with max_hops=%d...", len(nodes), max_hops)
-
         total_pairs = len(nodes) * (len(nodes) - 1) // 2
-        with tqdm(total=total_pairs, desc="Path pruning - node pairs", unit="pairs") as pbar:
+
+        logger.info(f"Starting path pruning for {len(nodes)} nodes")
+
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = []
+
+            # Submit path finding jobs
             for i, u in enumerate(nodes):
-                for v in nodes[i + 1:]:
-                    try:
-                        all_paths = nx.all_simple_paths(self.g, source=u, target=v, cutoff=max_hops)
-                        for path in all_paths:
-                            score = self._compute_flow(path)
-                            if score >= self.prune_thresh:
-                                valid_paths.append(path)
-                        pbar.update(1)
-                    except nx.NetworkXNoPath:
-                        pbar.update(1)
-                    except Exception as e:
-                        logger.warning("Path search failed between %d and %d: %s", u, v, e)
+                for v in nodes[i +1:]:
+                    future = executor.submit(
+                        self._fin
+                    )
+    def _validate_path_inputs(self, nodes: List[int], max_hops: int) -> bool:
+        """Validate path pruning inputs."""
+        if not nodes or not isinstance(nodes, list):
+            return False
+        if max_hops < 1 or not isinstance(max_hops, int):
+            return False
+        if not all(isinstance(n, int) and self.g.has_node(n) for n in nodes):
+            return False
+        return True
+    
+    def _find_paths_between_nodes(
+            self,
+            u: int,
+            v: int,
+            max_hops: int,
+            max_paths: int
+    ) -> List[List[int]]:
+        """Find valid paths between tow nodes."""
+        valid_paths = []
 
-        logger.info("Pruned to %d valid paths.", len(valid_paths))
+        try:
+            all_paths = nx.all_simple_paths(
+                self.g,
+                source=u,
+                target=v,
+                cutoff=max_hops
+            )
+
+            path_count = 0
+            for path in all_paths:
+                if path_count >= max_paths:
+                    break
+
+                score = self._compute_flow(path)
+                if score >= self.config.prune_thresh:
+                    valid_paths.append(path)
+
+        except nx.NetworkXNoPath:
+            pass
+        except Exception as e:
+            logger.debug(f"Path search failed between {u} and {v}: {e}")
+        
         return valid_paths
-
+    
     def _compute_flow(self, path: List[int]) -> float:
-        """
-        Compute the decay-weighted flow score for a given path in the graph.
-
-        The flow score is the product of all edge weights along the path,
-        multiplied by decay_rate raised to the path length minus one.
-
-        Args:
-            path (List[int]): List of node indices representing a path.
-
-        Returns:
-            float: The computed flow score. Zero if path length < 2 or on failure.
-        """
+        """Compute flow score with error handling."""
         if len(path) < 2:
             return 0.0
+        
         try:
-            weights = [
-                self.g.edges[path[i], path[i + 1]]["weight"]
-                for i in range(len(path) - 1)
-            ]
-            base = np.prod(weights)
-            flow = base * (self.decay_rate ** (len(path) - 1))
+            weights = []
+            for i in range(len(path) -1):
+                edge_data = self.g.edges.get((path[i], path[i + 1]))
+                if edge_data is None:
+                    return 0.0
+                weights.append(edge_data['weight'])
+            base_core = np.prod(weights)
+            decay_factor = self.config.decay_rate ** (len(path) - 1)
 
-            return flow
+            return float(base_core * decay_factor)
         except Exception as e:
-            logger.warning("Failed to compute flow for path %s: %s", path, e)
+            logger.debug(f"Flow computation failed for path {path}: {e}")
             return 0.0
-
+    
     def score_paths(self, paths: List[List[int]]) -> List[Dict[str, Any]]:
-        """
-        Score and sort paths based on their decay-weighted flow score.
-
-        Paths with zero or negative scores are excluded from the results.
-
-        Args:
-            paths (List[List[int]]): List of paths, each a list of node indices.
-
-        Returns:
-            List[Dict[str, Any]]: List of dictionaries with keys 'path' and 'score',
-            sorted descending by score.
-
-        Raises:
-            ValueError: If paths is empty or None.
-        """
+        """Score and sort paths with validation."""
         if not paths:
-            raise ValueError("No paths to score.")
-
+            logger.warning("No paths provided for scoring")
+            return []
+        
         results = []
         for path in paths:
-            score = self._compute_flow(path)
-            if score > 0:
-                results.append({"path": path, "score": score})
-
+            try:
+                score = self._compute_flow(path)
+                if score > 0:
+                    results.append({
+                        "path": path,
+                        "score": score,
+                        "length": len(path),
+                        "path_text": self._get_path_preview(path)
+                    })
+            except Exception as e:
+                logger.debug(f"Path scoring failed for {path}: {e}")
+        
+        # Sort by score descending
         results.sort(key=lambda x: x["score"], reverse=True)
         return results
-
-    def generate_prompt(self, query: str, scored_paths: List[Dict[str, Any]]) -> str:
-        """
-        Generate a text prompt consisting of the query followed by
-        a list of related evidence paths with their flow scores.
-
-        Args:
-            query (str): Original user query string.
-            scored_paths (List[Dict[str, Any]]): List of scored paths with keys 'path' and 'score'.
-
-        Returns:
-            str: Formatted prompt string including query and evidence paths.
-
-        Raises:
-            ValueError: If query is empty or not a string.
-        """
-        if not isinstance(query, str) or not query.strip():
-            raise ValueError("Query must be a non-empty string.")
-
-        lines = [f"QUERY: {query}", "RELATED EVIDENCE PATHS:"]
-        for item in scored_paths:
-            try:
-                path_texts = [self.g.nodes[n]["text"] for n in item["path"]]
-                line = f"- [Score: {item['score']:.3f}] " + " → ".join(path_texts)
-                lines.append(line)
-            except Exception as e:
-                logger.warning("Failed to format path %s: %s", item.get("path", []), e)
-
-        prompt = "\n".join(lines)
-        logger.info("Prompt generated with %d paths (%d characters)", len(scored_paths), len(prompt))
-        return prompt
     
-    def save_graph(self, file_path: Union[str, Path], format: str = "pickle") -> None:
-        """
-        Save the graph to disk in the specified format. If file exists, merges
-        new data without duplicating nodes or edges.
+    def _get_path_preview(self, path: List[int], max_length: int = 50) -> str:
+        """Get text preview of path for debugging."""
+        try:
+            texts = []
+            for node_id in path:
+                text = self.g.nodes[node_id].get("text", "")
+                preview = text[:max_length] + "..." if len(text) > max_length else text
+                texts.append(preview)
+            return " → ".join(texts)
 
-        Args:
-            file_path: Path to save the graph.
-            format: "pickle" or "json".
+        except Exception:
+            return "Preview unavailable"
+    
+    def generate_prompt(
+        self,
+        query: str,
+        scored_paths: List[Dict[str, Any]],
+        max_paths: int = 10,
+        max_prompt_length: int = 4000
+    ) -> str:
+        """Generate production-ready prompt with length controls."""
+        if not isinstance(query, str) or not query.strip():
+            raise ValueError("Query must be a non-empty string")
+        
+        # Limit number of paths
+        limited_paths = scored_paths[:max_paths]
 
-        Raises:
-            ValueError: For unsupported formats.
-            IOError: On save failure.
-        """
-        if not isinstance(file_path, Path):
-            file_path = Path(file_path)
+        lines = [f"QUERY: {query}", "", "RELATED EVIDENCE PATHS:"]
+        current_length = len("\n".join(lines))
 
-        # Ensure the parent directory exists
+        for i, item in enumerate(limited_paths):
+            try:
+                path_line = self._format_path_line(item, i + 1)
+                
+                # Check if adding this path would exceed limit
+                if current_length + len(path_line) > max_prompt_length:
+                    lines.append(f"... ({len(limited_paths) - i} more paths truncated)")
+                    break
+                
+                lines.append(path_line)
+                current_length += len(path_line)
+                
+            except Exception as e:
+                logger.debug(f"Failed to format path {i}: {e}")
+        
+        prompt = "\n".join(lines)
+        logger.info(f"Generated prompt with {len(limited_paths)} paths ({len(prompt)} chars)")
+        return prompt
+  
+    def _format_path_line(self, item: Dict[str, Any], index: int) -> str:
+        """Format a single path line for the prompt."""
+        try:
+            path = item["path"]
+            score = item["score"]
+
+            # Get node texts with fallback
+            path_texts = []
+            for node_id in path:
+                node_data = self.g.nodes.get(node_id, {})
+                text = node_data.get("text", f"Node_{node_id}")
+
+                # Truncate long texts
+                if len(text) > 100:
+                    text = text[:97] + "..."
+                path_texts.append(text)
+
+            return f"{index}. [Score: {score:.3f}] {' → '.join(path_texts)}"
+            
+        except Exception as e:
+            logger.debug(f"Path formatting failed: {e}")
+            return f"{index}. [Error formatting path]"
+    
+    def save_graph(
+            self,
+            file_path: Union[str, Path],
+            format: str = "pickle",
+            compress: bool = True
+    ) -> None:
+        """Save graph with enhanced options."""
+        file_path = Path(file_path)
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            if file_path.exists():
-                # Load existing graph
-                if format == "pickle":
-                    with open(file_path, 'rb') as f:
-                        existing_graph = pickle.load(f)
-                elif format == "json":
-                    with open(file_path, 'r') as f:
-                        existing_data = json.load(f)
-                    existing_graph = nx.node_link_graph(existing_data)
-                else:
-                    raise ValueError(f"Unsupported format: {format}. Use 'pickle' or 'json'")
-
-                # Merge without duplication
-                for node, attrs in self.g.nodes(data=True):
-                    if not existing_graph.has_node(node):
-                        existing_graph.add_node(node, **attrs)
-
-                for u, v, attrs in self.g.edges(data=True):
-                    if not existing_graph.has_edge(u, v):
-                        existing_graph.add_edge(u, v, **attrs)
-
-                # Save back
-                if format == "pickle":
-                    with open(file_path, 'wb') as f:
-                        pickle.dump(existing_graph, f)
-                elif format == "json":
-                    with open(file_path, 'w') as f:
-                        json.dump(nx.node_link_data(existing_graph), f)
-
-            else:
-                # First save — just write the graph
-                if format == "pickle":
-                    with open(file_path, 'wb') as f:
+            if format == "pickle":
+                mode = 'wb'
+                if compress:
+                    import gzip
+                    with gzip.open(file_path, mode) as f:
                         pickle.dump(self.g, f)
-                elif format == "json":
-                    with open(file_path, 'w') as f:
-                        json.dump(nx.node_link_data(self.g), f)
                 else:
-                    raise ValueError(f"Unsupported format: {format}. Use 'pickle' or 'json'")
+                    with open(file_path, mode) as f:
+                        pickle.dump(self.g, f)
+            elif format == "json":
+                data = nx.node_link_data(self.g)
 
-            logger.info(f"Graph saved to {file_path} in {format} format")
-
+                # Convert numpy arrays to lists for JSON serialization
+                for node in data['nodes']:
+                    if 'emb' in node and isinstance(node['emb'], np.ndarray):
+                        node['emb'] = node['emb'].tolist()
+                
+                with open(file_path, 'w') as f:
+                    json.dump(data, f, indent=2 if not compress else None)
+            else:
+                raise ValueError(f"Unsupported format: {format}")
+            
+            logger.info(f"Graph saved to {file_path}")
+            
         except Exception as e:
             logger.error(f"Failed to save graph: {e}")
             raise
-
+    
     def load_graph(self, file_path: Union[str, Path], format: str = "pickle") -> None:
-        """
-        Load graph from disk.
+        """Load graph with enhanced error handling."""
+        file_path = Path(file_path)
         
-        Args:
-            file_path: Path to load graph from
-            format: Format of the saved file ("pickle" or "json")
-            
-        Raises:
-            ValueError: If invalid format specified
-            IOError: If load operation fails
-        """
-        if format == "pickle":
-            with open(file_path, 'rb') as f:
-                self.g = pickle.load(f)
-        elif format == "json":
-            with open(file_path, 'r') as f:
-                data = json.load(f)
-            self.g = nx.node_link_graph(data)
-        else:
-            raise ValueError(f"Unsupported format: {format}. Use 'pickle' or 'json'")
-            
-        logger.info(f"Graph loaded from {file_path} ({self.g.number_of_nodes()} nodes, "
-                   f"{self.g.number_of_edges()} edges)")
-
-    def visualize_graph(self, max_nodes: int = 100) -> go.Figure:
-        """
-        Generate a 3D interactive visualization of the semantic graph.
-
-        Nodes represent document chunks or concepts. Edges represent semantic similarity.
-        Node color indicates degree; node type (chunk vs concept) can be differentiated.
-
-        Args:
-            max_nodes (int): Maximum number of nodes to visualize (for performance).
+        if not file_path.exists():
+            raise FileNotFoundError(f"Graph file not found: {file_path}")
         
-        Returns:
-            plotly.graph_objects.Figure: A 3D Plotly figure.
-        """
-        if self.g.number_of_nodes() == 0:
-            raise ValueError("Graph is empty - nothing to visualize")
-
-        # Reduce size for performance if needed
-        g = self.g
-        if g.number_of_nodes() > max_nodes:
-            sampled_nodes = list(g.nodes())[:max_nodes]
-            g = g.subgraph(sampled_nodes).copy()
-
-        # Layout in 3D
-        pos = nx.spring_layout(g, dim=3, seed=42)
-
-        # Edge trace
-        edge_x, edge_y, edge_z = [], [], []
-        for src, tgt in g.edges():
-            x0, y0, z0 = pos[src]
-            x1, y1, z1 = pos[tgt]
-            edge_x.extend([x0, x1, None])
-            edge_y.extend([y0, y1, None])
-            edge_z.extend([z0, z1, None])
-
-        edge_trace = go.Scatter3d(
-            x=edge_x, y=edge_y, z=edge_z,
-            mode='lines',
-            line=dict(width=1, color='gray'),
-            hoverinfo='none'
-        )
-
-        # Node trace
-        node_x, node_y, node_z = [], [], []
-        node_text = []
-        node_color = []
-        node_size = []
-
-        degrees = dict(g.degree())
-
-        for node in g.nodes():
-            x, y, z = pos[node]
-            node_x.append(x)
-            node_y.append(y)
-            node_z.append(z)
-
-            # Chunk text preview
-            node_data = g.nodes[node]
-            label = node_data.get("label", "chunk")
-            text = node_data.get("text", "")[:50] + "..." if "text" in node_data else label
-            degree = degrees.get(node, 1)
-
-            node_text.append(f"Node: {node}<br>Degree: {degree}<br>Type: {label}<br>{text}")
-
-            # Node color by type
-            if label == "chunk":
-                node_color.append("blue")
-            elif label == "concept":
-                node_color.append("green")
-            elif label == "query":
-                node_color.append("red")
+        try:
+            if format == "pickle":
+                # Try compressed first, then uncompressed
+                try:
+                    import gzip
+                    with gzip.open(file_path, 'rb') as f:
+                        self.g = pickle.load(f)
+                except:
+                    with open(file_path, 'rb') as f:
+                        self.g = pickle.load(f)
+                        
+            elif format == "json":
+                with open(file_path, 'r') as f:
+                    data = json.load(f)
+                
+                # Convert embedding lists back to numpy arrays
+                for node in data['nodes']:
+                    if 'emb' in node and isinstance(node['emb'], list):
+                        node['emb'] = np.array(node['emb'])
+                
+                self.g = nx.node_link_graph(data)
             else:
-                node_color.append("gray")
-
-            # Node size by degree
-            node_size.append(5 + 10 * (degree / max(degrees.values())))
-
-        node_trace = go.Scatter3d(
-            x=node_x, y=node_y, z=node_z,
-            mode='markers',
-            marker=dict(
-                size=node_size,
-                color=node_color,
-                line=dict(width=1, color='black'),
-                opacity=0.8
-            ),
-            hoverinfo='text',
-            text=node_text
-        )
-
-        # Build figure
-        fig = go.Figure(
-            data=[edge_trace, node_trace],
-            layout=go.Layout(
-                title="PathRAG Semantic Graph",
-                margin=dict(l=0, r=0, t=50, b=0),
-                scene=dict(
-                    xaxis=dict(showbackground=False),
-                    yaxis=dict(showbackground=False),
-                    zaxis=dict(showbackground=False)
-                ),
-                showlegend=False,
-                hovermode='closest'
-            )
-        )
-
-        return fig
-
-    def to_dataframe(self) -> pd.DataFrame:
-        """
-        Convert the graph to a pandas DataFrame representation.
-        
-        Returns:
-            pd.DataFrame: DataFrame with columns ['source', 'target', 'weight', 'source_text', 'target_text']
-        """
-        rows = []
-        for u, v, data in self.g.edges(data=True):
-            rows.append({
-                'source': u,
-                'target': v,
-                'weight': data['weight'],
-                'source_text': self.g.nodes[u]['text'][:100],  # Truncate for display
-                'target_text': self.g.nodes[v]['text'][:100]
-            })
+                raise ValueError(f"Unsupported format: {format}")
             
-        return pd.DataFrame(rows)
+            logger.info(
+                f"Graph loaded: {self.g.number_of_nodes()} nodes, "
+                f"{self.g.number_of_edges()} edges"
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to load graph: {e}")
+            raise
+    
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get comprehensive metrics report."""
+        base_metrics = self.metrics.get_report()
+        
+        # Add graph statistics
+        graph_stats = {
+            'nodes_count': self.g.number_of_nodes(),
+            'edges_count': self.g.number_of_edges(),
+            'memory_usage_gb': self.memory_monitor.get_memory_usage(),
+            'avg_degree': np.mean([d for n, d in self.g.degree()]) if self.g.nodes() else 0
+        }
+        
+        return {**base_metrics, **graph_stats}
+    
+    def health_check(self) -> Dict[str, Any]:
+        """Perform system health check."""
+        health = {
+            'status': 'healthy',
+            'issues': [],
+            'recommendations': []
+        }
+        
+        # Check memory usage
+        memory_usage = self.memory_monitor.get_memory_usage()
+        if memory_usage > self.config.memory_limit_gb * 0.8:
+            health['issues'].append(f"High memory usage: {memory_usage:.2f}GB")
+            health['recommendations'].append("Consider reducing batch size or graph size")
+        
+        # Check graph size
+        if self.g.number_of_nodes() > self.config.max_graph_size * 0.9:
+            health['issues'].append("Graph approaching size limit")
+            health['recommendations'].append("Consider graph pruning or increasing limits")
+        
+        # Set overall status
+        if health['issues']:
+            health['status'] = 'warning' if len(health['issues']) < 3 else 'critical'
+        
+        return health
+    
+    def cleanup(self) -> None:
+        """Clean up resources."""
+        try:
+            self.g.clear()
+            self.cache._memory_cache.clear()
+            if self.cache.redis_client:
+                self.cache.redis_client.close()
+            logger.info("PathRAG resources cleaned up")
+        except Exception as e:
+            logger.error(f"Cleanup failed: {e}")
+    
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit with cleanup."""
+        self.cleanup()

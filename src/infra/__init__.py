@@ -19,5 +19,5 @@ Usage example:
 
 from .logger import setup_logging
 from .resource_monitor import ResourceMonitor
-
+from .memory_monitor import MemoryMonitor
 __all__ = ["setup_logging", "ResourceMonitor"]

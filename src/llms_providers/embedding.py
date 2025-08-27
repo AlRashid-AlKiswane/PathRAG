@@ -45,6 +45,7 @@ import logging
 import os
 import sys
 from typing import List, Union, Optional
+import numpy as np
 from sentence_transformers import SentenceTransformer
 
 try:
@@ -91,20 +92,21 @@ class HuggingFaceModel:
     def embed_texts(
         self,
         texts: Union[str, List[str]],
-        convert_to_tensor: bool = True,
+        convert_to_tensor: bool = False,
         convert_to_numpy: bool = True,
         normalize_embeddings: bool = False
-    ) -> Optional[Union[List[float], List[List[float]]]]:
+    ) -> Optional[np.ndarray]:
         """
         Generate embeddings for a given string or list of strings.
 
         Args:
             texts: Single string or list of strings to embed.
             convert_to_tensor: Whether to return embeddings as tensors.
+            convert_to_numpy: Whether to return embeddings as NumPy arrays.
             normalize_embeddings: Whether to normalize the embeddings.
 
         Returns:
-            Embeddings as a list or tensor, or None on error.
+            np.ndarray: Embeddings as a numpy array, or None on error.
 
         Raises:
             ValueError: If input texts is empty or invalid.
@@ -119,14 +121,23 @@ class HuggingFaceModel:
             embedding = self.model.encode(
                 texts,
                 convert_to_tensor=convert_to_tensor,
-                normalize_embeddings=normalize_embeddings,
-                convert_to_numpy=convert_to_numpy
+                normalize_embeddings=normalize_embeddings
             )
 
-            preview_texts = texts if isinstance(texts, str) else texts[0]
-            return embedding.tolist()
-        # pylint: disable=broad-exception-caught
-        except Exception as e:
+            # Ensure numpy array output
+            if convert_to_numpy:
+                if hasattr(embedding, "cpu") and hasattr(embedding, "numpy"):
+                    # Torch tensor case
+                    embedding = embedding.cpu().numpy()
+                elif not isinstance(embedding, np.ndarray):
+                    embedding = np.array(embedding)
+
+            preview_text = texts if isinstance(texts, str) else texts[0]
+            logger.debug("Generated embedding for text preview: %s...", preview_text[:50])
+
+            return embedding
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error("Failed to generate embedding: %s", str(e))
             return None
 

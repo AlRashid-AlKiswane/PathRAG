@@ -65,16 +65,20 @@ try:
     from surya.model.recognition.model import load_model as load_rec_model # type: ignore
     from surya.model.recognition.processor import load_processor as load_rec_processor # type: ignore
     SURYA_AVAILABLE = True
-
-    MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-    if MAIN_DIR not in sys.path:
-        sys.path.append(MAIN_DIR)
-    
-    from src.schemas import OCRResult, OCREngine
-    from src.infra import setup_logging
 except ImportError:
     SURYA_AVAILABLE = False
     logging.error("Surya OCR not available. Install with: pip install surya-ocr")
+
+# Setup main directory
+try:
+    MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    sys.path.append(MAIN_DIR)
+except (ImportError, OSError) as e:
+    logging.getLogger(__name__).error("Failed to set main directory path: %s", e)
+    sys.exit(1)
+
+from src.schemas import OCRResult, OCREngine
+from src.infra import setup_logging
 
 logger = setup_logging(
     name="OCR-OPERATIONS"

@@ -13,5 +13,8 @@ Imports:
 """
 
 from .pathrag import PathRAG
+from .plot_graph import visualize_graph
 
 __all__ = ["PathRAG"]
+
+

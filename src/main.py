@@ -130,7 +130,7 @@ async def lifespan(app: FastAPI):
                 sim_should=app_settings.SIM_THRESHOLD
             )
             app.state.path_rag = path_rag
-            graph_path = Path(app_settings.STORGE_GRAPH)
+            graph_path = Path(app_settings.STORAGE_GRAPH)
             if graph_path.exists():
                 try:
                     path_rag.load_graph(graph_path)

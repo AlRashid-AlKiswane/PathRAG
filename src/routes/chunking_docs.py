@@ -425,9 +425,7 @@ class ChunkingService:
         Internal Use Only
     """
     def __init__(self,
-                 db: MongoClient,
-                 config: ProcessingConfig
-    ):
+                 db: MongoClient):
         """..."""
         self.db = db
         self.text_cleaner = TextCleaner(lowercase=True)
@@ -502,7 +500,7 @@ class ChunkingService:
             with ThreadPoolExecutor(max_workers=app_settings.MAX_WORKERS) as executor:
                 futures = []
                 for img_path in image_paths:
-                    full_img_path = MAIN_DIR / img_path
+                    full_img_path = os.path.join(MAIN_DIR, img_path)
                     future = executor.submit(self.ocr_processor.extract_text, str(full_img_path))
                     futures.append(future)
 
@@ -725,15 +723,15 @@ async def process_documents(
         processing_time = time.time() - start_time
         
         # Log completion
-        logger.info(
-            "Document processing completed",
-            total_chunks=total_chunks,
-            processed_files=processed_files,
-            total_files=len(files_to_process),
-            processing_time=processing_time,
-            errors_count=len(service.errors)
-        )
-        
+        logger.info({
+            "event": "Document processing completed",
+            "total_chunks": total_chunks,
+            "processed_files": processed_files,
+            "total_files": len(files_to_process),
+            "processing_time": processing_time,
+            "errors_count": len(service.errors)
+        })
+
         return ChunkingResponse(
             success=True,
             message="Document processing completed successfully",

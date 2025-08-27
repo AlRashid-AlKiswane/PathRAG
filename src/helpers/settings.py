@@ -278,6 +278,46 @@ class Settings(BaseSettings):
         description="Batch size for processing tasks (default 8, range 2-1024)"
     )
 
+    # --- Development ---
+    DEV_MAX_WORKERS: int = Field(
+        2,
+        env="DEV_MAX_WORKERS"
+    )
+
+    DEV_BATCH_SIZE: int = Field(500, env="DEV_BATCH_SIZE")
+    DEV_CACHE_SIZE: int = Field(1000, env="DEV_CACHE_SIZE")
+    DEV_MEMORY_LIMIT_GB: float = Field(2.0, env="DEV_MEMORY_LIMIT_GB")
+    DEV_MAX_GRAPH_SIZE: int = Field(10000, env="DEV_MAX_GRAPH_SIZE")
+    DEV_DECAY_RATE: float = Field(0.9, env="DEV_DECAY_RATE")
+    DEV_PRUNE_THRESH: float = Field(0.2, env="DEV_PRUNE_THRESH")
+    DEV_SIM_THRESHOLD: float = Field(0.75, env="DEV_SIM_THRESHOLD")
+    DEV_CHECKPOINT_INTERVAL: int = Field(5000, env="DEV_CHECKPOINT_INTERVAL")
+    DEV_ENABLE_CACHING: bool = Field(True, env="DEV_ENABLE_CACHING")
+
+    # --- Production ---
+    PROD_MAX_WORKERS: int = Field(8, env="PROD_MAX_WORKERS")
+    PROD_BATCH_SIZE: int = Field(2000, env="PROD_BATCH_SIZE")
+    PROD_CACHE_SIZE: int = Field(50000, env="PROD_CACHE_SIZE")
+    PROD_MEMORY_LIMIT_GB: float = Field(8.0, env="PROD_MEMORY_LIMIT_GB")
+    PROD_MAX_GRAPH_SIZE: int = Field(100000, env="PROD_MAX_GRAPH_SIZE")
+    PROD_DECAY_RATE: float = Field(0.95, env="PROD_DECAY_RATE")
+    PROD_PRUNE_THRESH: float = Field(0.3, env="PROD_PRUNE_THRESH")
+    PROD_SIM_THRESHOLD: float = Field(0.8, env="PROD_SIM_THRESHOLD")
+    PROD_CHECKPOINT_INTERVAL: int = Field(10000, env="PROD_CHECKPOINT_INTERVAL")
+    PROD_ENABLE_CACHING: bool = Field(True, env="PROD_ENABLE_CACHING")
+
+    # --- Memory-optimized ---
+    MEMORY_MAX_WORKERS: int = Field(2, env="MEMORY_MAX_WORKERS")
+    MEMORY_BATCH_SIZE: int = Field(200, env="MEMORY_BATCH_SIZE")
+    MEMORY_CACHE_SIZE: int = Field(500, env="MEMORY_CACHE_SIZE")
+    MEMORY_MEMORY_LIMIT_GB: float = Field(1.0, env="MEMORY_MEMORY_LIMIT_GB")
+    MEMORY_MAX_GRAPH_SIZE: int = Field(5000, env="MEMORY_MAX_GRAPH_SIZE")
+    MEMORY_DECAY_RATE: float = Field(0.85, env="MEMORY_DECAY_RATE")
+    MEMORY_PRUNE_THRESH: float = Field(0.15, env="MEMORY_PRUNE_THRESH")
+    MEMORY_SIM_THRESHOLD: float = Field(0.7, env="MEMORY_SIM_THRESHOLD")
+    MEMORY_CHECKPOINT_INTERVAL: int = Field(2000, env="MEMORY_CHECKPOINT_INTERVAL")
+    MEMORY_ENABLE_CACHING: bool = Field(False, env="MEMORY_ENABLE_CACHING")
+
 def get_settings() -> Settings:
     """
     Load and validate the application settings from environment or `.env` file.
