@@ -28,19 +28,19 @@ Example:
     >>> insert_chunk_to_mongo(db, "Some chunk", "file.pdf", "MyCorpus")
 """
 
-from .graph_clear_collection import clear_collection
-from .graph_collection import (
+from .mongodb_clear_collection import clear_collection
+from .mongodb_collection import (
     init_chatbot_collection,
     init_chunks_collection,
     init_embed_vector_collection,
 )
-from .graph_insert import (
+from .mongodb_insert import (
     insert_chatbot_entry_to_mongo,
     insert_chunk_to_mongo,
     insert_embed_vector_to_mongo,
 )
-from .graph_engin import get_mongo_client
-from .graph_pull_from_collection import pull_from_collection
+from .mongodb_engin import get_mongo_client
+from .mongodb_pull_from_collection import pull_from_collection
 
 __all__ = [
     "clear_collection",

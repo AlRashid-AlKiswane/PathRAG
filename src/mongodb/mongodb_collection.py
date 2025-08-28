@@ -104,7 +104,7 @@ def init_chatbot_collection(db) -> None:
 
 
 if __name__ == "__main__":
-    from src.mongodb.graph_engin import get_mongo_client  # your mongo_engine.py
+    from src.mongodb.mongodb_engin import get_mongo_client  # your mongo_engine.py
 
     client = get_mongo_client()
     if client:

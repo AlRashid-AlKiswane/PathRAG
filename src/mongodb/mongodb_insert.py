@@ -158,7 +158,7 @@ def insert_chatbot_entry_to_mongo(
 
 
 if __name__ == "__main__":
-    from src.mongodb.graph_engin import get_mongo_client
+    from src.mongodb.mongodb_engin import get_mongo_client
     import numpy as np
 
     client = get_mongo_client()
