@@ -91,7 +91,7 @@ def pull_from_collection(
 
 
 if __name__ == "__main__":
-    from src.graph_db.graph_engin import get_mongo_client
+    from src.mongodb.graph_engin import get_mongo_client
     client = get_mongo_client()
     db = client["my_project_db"]
 

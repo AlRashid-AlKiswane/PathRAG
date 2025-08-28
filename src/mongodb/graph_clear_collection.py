@@ -75,7 +75,7 @@ def clear_collection(db: Database, collection_name: str) -> None:
 
 
 if __name__ == "__main__":
-    from src.graph_db.graph_engin import get_mongo_client
+    from src.mongodb.graph_engin import get_mongo_client
 
     client = get_mongo_client()
     db = client["my_project_db"]
