@@ -60,6 +60,7 @@ from typing import Any, Dict, List, Tuple
 import networkx as nx
 import numpy as np
 import pandas as pd
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import Optional, Union
 from tqdm import tqdm
@@ -67,26 +68,40 @@ from pathlib import Path
 import pickle
 import json
 import plotly.graph_objects as go
+import faiss
+import torch
 
 # Set up project base directory
 try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     sys.path.append(MAIN_DIR)
+    from src.infra import setup_logging, MemoryMonitor
+    from src.schemas import PathRAGConfig, GraphBuildMethod, GraphConfig
+    from src.utils import timer
+    from .graph_cache import GraphCache
+    from .path_rag_metrics import PathRAGMetrics
+    from src.helpers import get_settings, Settings
+    from src.llms_providers import HuggingFaceModel
 except (ImportError, OSError) as e:
     logging.error("Failed to set up main directory path: %s", e)
     sys.exit(1)
 
-from src.infra import setup_logging, MemoryMonitor
-from src.schemas import PathRAGConfig
-from src.utils import timer
-from .graph_cache import GraphCache
-from .path_rag_metrics import PathRAGMetrics
-from src.helpers import get_settings, Settings
-from src.llms_providers import HuggingFaceModel
-
 logger = setup_logging(name="PATH-RAG")
-app_settings: Settings = get_settings()
+config: Settings = get_settings()
 
+graph_config: GraphConfig = GraphConfig(
+    max_workers=config.max_workers,
+    batch_size=config.batch_size,
+    checkpoint_interval=config.checkpoint_interval,
+    k_neighbors=config.k_neighbors,
+    similarity_threshold=config.similarity_threshold,
+    n_clusters=config.n_clusters,
+    intra_cluster_k=config.intra_cluster_k,
+    inter_cluster_k=config.inter_cluster_k,
+    sample_ratio=config.sample_ratio,
+    n_hash_tables=config.n_hash_tables,
+    n_hash_bits=config.n_hash_bits,
+)
 
 class PathRAG:
     """
@@ -101,7 +116,7 @@ class PathRAG:
     - Graceful error handling
     - Performance metrics
     """
-    
+
     def __init__(
         self,
         embedding_model: HuggingFaceModel,
@@ -130,7 +145,9 @@ class PathRAG:
         self, 
         chunks: List[str], 
         embeddings: np.ndarray,
-        checkpoint_callback: Optional[callable] = None
+        method: str = "knn",
+        checkpoint_callback: Optional[callable] = None,
+        use_gpu: bool = False,
     ) -> None:
         """
         Build semantic graph with production optimizations.
@@ -150,9 +167,25 @@ class PathRAG:
             )
             chunks = chunks[:self.config.max_graph_size]
             embeddings = embeddings[:self.config.max_graph_size]
-        
+        logger.info(f"Building {method.value} graph for {len(chunks)} chunks with {self.config.max_workers} workers")
         with self.memory_monitor.memory_guard():
-            self._build_graph_optimized(chunks, embeddings, checkpoint_callback)
+            if method == GraphBuildMethod.KNN:
+                edge_count = self._build_knn_parallel(embeddings, checkpoint_callback, use_gpu)
+            elif method == GraphBuildMethod.HIERARCHICAL:
+                edge_count = self._build_hierarchical_parallel(embeddings, checkpoint_callback)
+            elif method == GraphBuildMethod.APPROXIMATE:
+                edge_count = self._build_approximate_parallel(embeddings, checkpoint_callback)
+            elif method == GraphBuildMethod.MULTI_LEVEL:
+                edge_count = self._build_multi_level_parallel(embeddings, checkpoint_callback)
+            elif method == GraphBuildMethod.HYBRID:
+                edge_count = self._build_hybrid_parallel(embeddings, checkpoint_callback)
+            elif method == GraphBuildMethod.LSH:
+                edge_count = self._build_lsh_parallel(embeddings, checkpoint_callback)
+            elif method == GraphBuildMethod.SPECTRAL:
+                edge_count = self._build_spectral_parallel(embeddings, checkpoint_callback)
+            else:
+                self._build_graph_optimized(chunks, embeddings, checkpoint_callback)
+            logger.info(f"Graph built By {method}: {len(chunks)} nodes, {edge_count} edges")
 
     def _validate_inputs(self, chunks: List[str], embeddings: np.ndarray) -> bool:
         """Comprehensive input validation."""
@@ -356,24 +389,61 @@ class PathRAG:
     
     @lru_cache(maxsize=1000)
     def _compute_similarities_batch(self, q_emb_tuple: tuple) -> Dict[int, float]:
-        """Compute similarities with caching (using tuple for hashability)."""
-        q_emb = np.array(q_emb_tuple)
+        """
+        Compute similarities using FAISS index (GPU if available).
+        Returns a dictionary mapping node_id -> similarity score.
+        """
         similarities = {}
 
-        # Batch process similarites
-        node_ids = list(self.g.nodes())
-        embedding_martix = np.vstack([
-            self.g.nodes[ndi]['emb'] for ndi in node_ids
-        ])
+        try:
+            # Validate FAISS index
+            if not hasattr(self, "index") or self.index is None:
+                logger.error("FAISS index is not initialized")
+                return similarities
 
-        # Vectorized similarity computation
-        sims = cosine_similarity(q_emb.reshape(1, -1), embedding_martix)[0]
+            if self.index.ntotal == 0:
+                logger.warning("FAISS index is empty, no similarities computed")
+                return similarities
 
-        for node_id, sim in zip(node_ids, sims):
-            similarities[node_id] = float(sim)
-        
+            # Convert query embedding safely
+            try:
+                q_emb = np.asarray(q_emb_tuple, dtype="float32").reshape(1, -1)
+            except Exception as e:
+                logger.error("Failed to convert query embedding: %s", e)
+                return similarities
+
+            # Normalize for cosine similarity
+            try:
+                faiss.normalize_L2(q_emb)
+            except Exception as e:
+                logger.warning("Normalization failed, using raw embedding. Error: %s", e)
+
+            # Search all embeddings (k = total vectors in index)
+            k = self.index.ntotal
+            try:
+                similarities_scores, indices = self.index.search(q_emb, k)
+            except Exception as e:
+                logger.error("FAISS search failed: %s", e)
+                return similarities
+
+            # Map FAISS results back to node IDs
+            for i in tqdm(range(len(indices[0])), desc="Mapping FAISS results", colour="green"):
+                idx = int(indices[0][i])
+                score = float(similarities_scores[0][i])
+
+                if idx < 0 or idx >= len(self.node_ids):
+                    logger.warning("Invalid FAISS index %s, skipping", idx)
+                    continue
+
+                node_id = self.node_ids[idx]
+                similarities[node_id] = score
+
+            logger.debug("Computed %s similarity scores successfully", len(similarities))
+
+        except Exception as e:
+            logger.exception("Unexpected error in _compute_similarities_batch: %s", e)
+
         return similarities
-    
 
     @timer('path_pruning_time')
     def prune_paths(
@@ -410,6 +480,7 @@ class PathRAG:
                     future = executor.submit(
                         self._fin
                     )
+
     def _validate_path_inputs(self, nodes: List[int], max_hops: int) -> bool:
         """Validate path pruning inputs."""
         if not nodes or not isinstance(nodes, list):
@@ -687,7 +758,41 @@ class PathRAG:
             health['status'] = 'warning' if len(health['issues']) < 3 else 'critical'
         
         return health
-    
+
+    def build_faiss_index(self):
+        """Build FAISS index for fast similarity search."""
+        node_ids = list(self.g.nodes())
+        self.node_ids = np.array(node_ids)
+
+        # Stack embeddings into matrix
+        embedding_matrix = np.vstack(
+            [self.g.nodes[n]['emb'] 
+            for n in node_ids]).astype('float32')
+        self.embedding_matrix = embedding_matrix
+
+        dim = embedding_matrix.shape[1]
+
+        # Use Inner Product (for cosine similarity, normalize embeddings first)
+        faiss.normalize_L2(embedding_matrix)
+
+        # Create CPU index first
+        self.index = faiss.IndexFlatIP(dim)
+
+        # Try to move to GPU if available
+        if torch.cuda.is_available():
+            try:
+                res = faiss.StandardGpuResources()
+                gpu_index = faiss.index_cpu_to_gpu(res, 0, self.index)
+                self.index = gpu_index
+                logger.info("Successfully moved FAISS index to GPU")
+            except Exception as e:
+                logger.warning(f"Failed to move FAISS index to GPU, using CPU: {e}")
+        else:
+            logger.info("GPU not available, using CPU for FAISS index")
+
+        self.index.add(embedding_matrix)
+        logger.info("FAISS index built with %d embeddings", len(node_ids))
+
     def cleanup(self) -> None:
         """Clean up resources."""
         try:
@@ -706,3 +811,586 @@ class PathRAG:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit with cleanup."""
         self.cleanup()
+
+    def _add_nodes(self, chunks: List[str], embeddings: np.ndarray) -> None:
+        """Add all nodes to the graph efficiently."""
+        if self.g:
+            self.g.clear()
+            
+        # Batch node addition for efficiency
+        batch_size = self.config.batch_size
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = []
+            
+            for i in range(0, len(chunks), batch_size):
+                batch_end = min(i + batch_size, len(chunks))
+                future = executor.submit(
+                    self._add_node_batch,
+                    chunks[i:batch_end],
+                    embeddings[i:batch_end],
+                    i  # Start index offset
+                )
+                futures.append(future)
+            
+            # Wait for all batches to complete
+            for future in as_completed(futures):
+                future.result()
+    
+    def _add_node_batch(self, chunk_batch: List[str], emb_batch: np.ndarray, start_idx: int) -> None:
+        """Add a batch of nodes thread-safely."""
+        with self._lock:
+            for idx, (chunk, emb) in enumerate(zip(chunk_batch, emb_batch)):
+                if self.g:
+                    self.g.add_node(start_idx + idx, text=chunk, emb=emb)
+
+    def _build_knn_parallel(
+        self,
+        embeddings: np.ndarray,
+        checkpoint_callback: Optional[callable],
+        use_gpu: bool = False
+    ) -> int:
+        """Parallel KNN graph building with FAISS."""
+        
+        # Setup FAISS index
+        dimension = embeddings.shape[1]
+        if use_gpu and faiss.get_num_gpus() > 0:
+            index = faiss.index_cpu_to_all_gpus(faiss.IndexFlatIP(dimension))
+        else:
+            index = faiss.IndexFlatIP(dimension)
+        
+        # Normalize for cosine similarity
+        embeddings_norm = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
+        index.add(embeddings_norm.astype('float32'))
+        
+        # Parallel KNN search
+        edge_count = 0
+        batch_size = self.config.batch_size
+        
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = []
+            
+            # Submit batched KNN searches
+            for i in range(0, len(embeddings), batch_size):
+                batch_end = min(i + batch_size, len(embeddings))
+                future = executor.submit(
+                    self._process_knn_batch,
+                    index,
+                    embeddings_norm[i:batch_end],
+                    i,  # Start index
+                    self.config.k_neighbors + 1,
+                    self.config.similarity_threshold
+                )
+                futures.append(future)
+            
+            # Collect results with progress tracking
+            with tqdm(total=len(futures), desc="KNN batches") as pbar:
+                for future in as_completed(futures):
+                    try:
+                        batch_edges = future.result()
+                        
+                        # Add edges thread-safely
+                        with self._lock:
+                            for i, j, sim in batch_edges:
+                                if self.g:
+                                    self.g.add_edge(i, j, weight=sim)
+                                edge_count += 1
+                        
+                        pbar.update(1)
+                        
+                        if checkpoint_callback and edge_count % self.config.checkpoint_interval == 0:
+                            checkpoint_callback(edge_count, "edges")
+                            
+                    except Exception as e:
+                        logger.error(f"KNN batch failed: {e}")
+        
+        return edge_count
+
+    def _process_knn_batch(
+        self,
+        index,
+        embeddings_batch: np.ndarray,
+        start_idx: int,
+        k: int,
+        threshold: float
+    ) -> List[Tuple[int, int, float]]:
+        """Process a batch of KNN searches."""
+        similarities, indices = index.search(embeddings_batch.astype('float32'), k)
+        
+        batch_edges = []
+        for i, (chunk_sims, chunk_indices) in enumerate(zip(similarities, indices)):
+            original_idx = start_idx + i
+            for neighbor_idx, similarity in zip(chunk_indices[1:], chunk_sims[1:]):  # Skip self
+                if similarity >= threshold:
+                    batch_edges.append((original_idx, int(neighbor_idx), float(similarity)))
+        
+        return batch_edges
+    
+    def _build_hierarchical_parallel(
+        self,
+        embeddings: np.ndarray,
+        checkpoint_callback: Optional[callable]
+    ) -> int:
+        """Parallel hierarchical clustering graph building."""
+        
+        # Parallel clustering
+        kmeans = MiniBatchKMeans(
+            n_clusters=self.config.n_clusters,
+            random_state=42,
+            batch_size=min(1000, len(embeddings) // 10)
+        )
+        cluster_labels = kmeans.fit_predict(embeddings)
+        
+        # Group by clusters
+        clusters = {}
+        for idx, label in enumerate(cluster_labels):
+            if label not in clusters:
+                clusters[label] = []
+            clusters[label].append(idx)
+        
+        edge_count = 0
+        
+        # Process clusters in parallel
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = []
+            
+            # Intra-cluster connections
+            for cluster_id, chunk_indices in clusters.items():
+                if len(chunk_indices) > 1:
+                    future = executor.submit(
+                        self._process_cluster,
+                        embeddings,
+                        chunk_indices,
+                        self.config.intra_cluster_k,
+                        "intra"
+                    )
+                    futures.append(future)
+            
+            # Inter-cluster connections
+            future = executor.submit(
+                self._process_inter_cluster,
+                embeddings,
+                clusters,
+                kmeans.cluster_centers_,
+                self.config.inter_cluster_k
+            )
+            futures.append(future)
+            
+            # Collect results
+            with tqdm(total=len(futures), desc="Hierarchical batches") as pbar:
+                for future in as_completed(futures):
+                    try:
+                        batch_edges = future.result()
+                        
+                        with self._lock:
+                            for i, j, sim in batch_edges:
+                                if self.g:
+                                    self.g.add_edge(i, j, weight=sim)
+                                edge_count += 1
+                        
+                        pbar.update(1)
+                        
+                    except Exception as e:
+                        logger.error(f"Hierarchical batch failed: {e}")
+        
+        return edge_count
+    
+    def _process_cluster(
+        self,
+        embeddings: np.ndarray,
+        chunk_indices: List[int],
+        k: int,
+        mode: str
+    ) -> List[Tuple[int, int, float]]:
+        """Process connections within a cluster."""
+        batch_edges = []
+        
+        if len(chunk_indices) <= k or len(chunk_indices) <= 20:
+            # Small cluster: full connections
+            for i, idx1 in enumerate(chunk_indices):
+                for idx2 in chunk_indices[i+1:]:
+                    sim = np.dot(embeddings[idx1], embeddings[idx2])
+                    if sim > self.config.similarity_threshold:
+                        batch_edges.append((idx1, idx2, sim))
+        else:
+            # Large cluster: KNN within cluster
+            cluster_embeddings = embeddings[chunk_indices]
+            index = faiss.IndexFlatIP(cluster_embeddings.shape[1])
+            cluster_embeddings_norm = cluster_embeddings / np.linalg.norm(cluster_embeddings, axis=1, keepdims=True)
+            index.add(cluster_embeddings_norm.astype('float32'))
+            
+            similarities, indices = index.search(
+                cluster_embeddings_norm.astype('float32'),
+                min(k + 1, len(chunk_indices))
+            )
+            
+            for i, (chunk_sims, neighbor_indices) in enumerate(zip(similarities, indices)):
+                original_idx = chunk_indices[i]
+                for neighbor_idx, similarity in zip(neighbor_indices[1:], chunk_sims[1:]):
+                    if similarity > self.config.similarity_threshold:
+                        neighbor_original_idx = chunk_indices[neighbor_idx]
+                        batch_edges.append((original_idx, neighbor_original_idx, float(similarity)))
+        
+        return batch_edges
+    
+    def _process_inter_cluster(
+        self,
+        embeddings: np.ndarray,
+        clusters: Dict[int, List[int]],
+        centroids: np.ndarray,
+        k: int
+    ) -> List[Tuple[int, int, float]]:
+        """Process connections between clusters."""
+        batch_edges = []
+        
+        # Find similar clusters using centroids
+        index = faiss.IndexFlatIP(centroids.shape[1])
+        index.add(centroids.astype('float32'))
+        
+        similarities, indices = index.search(centroids.astype('float32'), min(k + 1, len(centroids)))
+        
+        for cluster_id, (cluster_sims, neighbor_cluster_ids) in enumerate(zip(similarities, indices)):
+            if cluster_id not in clusters:
+                continue
+                
+            for neighbor_cluster_id, similarity in zip(neighbor_cluster_ids[1:], cluster_sims[1:]):
+                if neighbor_cluster_id not in clusters or similarity < 0.5:
+                    continue
+                
+                # Connect representative nodes
+                source_chunks = clusters[cluster_id][:3]
+                target_chunks = clusters[neighbor_cluster_id][:3]
+                
+                for src_idx in source_chunks:
+                    for tgt_idx in target_chunks:
+                        sim = np.dot(embeddings[src_idx], embeddings[tgt_idx])
+                        if sim > 0.6:
+                            batch_edges.append((src_idx, tgt_idx, sim))
+        
+        return batch_edges
+    
+    def _build_approximate_parallel(
+        self,
+        embeddings: np.ndarray,
+        checkpoint_callback: Optional[callable]
+    ) -> int:
+        """Parallel approximate graph building with random sampling."""
+        
+        n_chunks = len(embeddings)
+        edge_count = 0
+        
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = []
+            
+            # Process chunks in batches
+            batch_size = self.config.batch_size
+            for i in range(0, n_chunks, batch_size):
+                batch_end = min(i + batch_size, n_chunks)
+                future = executor.submit(
+                    self._process_approximate_batch,
+                    embeddings,
+                    i,
+                    batch_end,
+                    n_chunks,
+                    self.config.sample_ratio,
+                    self.config.k_neighbors
+                )
+                futures.append(future)
+            
+            # Collect results
+            with tqdm(total=len(futures), desc="Approximate batches") as pbar:
+                for future in as_completed(futures):
+                    try:
+                        batch_edges = future.result()
+                        
+                        with self._lock:
+                            for i, j, sim in batch_edges:
+                                if self.g:
+                                    self.g.add_edge(i, j, weight=sim)
+                                edge_count += 1
+                        
+                        pbar.update(1)
+                        
+                    except Exception as e:
+                        logger.error(f"Approximate batch failed: {e}")
+        
+        return edge_count
+    
+    def _process_approximate_batch(
+        self,
+        embeddings: np.ndarray,
+        start_idx: int,
+        end_idx: int,
+        total_chunks: int,
+        sample_ratio: float,
+        k: int
+    ) -> List[Tuple[int, int, float]]:
+        """Process approximate connections for a batch."""
+        batch_edges = []
+        
+        for i in range(start_idx, end_idx):
+            # Sample candidate indices
+            sample_size = min(int(total_chunks * sample_ratio), k * 3)
+            candidate_indices = np.random.choice(
+                [j for j in range(total_chunks) if j != i],
+                size=min(sample_size, total_chunks - 1),
+                replace=False
+            )
+            
+            # Compute similarities
+            similarities = []
+            for j in candidate_indices:
+                sim = np.dot(embeddings[i], embeddings[j])
+                similarities.append((j, sim))
+            
+            # Keep top-k
+            similarities.sort(key=lambda x: x[1], reverse=True)
+            for j, sim in similarities[:k]:
+                if sim > self.config.similarity_threshold:
+                    batch_edges.append((i, j, sim))
+        
+        return batch_edges
+    
+    def _build_multi_level_parallel(
+        self,
+        embeddings: np.ndarray,
+    ) -> int:
+        """Multi-level parallel approach combining multiple strategies."""
+        
+        # Level 1: Coarse clustering
+        n_coarse = min(self.config.n_clusters, len(embeddings) // 100)
+        coarse_kmeans = MiniBatchKMeans(n_clusters=n_coarse, random_state=42)
+        coarse_labels = coarse_kmeans.fit_predict(embeddings)
+        
+        edge_count = 0
+        
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = []
+            
+            # Process each coarse cluster
+            for cluster_id in range(n_coarse):
+                cluster_mask = coarse_labels == cluster_id
+                cluster_indices = np.where(cluster_mask)[0]
+                
+                if len(cluster_indices) > 1:
+                    future = executor.submit(
+                        self._process_multi_level_cluster,
+                        embeddings,
+                        cluster_indices
+                    )
+                    futures.append(future)
+            
+            # Collect results
+            with tqdm(total=len(futures), desc="Multi-level batches") as pbar:
+                for future in as_completed(futures):
+                    try:
+                        batch_edges = future.result()
+                        
+                        with self._lock:
+                            for i, j, sim in batch_edges:
+                                if self.g:
+                                    self.g.add_edge(i, j, weight=sim)
+                                edge_count += 1
+                        
+                        pbar.update(1)
+                        
+                    except Exception as e:
+                        logger.error(f"Multi-level batch failed: {e}")
+        
+        return edge_count
+    
+    def _process_multi_level_cluster(
+        self,
+        embeddings: np.ndarray,
+        cluster_indices: np.ndarray
+    ) -> List[Tuple[int, int, float]]:
+        """Process a cluster with adaptive strategy."""
+        batch_edges = []
+        
+        if len(cluster_indices) <= 50:
+            # Small: full connections
+            for i, idx1 in enumerate(cluster_indices):
+                for idx2 in cluster_indices[i+1:]:
+                    sim = np.dot(embeddings[idx1], embeddings[idx2])
+                    if sim > self.config.similarity_threshold:
+                        batch_edges.append((idx1, idx2, sim))
+        else:
+            # Large: KNN
+            cluster_embeddings = embeddings[cluster_indices]
+            index = faiss.IndexFlatIP(cluster_embeddings.shape[1])
+            cluster_embeddings_norm = cluster_embeddings / np.linalg.norm(cluster_embeddings, axis=1, keepdims=True)
+            index.add(cluster_embeddings_norm.astype('float32'))
+            
+            k = min(self.config.k_neighbors, len(cluster_indices) - 1)
+            similarities, indices = index.search(cluster_embeddings_norm.astype('float32'), k + 1)
+            
+            for i, (chunk_sims, neighbor_indices) in enumerate(zip(similarities, indices)):
+                original_idx = cluster_indices[i]
+                for neighbor_idx, similarity in zip(neighbor_indices[1:], chunk_sims[1:]):
+                    if similarity > self.config.similarity_threshold:
+                        neighbor_original_idx = cluster_indices[neighbor_idx]
+                        batch_edges.append((original_idx, neighbor_original_idx, float(similarity)))
+        
+        return batch_edges
+    
+    def _build_hybrid_parallel(
+        self,
+        embeddings: np.ndarray,
+    ) -> int:
+        """Hybrid approach: KNN + Hierarchical + Approximate."""
+        edge_count = 0
+        
+        # Strategy 1: KNN for high-quality local connections
+        knn_edges = self._build_knn_parallel(embeddings, None, False)
+        edge_count += knn_edges
+        
+        # Strategy 2: Hierarchical for global structure
+        hier_edges = self._build_hierarchical_parallel(embeddings, None)
+        edge_count += hier_edges
+        
+        # Strategy 3: Approximate for additional coverage
+        approx_edges = self._build_approximate_parallel(embeddings, None)
+        edge_count += approx_edges
+        
+        return edge_count
+    
+    def _build_lsh_parallel(
+        self,
+        embeddings: np.ndarray,
+        checkpoint_callback: Optional[callable]
+    ) -> int:
+        """LSH-based parallel graph building for ultra-fast approximate similarity."""
+        try:
+            from sklearn.neighbors import LSHForest
+            # Note: LSHForest is deprecated, using alternative approach
+            pass
+        except:
+            logger.warning("LSH not available, falling back to KNN")
+            return self._build_knn_parallel(embeddings, checkpoint_callback, False)
+        
+        # Implement custom LSH or use FAISS LSH
+        dimension = embeddings.shape[1]
+        index = faiss.IndexLSH(dimension, self.config.n_hash_bits)
+        index.add(embeddings.astype('float32'))
+        
+        edge_count = 0
+        batch_size = self.config.batch_size
+        
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = []
+            
+            for i in range(0, len(embeddings), batch_size):
+                batch_end = min(i + batch_size, len(embeddings))
+                future = executor.submit(
+                    self._process_lsh_batch,
+                    index,
+                    embeddings[i:batch_end],
+                    i,
+                    self.config.k_neighbors
+                )
+                futures.append(future)
+            
+            for future in as_completed(futures):
+                try:
+                    batch_edges = future.result()
+                    with self._lock:
+                        for i, j, sim in batch_edges:
+                            if self.g:
+                                self.g.add_edge(i, j, weight=sim)
+                            edge_count += 1
+                except Exception as e:
+                    logger.error(f"LSH batch failed: {e}")
+        
+        return edge_count
+    
+    def _process_lsh_batch(
+        self,
+        index,
+        embeddings_batch: np.ndarray,
+        start_idx: int,
+        k: int
+    ) -> List[Tuple[int, int, float]]:
+        """Process LSH batch."""
+        similarities, indices = index.search(embeddings_batch.astype('float32'), k + 1)
+        
+        batch_edges = []
+        for i, (chunk_sims, chunk_indices) in enumerate(zip(similarities, indices)):
+            original_idx = start_idx + i
+            for neighbor_idx, similarity in zip(chunk_indices[1:], chunk_sims[1:]):
+                if similarity > self.config.similarity_threshold:
+                    batch_edges.append((original_idx, int(neighbor_idx), float(similarity)))
+        
+        return batch_edges
+    
+    def _build_spectral_parallel(
+        self,
+        embeddings: np.ndarray,
+        checkpoint_callback: Optional[callable]
+    ) -> int:
+        """Spectral clustering based graph building."""
+        from sklearn.cluster import SpectralClustering
+        
+        # Use spectral clustering for better community detection
+        if len(embeddings) > 5000:
+            # For large datasets, use approximate spectral clustering
+            n_clusters = min(self.config.n_clusters, len(embeddings) // 50)
+            spectral = SpectralClustering(
+                n_clusters=n_clusters,
+                affinity='nearest_neighbors',
+                n_neighbors=min(50, len(embeddings) // 10),
+                n_jobs=self.config.max_workers
+            )
+            cluster_labels = spectral.fit_predict(embeddings)
+        else:
+            # For smaller datasets, use full spectral clustering
+            similarity_matrix = np.dot(embeddings, embeddings.T)
+            n_clusters = min(self.config.n_clusters // 2, len(embeddings) // 20)
+            spectral = SpectralClustering(
+                n_clusters=n_clusters,
+                affinity='precomputed',
+                n_jobs=self.config.max_workers
+            )
+            cluster_labels = spectral.fit_predict(similarity_matrix)
+        
+        # Build graph based on spectral clusters (similar to hierarchical)
+        clusters = {}
+        for idx, label in enumerate(cluster_labels):
+            if label not in clusters:
+                clusters[label] = []
+            clusters[label].append(idx)
+        
+        return self._build_from_clusters_parallel(embeddings, clusters)
+    
+    def _build_from_clusters_parallel(
+        self,
+        embeddings: np.ndarray,
+        clusters: Dict[int, List[int]]
+    ) -> int:
+        """Build graph from pre-computed clusters."""
+        edge_count = 0
+        
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = []
+            
+            for cluster_id, chunk_indices in clusters.items():
+                if len(chunk_indices) > 1:
+                    future = executor.submit(
+                        self._process_cluster,
+                        embeddings,
+                        chunk_indices,
+                        self.config.intra_cluster_k,
+                        "spectral"
+                    )
+                    futures.append(future)
+            
+            for future in as_completed(futures):
+                try:
+                    batch_edges = future.result()
+                    with self._lock:
+                        for i, j, sim in batch_edges:
+                            if self.g:
+                                self.g.add_edge(i, j, weight=sim)
+                            edge_count += 1
+                except Exception as e:
+                    logger.error(f"Spectral batch failed: {e}")
+        
+        return edge_count

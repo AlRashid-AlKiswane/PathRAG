@@ -14,7 +14,6 @@ Imports:
 
 from .pathrag import PathRAG
 from .plot_graph import visualize_graph
-
+from .path_rag_factory import PathRAGFactory
 __all__ = ["PathRAG"]
-
 

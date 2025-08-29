@@ -318,6 +318,27 @@ class Settings(BaseSettings):
     MEMORY_CHECKPOINT_INTERVAL: int = Field(2000, env="MEMORY_CHECKPOINT_INTERVAL")
     MEMORY_ENABLE_CACHING: bool = Field(False, env="MEMORY_ENABLE_CACHING")
 
+    # General
+    max_workers: int = 8
+    batch_size: int = 1000
+    checkpoint_interval: int = 5000
+
+    # KNN specific
+    k_neighbors: int = 50
+    similarity_threshold: float = 0.7
+
+    # Hierarchical specific
+    n_clusters: int = 200
+    intra_cluster_k: int = 20
+    inter_cluster_k: int = 5
+
+    # Approximate specific
+    sample_ratio: float = 0.05
+
+    # LSH specific
+    n_hash_tables: int = 10
+    n_hash_bits: int = 12
+
 def get_settings() -> Settings:
     """
     Load and validate the application settings from environment or `.env` file.

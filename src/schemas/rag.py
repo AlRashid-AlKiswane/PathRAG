@@ -10,6 +10,7 @@ The `PathRAGConfig` class ensures all parameters are validated at initialization
 and provides a central location to manage system-wide constants.
 """
 
+from dataclasses import dataclass
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -84,3 +85,17 @@ class PathRAGConfig(BaseModel):
         if v < 1:
             raise ValueError("Value must be positive")
         return v
+
+@dataclass
+class GraphConfig:
+    max_workers: int = 8
+    batch_size: int = 1000
+    checkpoint_interval: int = 5000
+    k_neighbors: int = 50
+    similarity_threshold: float = 0.7
+    n_clusters: int = 200
+    intra_cluster_k: int = 20
+    inter_cluster_k: int = 5
+    sample_ratio: float = 0.05
+    n_hash_tables: int = 10
+    n_hash_bits: int = 12

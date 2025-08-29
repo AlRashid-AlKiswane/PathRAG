@@ -136,7 +136,7 @@ try:
         TextCleaner,
         chunking_docs,
     )
-    from src.graph_db import clear_collection, insert_chunk_to_mongo
+    from src.mongodb import clear_collection, insert_chunk_to_mongo
     from src.helpers import Settings, get_settings
     from src.infra import setup_logging
     from src.schemas import (

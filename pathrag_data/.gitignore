@@ -1,1 +1,5 @@
 *.pickle
+*.npy
+*.json
+*.bin
+*.pkl

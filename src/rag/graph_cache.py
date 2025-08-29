@@ -6,15 +6,7 @@ import pickle
 import sys
 import threading
 from typing import Any, Optional
-import warnings
-
-# Production imports - would need to be available
-try:
-    import redis
-    REDIS_AVAILABLE = True
-except ImportError:
-    REDIS_AVAILABLE = False
-    warnings.warn("Redis not available - caching will be memory-only")
+import valkey
 
 # Set up project base directory
 try:
@@ -28,6 +20,7 @@ from src.schemas import PathRAGConfig
 from src.infra import setup_logging
 
 logger = setup_logging(name="GRAPH-CACHE")
+VALKEY_AVAILABLE = True
 
 class GraphCache:
     """Intelligent caching system for graph operations."""
@@ -37,19 +30,16 @@ class GraphCache:
         self._memory_cache = {}
         self._cache_lock = threading.Lock()
         
-        # Initialize Redis cache if available
-        self.redis_client = None
-        if REDIS_AVAILABLE and config.enable_caching:
+        # Initialize Valkey client if caching is enabled
+        self.valkey_client = None
+        if VALKEY_AVAILABLE and config.enable_caching:
             try:
-                self.redis_client = redis.Redis(
-                    host='localhost', port=6379, db=0,
-                    decode_responses=False
-                )
-                self.redis_client.ping()
-                logger.info("Redis cache initialized")
+                self.valkey_client = valkey.Valkey(host='localhost', port=6379, db=0, decode_responses=False)
+                self.valkey_client.ping()
+                logger.info("Valkey cache initialized")
             except Exception as e:
-                logger.warning(f"Redis initialization failed: {e}")
-                self.redis_client = None
+                logger.warning(f"Valkey initialization failed: {e}")
+                self.valkey_client = None
     
     def get(self, key: str) -> Optional[Any]:
         """Get item from cache."""

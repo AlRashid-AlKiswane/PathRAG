@@ -52,7 +52,7 @@ except Exception as e:
     sys.exit(1)
 
 # === Project Imports ===
-from src.graph_db import clear_collection
+from src.mongodb import clear_collection
 from src.infra import setup_logging
 from src import get_mongo_db
 

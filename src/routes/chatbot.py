@@ -71,7 +71,7 @@ except (ImportError, OSError) as e:
     sys.exit(1)
 
 from src.llms_providers import OllamaModel
-from src.graph_db import insert_chatbot_entry_to_mongo
+from src.mongodb import insert_chatbot_entry_to_mongo
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 from src import get_mongo_db, get_llm, get_path_rag

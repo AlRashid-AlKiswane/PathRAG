@@ -71,7 +71,7 @@ except Exception as e:
     sys.exit(1)
 
 # === Project Imports ===
-from src.graph_db import insert_chunk_to_mongo, clear_collection
+from src.mongodb import insert_chunk_to_mongo, clear_collection
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 from src.controllers import md_files_chunking

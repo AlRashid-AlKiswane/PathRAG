@@ -15,8 +15,10 @@ The exports cover:
 """
 
 from .chatbot import Chatbot
+from .build_method_graph import GraphBuildMethod
+from .checkpoint_meta_data import CheckpointMetadata
 from .md_chunks import ChunkRequest, ChunkResponse
-from .rag import PathRAGConfig
+from .rag import PathRAGConfig, GraphConfig
 from .ocr_core import OCREngine, OCRResult
 from .chunker_route import (
     ChunkingRequest,
@@ -43,4 +45,7 @@ __all__ = [
     # OCR
     "OCREngine",
     "OCRResult",
+
+    "CheckpointMetadata",
+    "GraphBuildMethod"
 ]

@@ -47,6 +47,7 @@ import sys
 from typing import List, Union, Optional
 import numpy as np
 from sentence_transformers import SentenceTransformer
+import torch
 
 try:
     MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -83,8 +84,10 @@ class HuggingFaceModel:
         """Initialize the embedding model."""
         self.model_name = model_name or app_settings.EMBEDDING_MODEL
         try:
-            self.model = SentenceTransformer(self.model_name)
-            logger.info("SentenceTransformer model '%s' initialized successfully.", self.model_name)
+            self.model = SentenceTransformer(self.model_name,
+                                             "cuda" if torch.cuda.is_available() else "cpu")
+            
+            logger.info("SentenceTransformer model '%s'  & Device %s initialized successfully.", self.model_name, str("cuda" if torch.cuda.is_available() else "cpu"))
         except Exception as e:
             logger.error("Failed to initialize SentenceTransformer model '%s': %s", self.model_name, str(e))
             raise
@@ -94,23 +97,27 @@ class HuggingFaceModel:
         texts: Union[str, List[str]],
         convert_to_tensor: bool = False,
         convert_to_numpy: bool = True,
-        normalize_embeddings: bool = False
+        normalize_embeddings: bool = False,
+        show_progress_bar: bool = True
     ) -> Optional[np.ndarray]:
         """
-        Generate embeddings for a given string or list of strings.
+        Generate embeddings for one or more input texts.
 
         Args:
-            texts: Single string or list of strings to embed.
-            convert_to_tensor: Whether to return embeddings as tensors.
-            convert_to_numpy: Whether to return embeddings as NumPy arrays.
-            normalize_embeddings: Whether to normalize the embeddings.
+            texts (str or List[str]): Input text(s) to embed. Can be a single
+                string or a list of strings.
+            convert_to_tensor (bool, optional): If True, return embeddings as a
+                PyTorch tensor. Defaults to False.
+            convert_to_numpy (bool, optional): If True, return embeddings as a
+                NumPy array. Defaults to True.
+            normalize_embeddings (bool, optional): If True, L2-normalize each
+                embedding vector. Defaults to False.
+            show_progress_bar (bool, optional): If True, display a progress bar
+                during embedding generation. Defaults to True.
 
         Returns:
-            np.ndarray: Embeddings as a numpy array, or None on error.
-
-        Raises:
-            ValueError: If input texts is empty or invalid.
-            Exception: For other embedding generation errors.
+            Optional[np.ndarray]: Embeddings as a NumPy array (or tensor if
+            `convert_to_tensor=True`), or None if an error occurs.
         """
         if not texts:
             error_msg = "Input texts for embedding are empty or invalid."
@@ -121,7 +128,8 @@ class HuggingFaceModel:
             embedding = self.model.encode(
                 texts,
                 convert_to_tensor=convert_to_tensor,
-                normalize_embeddings=normalize_embeddings
+                normalize_embeddings=normalize_embeddings,
+                show_progress_bar=show_progress_bar
             )
 
             # Ensure numpy array output

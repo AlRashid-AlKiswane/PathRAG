@@ -236,7 +236,7 @@ def main() -> None:
 
         # Example: Insert chunks into MongoDB - customize as per your db API
         try:
-            from src.graph_db import get_mongo_client, insert_chunk_to_mongo
+            from src.mongodb import get_mongo_client, insert_chunk_to_mongo
         except ImportError as err:
             logger.error(f"Failed to import database functions: {err}")
             return

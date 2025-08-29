@@ -44,7 +44,7 @@ except Exception as e:
 
 # === Project Imports ===
 from src.llms_providers import HuggingFaceModel
-from src.graph_db import pull_from_collection, insert_embed_vector_to_mongo
+from src.mongodb import pull_from_collection, insert_embed_vector_to_mongo
 from src.infra import setup_logging
 from src.helpers import get_settings, Settings
 from src import get_mongo_db, get_embedding_model

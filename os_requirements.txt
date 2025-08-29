@@ -1,0 +1,13 @@
+python
+tesseract
+ffmpeg
+docker
+jq
+perl
+unzip
+zip
+7zip
+wget
+rsync
+yay
+pamac

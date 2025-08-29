@@ -2,6 +2,8 @@
 import logging
 import os
 import sys
+import time
+import numpy as np
 
 # Set up project base directory
 try:
@@ -77,63 +79,86 @@ if __name__ == "__main__":
     """
     Example usage of PathRAGFactory with HuggingFace embeddings.
 
-    This script demonstrates:
+    Demonstrates:
     1. Initializing the embedding model.
-    2. Creating a memory-optimized PathRAG instance.
-    3. Generating embeddings for example texts.
-    4. Building the semantic graph from chunks and embeddings.
-    5. Saving the resulting graph to disk.
-
-    Notes
-    -----
-    - Replace the placeholder texts with your real document chunks.
-    - The saved graph can later be reloaded for retrieval and reasoning.
+    2. Creating a PathRAG instance.
+    3. Generating embeddings for example chunks.
+    4. Building the semantic graph.
+    5. Building FAISS index.
+    6. Saving graph and displaying metrics.
     """
 
-    import logging
+    import time
     from src.llms_providers import HuggingFaceModel
-    from pathlib import Path
-    from src.rag.plot_graph import visualize_graph
-    
+    from src.utils import AutoSave, checkpoint_callback
+
     try:
         # 1. Initialize embedding model
         embedding_model = HuggingFaceModel(model_name="sentence-transformers/all-MiniLM-L6-v2")
-        logger.info("✅ HuggingFace embedding model initialized")
+        logger.info("HuggingFace embedding model initialized")
 
-        # 2. Create a production PathRAG instance
-        rag = PathRAGFactory.create_production_instance(embedding_model)
-        logger.info("✅ PathRAG production instance created")
-
-        # 3. Example document chunks
+        # 2. Example document chunks
         chunks = [
-            "Graph neural networks extend deep learning to structured data.",
-            "Retrieval-Augmented Generation combines retrieval with LLM reasoning.",
-            "FastAPI is a modern web framework for building APIs in Python."
+            "Climate change is causing global temperatures to rise significantly.",
+            "Rising sea levels threaten coastal cities around the world.",
+            "Renewable energy sources like solar and wind are becoming more efficient.",
+            "Artificial intelligence is transforming various industries rapidly.",
+            "Machine learning algorithms require large datasets for training.",
+            "Deep learning models can process complex patterns in data.",
+            "Electric vehicles are reducing carbon emissions in transportation.",
+            "Battery technology improvements enable longer-range electric cars.",
+            "Sustainable agriculture practices help preserve soil quality.",
+            "Organic farming methods reduce pesticide use in food production.",
+            "Ocean acidification affects marine ecosystems negatively.",
+            "Coral reefs are bleaching due to increased water temperatures.",
+            "Deforestation contributes to loss of biodiversity globally.",
+            "Reforestation efforts help restore damaged forest ecosystems.",
+            "Urban planning must consider environmental sustainability factors."
         ]
 
-        # 4. Generate embeddings
-        embeddings = embedding_model.embed_texts(texts=chunks)
+        # 3. Generate embeddings
+        embeddings = embedding_model.embed_texts(
+            texts=chunks,
+            convert_to_numpy=True,
+            show_progress_bar=True
+        )
+        if isinstance(embeddings, list):
+            embeddings = np.array(embeddings)
         if embeddings is None:
             raise ValueError("Embedding generation failed")
-        logger.info("✅ Generated embeddings for %d chunks", len(chunks))
+        logger.info("Generated embeddings for %d chunks", len(chunks))
+        logger.info("Embeddings shape: %s", embeddings.shape)
+
+        # 4. Create PathRAG instance
+        rag = PathRAGFactory.create_production_instance(embedding_model)
+        logger.info("PathRAG instance created with FAISS optimization")
 
         # 5. Build the semantic graph
-        rag.build_graph(chunks=chunks, embeddings=embeddings)
-        logger.info(
-            "✅ Semantic graph built with %d nodes and %d edges",
-            rag.g.number_of_nodes(),
-            rag.g.number_of_edges()
-        )
+        logger.info("Building semantic graph from %d chunks...", len(chunks))
+        start_time = time.time()
+        rag.build_graph(chunks=chunks, embeddings=embeddings, checkpoint_callback=checkpoint_callback)
+        build_time = time.time() - start_time
+        logger.info("Graph built in %.2f seconds", build_time)
+        logger.info("Graph contains %d nodes and %d edges", rag.g.number_of_nodes(), rag.g.number_of_edges())
 
-        # 6. Save the graph
-        output_path = Path("pathrag_data/pathrag_graph.pkl")
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        rag.save_graph(file_path=str(output_path))
-        logger.info("✅ Graph saved to %s", output_path)
+        # 6. Initialize AutoSave
+        autosave = AutoSave(pathrag_instance=rag)
+        logger.info("AutoSave initialized at %s", str(autosave.save_dir))
 
-        # 7. Visualize the graph (Plotly figure)
-        fig = visualize_graph(g=rag.g, max_nodes=5)
-        fig.show()
+        # 7. Build FAISS index for fast similarity search
+        logger.info("Building FAISS index...")
+        faiss_start = time.time()
+        rag.build_faiss_index()
+        faiss_time = time.time() - faiss_start
+        logger.info("FAISS index built in %.2f seconds", faiss_time)
 
+        # 8. Display graph metrics
+        metrics = rag.get_metrics()
+        logger.info("Graph Statistics:")
+        logger.info("  - Nodes: %d", metrics["nodes_count"])
+        logger.info("  - Edges: %d", metrics["edges_count"])
+        logger.info("  - Memory Usage: %.2f GB", metrics["memory_usage_gb"])
+        logger.info("  - Average Degree: %.2f", metrics["avg_degree"])
+        autosave.save_checkpoint()
     except Exception as e:
-        logger.exception("❌ Error occurred while running PathRAG demo: %s", e)
+        logger.exception("Error occurred during PathRAG demo: %s", e)
