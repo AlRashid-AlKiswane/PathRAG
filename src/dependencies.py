@@ -185,13 +185,12 @@ def get_path_rag(request: Request) -> PathRAG:
     """
     try:
         path_rag = getattr(request.app.state, "path_rag", None)
-        if not isinstance(path_rag, PathRAG):
-            logger.error("PathRAG instance is missing or invalid in app state.")
-            raise HTTPException(
-                status_code=HTTP_503_SERVICE_UNAVAILABLE,
-                detail="PathRAG service is not available. Please try again later."
-            )
-
+        # if not isinstance(path_rag, PathRAG):
+        #     logger.error("PathRAG instance is missing or invalid in app state.")
+        #     raise HTTPException(
+        #         status_code=HTTP_503_SERVICE_UNAVAILABLE,
+        #         detail="PathRAG service is not available. Please try again later."
+        #     )
         logger.debug("PathRAG instance successfully retrieved from app state.")
         return path_rag
 

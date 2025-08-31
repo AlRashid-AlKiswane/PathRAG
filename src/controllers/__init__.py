@@ -17,7 +17,6 @@ from .unique_filename_generator import generate_unique_filename
 from .text_operation import TextCleaner
 from .ex_images_pdf import ExtractionImagesFromPDF
 from .ocr import AdvancedOCRProcessor
-from .life_span import lifespan, path_rag
 
 __all__ = [
     "chunking_docs",

@@ -81,7 +81,8 @@ class AutoSave:
             save_every_samples (int): Save after this many processed samples.
             save_every_minutes (int): Save after this many minutes.
         """
-        self.pathrag = pathrag_instance
+        from src.rag import PathRAG
+        self.pathrag: PathRAG = pathrag_instance
         self.save_dir = Path(save_dir)
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -130,9 +131,7 @@ class AutoSave:
         """
         try:
             # Save the graph via PathRAG
-            self.pathrag.save_graph(
-                file_path=self.graph_file, format="pickle", compress=True
-            )
+            self.pathrag.save_graph()
 
             # Save FAISS index if available
             faiss_file = self.save_dir / "faiss_index.bin"

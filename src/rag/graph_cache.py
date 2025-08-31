@@ -49,9 +49,9 @@ class GraphCache:
                 return self._memory_cache[key]
         
         # Try Redis cache
-        if self.redis_client:
+        if self.valkey_client:
             try:
-                data = self.redis_client.get(key)
+                data = self.valkey_client.get(key)
                 if data:
                     return pickle.loads(data)
             except Exception as e:
@@ -70,8 +70,8 @@ class GraphCache:
             self._memory_cache[key] = value
         
         # Redis cache
-        if self.redis_client:
+        if self.valkey_client:
             try:
-                self.redis_client.setex(key, expire, pickle.dumps(value))
+                self.valkey_client.setex(key, expire, pickle.dumps(value))
             except Exception as e:
                 logger.warning(f"Redis set failed: {e}")

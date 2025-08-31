@@ -41,8 +41,11 @@ ALRashid AlKiswane
 """
 
 import asyncio
+from contextlib import asynccontextmanager
 import json
+from logging import config
 import os
+from pathlib import Path
 import sys
 import logging
 from typing import Any, Dict
@@ -50,6 +53,7 @@ from typing import Any, Dict
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 # === Configure Project Path ===
 try:
@@ -67,7 +71,11 @@ try:
     from src.infra import setup_logging
     from src.rag import visualize_graph
     from src.helpers import get_settings, Settings
-    from src.controllers import lifespan, path_rag
+    from src.llms_providers import HuggingFaceModel
+    from src.llms_providers import OllamaModel
+    from src.mongodb import init_chatbot_collection, init_chunks_collection, init_embed_vector_collection
+    from src.rag import PathRAGFactory
+    from src.utils import ConcurrentModelManager, ThreadSafePathRAG
 except ImportError as e:
     logging.critical("Import error during module loading: %s", e, exc_info=True)
     sys.exit(1)
@@ -76,12 +84,99 @@ except ImportError as e:
 logger = setup_logging(name="MAIN")
 app_settings: Settings = get_settings()
 
+pathrag = None
+
+# === FastAPI Lifespan ===
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        logger.info("Starting up Graph-RAG API with concurrency support...")
+
+        # === MongoDB Initialization ===
+        try:
+            client = get_mongo_client()
+            db = client["PathRAG-MongoDB"]
+            app.state.db = db
+            logger.info("Connected to MongoDB: %s", db.name)
+        except Exception as mongo_err:
+            logger.critical("Failed to connect to MongoDB: %s", mongo_err, exc_info=True)
+            raise RuntimeError("Database initialization failed.") from mongo_err
+
+        # === Initialize Collections ===
+        try:
+            init_chunks_collection(db)
+            init_embed_vector_collection(db)
+            init_chatbot_collection(db)
+            logger.info("MongoDB collections initialized.")
+        except Exception as coll_err:
+            logger.critical("Failed to initialize MongoDB collections: %s", coll_err, exc_info=True)
+            raise RuntimeError("Collection setup failed.") from coll_err
+
+        # === Load LLM and Embedding Models ===
+        try:
+            app.state.model_manager = ConcurrentModelManager(
+                OllamaModel,
+                HuggingFaceModel,
+                app_settings.OLLAMA_MODEL,
+                app_settings.EMBEDDING_MODEL,
+            )
+            app.state.llm = app.state.model_manager.get_llm_instance()
+            app.state.embedding_model = app.state.model_manager.get_embedding_instance()
+            logger.info("Models loaded with concurrent support.")
+        except Exception as model_err:
+            logger.critical("Failed to load models: %s", model_err, exc_info=True)
+            raise RuntimeError("Model loading failed.") from model_err
+
+        # === Initialize PathRAG ===
+        try:
+            global pathrag
+            pathrag = PathRAGFactory().create_development_instance(
+                embedding_model=app.state.embedding_model
+            )
+            app.state.path_rag = ThreadSafePathRAG(pathrag)
+
+            graph_path = Path(app_settings.STORAGE_GRAPH)
+            if graph_path.exists():
+                try:
+                    await asyncio.get_event_loop().run_in_executor(
+                        None, app.state.path_rag.load_graph, graph_path
+                    )
+                    logger.info("Graph loaded from %s", graph_path)
+                except Exception as e:
+                    logger.warning("Failed to load existing graph: %s", e)
+            else:
+                logger.info("No saved graph found. A new one will be created as needed.")
+        except Exception as rag_err:
+            logger.critical("Failed to initialize PathRAG: %s", rag_err, exc_info=True)
+            raise RuntimeError("PathRAG initialization failed.") from rag_err
+
+        yield
+
+    except Exception as startup_error:
+        logger.exception("Fatal error during app startup: %s", startup_error)
+        raise
+    finally:
+        try:
+            if hasattr(app.state, 'model_manager'):
+                app.state.model_manager.shutdown()
+            logger.info("Application shutdown complete.")
+        except Exception as cleanup_err:
+            logger.error("Error during cleanup: %s", cleanup_err)
+
 # === FastAPI Application Instance ===
 app = FastAPI(
     title="Graph-RAG API",
     version="1.0.0",
     description="Path-aware Retrieval-Augmented Generation system using semantic graphs with concurrency support.",
     lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or ["http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # === Register Routes ===
@@ -134,7 +229,7 @@ async def get_graph(max_nodes: int = 100):
     """
     try:
         # Use thread-safe graph access
-        g = path_rag.get_graph()
+        g = pathrag.g
         if g is None or g.number_of_nodes() == 0:
             logging.warning("Graph is empty or not initialized.")
             raise HTTPException(status_code=404, detail="Graph is empty or not initialized.")

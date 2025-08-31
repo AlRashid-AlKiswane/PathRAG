@@ -53,6 +53,7 @@ build_pathrag_route = APIRouter(
 async def build_pathrag(
     do_save: bool = False,
     build_graph: bool = False,
+    method: str = "knn",
     limit: Optional[int] = Query(None, description="Optional limit on number of chunks to load."),
     db: MongoClient = Depends(get_mongo_db),
     pathrag: PathRAG = Depends(get_path_rag)
@@ -114,16 +115,9 @@ async def build_pathrag(
         embeddings_np = np.vstack(embeddings)
         logger.info("Building semantic graph with %d valid chunks.", len(chunks))
         start_time = time.time()
-        pathrag.build_graph(chunks=chunks, embeddings=embeddings_np)
+        pathrag.build_graph(chunks=chunks, embeddings=embeddings_np, method=method)
         build_time = time.time() - start_time
         logger.info("Graph built in %.2f seconds.", build_time)
-
-        # Build FAISS index
-        logger.info("Building FAISS index...")
-        faiss_start = time.time()
-        pathrag.build_faiss_index()
-        faiss_time = time.time() - faiss_start
-        logger.info("FAISS index built in %.2f seconds.", faiss_time)
 
         # Metrics
         metrics = pathrag.get_metrics()

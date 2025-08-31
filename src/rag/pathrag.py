@@ -56,7 +56,7 @@ import sys
 import threading
 from time import time
 from typing import Any, Dict, List, Tuple
-
+from numbers import Integral
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -137,6 +137,11 @@ class PathRAG:
         self.cache = GraphCache(self.config)
         self._lock = threading.Lock()
         
+        # Initialize FAISS-related attributes
+        self.index = None
+        self.node_ids = None
+        self.embedding_matrix = None
+        
         # Setup logging        
         logger.info(f"PathRAG initialized with config: {self.config}")
     
@@ -145,7 +150,7 @@ class PathRAG:
         self, 
         chunks: List[str], 
         embeddings: np.ndarray,
-        method: str = "knn",
+        method: str = "hierarchical",
         checkpoint_callback: Optional[callable] = None,
         use_gpu: bool = False,
     ) -> None:
@@ -155,19 +160,27 @@ class PathRAG:
         Args:
             chunks: List of text chunks
             embeddings: Corresponding embeddings
+            method: Graph building method
             checkpoint_callback: Optional callback for progress checkpoints
+            use_gpu: Whether to use GPU acceleration
         """
         if not self._validate_inputs(chunks, embeddings):
             raise ValueError("Invalid inputs provided")
         
         if len(chunks) > self.config.max_graph_size:
             logger.warning(
-                f"Input size {len(chunks)} exceeds max_graph_size"
+                f"Input size {len(chunks)} exceeds max_graph_size "
                 f"{self.config.max_graph_size}, truncating"
             )
             chunks = chunks[:self.config.max_graph_size]
             embeddings = embeddings[:self.config.max_graph_size]
-        logger.info(f"Building {method.value} graph for {len(chunks)} chunks with {self.config.max_workers} workers")
+            
+        logger.info(f"Building {method} graph for {len(chunks)} chunks with {self.config.max_workers} workers")
+        
+        # Clear existing graph and initialize nodes
+        self.g.clear()
+        self._add_nodes(chunks, embeddings)
+        
         with self.memory_monitor.memory_guard():
             if method == GraphBuildMethod.KNN:
                 edge_count = self._build_knn_parallel(embeddings, checkpoint_callback, use_gpu)
@@ -184,8 +197,13 @@ class PathRAG:
             elif method == GraphBuildMethod.SPECTRAL:
                 edge_count = self._build_spectral_parallel(embeddings, checkpoint_callback)
             else:
-                self._build_graph_optimized(chunks, embeddings, checkpoint_callback)
-            logger.info(f"Graph built By {method}: {len(chunks)} nodes, {edge_count} edges")
+                edge_count = self._build_graph_optimized(chunks, embeddings, checkpoint_callback)
+                
+            # Build FAISS index after graph construction
+            logger.info("Building FAISS index for fast retrieval...")
+            # self._build_faiss_index()
+            
+            logger.info(f"Graph built by {method}: {len(chunks)} nodes, {edge_count} edges")
 
     def _validate_inputs(self, chunks: List[str], embeddings: np.ndarray) -> bool:
         """Comprehensive input validation."""
@@ -195,6 +213,7 @@ class PathRAG:
 
         if not isinstance(embeddings, np.ndarray):
             logger.error("Embeddings must be numpy array")
+            return False
         
         if len(chunks) != embeddings.shape[0]:
             logger.error("Chunks and embeddings length mismatch")
@@ -206,23 +225,44 @@ class PathRAG:
         
         return True
 
+    def _add_nodes(self, chunks: List[str], embeddings: np.ndarray) -> None:
+        """Add all nodes to the graph efficiently."""
+        # Batch node addition for efficiency
+        batch_size = self.config.batch_size
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            futures = []
+            
+            for i in range(0, len(chunks), batch_size):
+                batch_end = min(i + batch_size, len(chunks))
+                future = executor.submit(
+                    self._add_node_batch,
+                    chunks[i:batch_end],
+                    embeddings[i:batch_end],
+                    i  # Start index offset
+                )
+                futures.append(future)
+            
+            # Wait for all batches to complete
+            for future in as_completed(futures):
+                future.result()
+    
+    def _add_node_batch(self, chunk_batch: List[str], emb_batch: np.ndarray, start_idx: int) -> None:
+        """Add a batch of nodes thread-safely."""
+        with self._lock:
+            for idx, (chunk, emb) in enumerate(zip(chunk_batch, emb_batch)):
+                self.g.add_node(start_idx + idx, text=chunk, emb=emb)
+
     def _build_graph_optimized(
             self,
             chunks: List[str],
             embeddings: np.ndarray,
             checkpoint_callback: Optional[callable]
-    ) -> None:
+    ) -> int:
         """Optimized graph building with batching and concurrency."""
-        self.g.clear()
         logger.info("Building graph for %d chunks", int(len(chunks)))
 
-        # Add nodes efficiently
-        with self._lock:
-            for idx, (chunk, emb) in enumerate(zip(chunks, embeddings)):
-                self.g.add_node(idx, text=chunk, emb=emb)
-        
-        # Build adges in batches with concurrent processing
-        total_pairs = len(chunks) * (len(chunks) -1) // 2
+        # Build edges in batches with concurrent processing
+        total_pairs = len(chunks) * (len(chunks) - 1) // 2
         processed_pairs = 0
         edge_count = 0
 
@@ -241,7 +281,7 @@ class PathRAG:
                 )
                 futures.append(future)
 
-            # Collect results wiht progress tracking
+            # Collect results with progress tracking
             with tqdm(total=len(futures), desc="Processing batches") as pbar:
                 for future in as_completed(futures):
                     try:
@@ -266,6 +306,7 @@ class PathRAG:
         self.metrics.set_metric('nodes_processed', len(chunks))
         self.metrics.set_metric('edges_created', edge_count)
         logger.info(f"Graph built: {len(chunks)} nodes, {edge_count} edges")
+        return edge_count
     
     def _process_batch(
         self,
@@ -277,7 +318,7 @@ class PathRAG:
         """Process a batch of similarity computations."""
         batch_edges = []
 
-        for i in tqdm(range(start_idx, end_idx)):
+        for i in tqdm(range(start_idx, end_idx), desc=f"Batch {start_idx}-{end_idx}"):
             # Check memory periodically
             if i % 100 == 0 and not self.memory_monitor.check_memory_limit():
                 logger.warning("Memory limit approached, reducing batch processing")
@@ -297,7 +338,7 @@ class PathRAG:
                     continue
         
         return batch_edges
-    
+
     @timer('retrieval_time')
     def retrieve_nodes(
         self,
@@ -324,18 +365,22 @@ class PathRAG:
         if cache_key:
             cached_result = self.cache.get(cache_key)
             if cached_result is not None:
-                self.metrics.increment("cache_hist")
+                self.metrics.increment("cache_hits")
                 return cached_result
-            self.metrics.increment("cache_hist")
-        
-        try:
-            # Embed quyer with error handling
-            q_emb = self._embed_query_safe(query)
+            self.metrics.increment("cache_misses")
 
-            # compute similarites efficiently
-            similarities = self._compute_similarities_batch(q_emb)
+        try:
+            # Embed query with error handling
+            q_emb = self._embed_query_safe(query).astype("float32")
+
+            # Compute similarities efficiently
+            similarities = self._compute_similarities_batch(tuple(q_emb))
 
             # Get top-k results
+            if not similarities:
+                logger.warning("No similarities computed, returning empty result")
+                return []
+                
             top_nodes = heapq.nlargest(
                 top_k,
                 similarities.items(),
@@ -361,9 +406,10 @@ class PathRAG:
         if top_k <= 0 or not isinstance(top_k, int):
             return False
         if self.g.number_of_nodes() == 0:
+            logger.error("Graph has no nodes")
             return False
         return True
-    
+
     def _embed_query_safe(self, query: str) -> np.ndarray:
         """Safely embed query with retries."""
         max_retries = 3
@@ -387,12 +433,12 @@ class PathRAG:
                     raise
                 time.sleep(0.1 * (attempt + 1)) 
     
-    @lru_cache(maxsize=1000)
     def _compute_similarities_batch(self, q_emb_tuple: tuple) -> Dict[int, float]:
         """
         Compute similarities using FAISS index (GPU if available).
         Returns a dictionary mapping node_id -> similarity score.
         """
+        self.index = self._build_faiss_index()
         similarities = {}
 
         try:
@@ -427,7 +473,7 @@ class PathRAG:
                 return similarities
 
             # Map FAISS results back to node IDs
-            for i in tqdm(range(len(indices[0])), desc="Mapping FAISS results", colour="green"):
+            for i in range(len(indices[0])):
                 idx = int(indices[0][i])
                 score = float(similarities_scores[0][i])
 
@@ -435,7 +481,7 @@ class PathRAG:
                     logger.warning("Invalid FAISS index %s, skipping", idx)
                     continue
 
-                node_id = self.node_ids[idx]
+                node_id = int(self.node_ids[idx])
                 similarities[node_id] = score
 
             logger.debug("Computed %s similarity scores successfully", len(similarities))
@@ -446,50 +492,79 @@ class PathRAG:
         return similarities
 
     @timer('path_pruning_time')
-    def prune_paths(
-        self,
-        nodes: List[int],
-        max_hops: int = 4,
-        max_paths_per_pair: int = 10
-    ) -> List[List[int]]:
+    def prune_paths(self, nodes: List[int], max_hops: int = 4, max_paths_per_pair: int = 10) -> List[List[int]]:
         """
-        Prune paths with production optimizations.
+        Prune and find paths between nodes with proper validation.
         
         Args:
-            nodes: List of node indices
-            max_hops: Maximum path length
-            max_paths_per_pair: Limit paths per node pair for performance
+            nodes: List of node IDs to find paths between
+            max_hops: Maximum number of hops in paths
+            max_paths_per_pair: Maximum paths to find per node pair
             
         Returns:
-            List of valid paths
+            List of valid paths between nodes
         """
+        # Handle empty nodes list gracefully
+        if not nodes:
+            logger.warning("No nodes provided for path pruning, returning empty paths")
+            return []
+            
+        # Normalize + validate
+        try:
+            nodes = [int(n) for n in nodes]
+        except (TypeError, ValueError) as e:
+            logger.error(f"Invalid node types: {e}")
+            return []
+            
         if not self._validate_path_inputs(nodes, max_hops):
-            raise ValueError("Invalid path pruning parameters")
-
-        valid_paths = []
-        total_pairs = len(nodes) * (len(nodes) - 1) // 2
+            logger.error("Some nodes do not exist in graph or invalid params")
+            # Instead of raising exception, return empty list to handle gracefully
+            logger.warning("Returning empty paths due to validation failure")
+            return []
 
         logger.info(f"Starting path pruning for {len(nodes)} nodes")
+        valid_paths = []
+        
+        # If only one node, return empty paths
+        if len(nodes) <= 1:
+            logger.info("Only one or no nodes, no paths to find")
+            return []
+            
+        futures = []
 
         with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
-            futures = []
-
-            # Submit path finding jobs
             for i, u in enumerate(nodes):
-                for v in nodes[i +1:]:
-                    future = executor.submit(
-                        self._fin
+                for v in nodes[i+1:]:
+                    futures.append(
+                        executor.submit(
+                            self._find_paths_between_nodes,
+                            u, v, max_hops, max_paths_per_pair
+                        )
                     )
+
+            for fut in as_completed(futures):
+                try:
+                    paths = fut.result()
+                    if paths:
+                        valid_paths.extend(paths)
+                except Exception as e:
+                    logger.debug(f"Path finding future failed: {e}")
+
+        logger.info(f"Pruned to {len(valid_paths)} valid paths")
+        return valid_paths
 
     def _validate_path_inputs(self, nodes: List[int], max_hops: int) -> bool:
         """Validate path pruning inputs."""
-        if not nodes or not isinstance(nodes, list):
+        if not nodes or not isinstance(nodes, (list, tuple)):
             return False
-        if max_hops < 1 or not isinstance(max_hops, int):
+        if not isinstance(max_hops, int) or max_hops < 1:
             return False
-        if not all(isinstance(n, int) and self.g.has_node(n) for n in nodes):
+        try:
+            casted = [int(n) for n in nodes]  # handles np.int64, etc.
+        except Exception:
             return False
-        return True
+        # All must exist in graph
+        return all(self.g.has_node(n) for n in casted)
     
     def _find_paths_between_nodes(
             self,
@@ -498,7 +573,7 @@ class PathRAG:
             max_hops: int,
             max_paths: int
     ) -> List[List[int]]:
-        """Find valid paths between tow nodes."""
+        """Find valid paths between two nodes."""
         valid_paths = []
 
         try:
@@ -517,6 +592,7 @@ class PathRAG:
                 score = self._compute_flow(path)
                 if score >= self.config.prune_thresh:
                     valid_paths.append(path)
+                path_count += 1
 
         except nx.NetworkXNoPath:
             pass
@@ -532,15 +608,14 @@ class PathRAG:
         
         try:
             weights = []
-            for i in range(len(path) -1):
-                edge_data = self.g.edges.get((path[i], path[i + 1]))
-                if edge_data is None:
+            for i in range(len(path)-1):
+                data = self.g.get_edge_data(path[i], path[i + 1])
+                if not data or 'weight' not in data:
                     return 0.0
-                weights.append(edge_data['weight'])
-            base_core = np.prod(weights)
+                weights.append(data["weight"])
+            base_score = float(np.prod(weights))
             decay_factor = self.config.decay_rate ** (len(path) - 1)
-
-            return float(base_core * decay_factor)
+            return base_score * decay_factor
         except Exception as e:
             logger.debug(f"Flow computation failed for path {path}: {e}")
             return 0.0
@@ -581,7 +656,7 @@ class PathRAG:
 
         except Exception:
             return "Preview unavailable"
-    
+
     def generate_prompt(
         self,
         query: str,
@@ -640,86 +715,7 @@ class PathRAG:
         except Exception as e:
             logger.debug(f"Path formatting failed: {e}")
             return f"{index}. [Error formatting path]"
-    
-    def save_graph(
-            self,
-            file_path: Union[str, Path],
-            format: str = "pickle",
-            compress: bool = True
-    ) -> None:
-        """Save graph with enhanced options."""
-        file_path = Path(file_path)
-        file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        try:
-            if format == "pickle":
-                mode = 'wb'
-                if compress:
-                    import gzip
-                    with gzip.open(file_path, mode) as f:
-                        pickle.dump(self.g, f)
-                else:
-                    with open(file_path, mode) as f:
-                        pickle.dump(self.g, f)
-            elif format == "json":
-                data = nx.node_link_data(self.g)
-
-                # Convert numpy arrays to lists for JSON serialization
-                for node in data['nodes']:
-                    if 'emb' in node and isinstance(node['emb'], np.ndarray):
-                        node['emb'] = node['emb'].tolist()
-                
-                with open(file_path, 'w') as f:
-                    json.dump(data, f, indent=2 if not compress else None)
-            else:
-                raise ValueError(f"Unsupported format: {format}")
-            
-            logger.info(f"Graph saved to {file_path}")
-            
-        except Exception as e:
-            logger.error(f"Failed to save graph: {e}")
-            raise
-    
-    def load_graph(self, file_path: Union[str, Path], format: str = "pickle") -> None:
-        """Load graph with enhanced error handling."""
-        file_path = Path(file_path)
-        
-        if not file_path.exists():
-            raise FileNotFoundError(f"Graph file not found: {file_path}")
-        
-        try:
-            if format == "pickle":
-                # Try compressed first, then uncompressed
-                try:
-                    import gzip
-                    with gzip.open(file_path, 'rb') as f:
-                        self.g = pickle.load(f)
-                except:
-                    with open(file_path, 'rb') as f:
-                        self.g = pickle.load(f)
-                        
-            elif format == "json":
-                with open(file_path, 'r') as f:
-                    data = json.load(f)
-                
-                # Convert embedding lists back to numpy arrays
-                for node in data['nodes']:
-                    if 'emb' in node and isinstance(node['emb'], list):
-                        node['emb'] = np.array(node['emb'])
-                
-                self.g = nx.node_link_graph(data)
-            else:
-                raise ValueError(f"Unsupported format: {format}")
-            
-            logger.info(
-                f"Graph loaded: {self.g.number_of_nodes()} nodes, "
-                f"{self.g.number_of_edges()} edges"
-            )
-            
-        except Exception as e:
-            logger.error(f"Failed to load graph: {e}")
-            raise
-    
     def get_metrics(self) -> Dict[str, Any]:
         """Get comprehensive metrics report."""
         base_metrics = self.metrics.get_report()
@@ -759,58 +755,87 @@ class PathRAG:
         
         return health
 
-    def build_faiss_index(self):
-        """Build FAISS index for fast similarity search."""
-        node_ids = list(self.g.nodes())
-        self.node_ids = np.array(node_ids)
+    def _build_faiss_index(self):
+        """
+        Build a FAISS index for fast similarity search.
 
-        # Stack embeddings into matrix
-        embedding_matrix = np.vstack(
-            [self.g.nodes[n]['emb'] 
-            for n in node_ids]).astype('float32')
-        self.embedding_matrix = embedding_matrix
+        - Normalizes embeddings (for cosine similarity).
+        - Attempts to move the index to GPU if available.
+        - Falls back gracefully to CPU on error.
+        - Provides full logging and error handling.
 
-        dim = embedding_matrix.shape[1]
+        Returns:
+            faiss.Index: The built FAISS index.
 
-        # Use Inner Product (for cosine similarity, normalize embeddings first)
-        faiss.normalize_L2(embedding_matrix)
-
-        # Create CPU index first
-        self.index = faiss.IndexFlatIP(dim)
-
-        # Try to move to GPU if available
-        if torch.cuda.is_available():
-            try:
-                res = faiss.StandardGpuResources()
-                gpu_index = faiss.index_cpu_to_gpu(res, 0, self.index)
-                self.index = gpu_index
-                logger.info("Successfully moved FAISS index to GPU")
-            except Exception as e:
-                logger.warning(f"Failed to move FAISS index to GPU, using CPU: {e}")
-        else:
-            logger.info("GPU not available, using CPU for FAISS index")
-
-        self.index.add(embedding_matrix)
-        logger.info("FAISS index built with %d embeddings", len(node_ids))
-
-    def cleanup(self) -> None:
-        """Clean up resources."""
+        Raises:
+            RuntimeError: If index building fails irrecoverably.
+        """
         try:
-            self.g.clear()
-            self.cache._memory_cache.clear()
-            if self.cache.redis_client:
-                self.cache.redis_client.close()
-            logger.info("PathRAG resources cleaned up")
+            node_ids = list(self.g.nodes())
+            if not node_ids:
+                raise ValueError("Graph contains no nodes to index.")
+
+            # Store node_ids
+            self.node_ids = np.array(node_ids)
+
+            # Stack embeddings into a matrix
+            try:
+                embedding_matrix = np.vstack(
+                    [self.g.nodes[n].get('emb') for n in node_ids]
+                ).astype('float32')
+            except Exception as e:
+                logger.error("Failed to build embedding matrix: %s", e, exc_info=True)
+                raise RuntimeError("Embedding matrix construction failed.") from e
+
+            if embedding_matrix.ndim != 2:
+                raise ValueError(
+                    f"Invalid embedding matrix shape: {embedding_matrix.shape}. "
+                    "Expected 2D [num_nodes, dim]."
+                )
+
+            self.embedding_matrix = embedding_matrix
+            dim = embedding_matrix.shape[1]
+
+            # Normalize for cosine similarity
+            try:
+                faiss.normalize_L2(embedding_matrix)
+            except Exception as e:
+                logger.error("Failed to normalize embeddings: %s", e, exc_info=True)
+                raise RuntimeError("Embedding normalization failed.") from e
+
+            # Create CPU index
+            try:
+                index = faiss.IndexFlatIP(dim)
+            except Exception as e:
+                logger.error("Failed to initialize FAISS CPU index: %s", e, exc_info=True)
+                raise RuntimeError("FAISS CPU index creation failed.") from e
+
+            # Try GPU if available
+            if torch.cuda.is_available():
+                try:
+                    res = faiss.StandardGpuResources()
+                    gpu_index = faiss.index_cpu_to_gpu(res, 0, index)
+                    index = gpu_index
+                    logger.info("Successfully moved FAISS index to GPU")
+                except Exception as e:
+                    logger.warning("Failed to move FAISS index to GPU: %s", e, exc_info=True)
+                    logger.info("Falling back to CPU FAISS index.")
+            else:
+                logger.info("GPU not available, using CPU for FAISS index.")
+
+            # Add vectors to index
+            try:
+                index.add(embedding_matrix)
+            except Exception as e:
+                logger.error("Failed to add embeddings to FAISS index: %s", e, exc_info=True)
+                raise RuntimeError("FAISS index population failed.") from e
+
+            logger.info("FAISS index successfully built with %d embeddings.", len(node_ids))
+            return index
+
         except Exception as e:
-            logger.error(f"Cleanup failed: {e}")
-    
-    def __enter__(self):
-        """Context manager entry."""
-        return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit with cleanup."""
-        self.cleanup()
+            logger.critical("Unrecoverable error while building FAISS index: %s", e, exc_info=True)
+            raise
 
     def _add_nodes(self, chunks: List[str], embeddings: np.ndarray) -> None:
         """Add all nodes to the graph efficiently."""
@@ -1231,7 +1256,7 @@ class PathRAG:
                         batch_edges.append((original_idx, neighbor_original_idx, float(similarity)))
         
         return batch_edges
-    
+
     def _build_hybrid_parallel(
         self,
         embeddings: np.ndarray,
@@ -1394,3 +1419,101 @@ class PathRAG:
                     logger.error(f"Spectral batch failed: {e}")
         
         return edge_count
+
+    def save_graph(
+            self,
+            file_path: Union[str, Path],
+            format: str = "pickle",
+            compress: bool = True
+    ) -> None:
+        """Save graph with enhanced options."""
+        file_path = Path(file_path)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            if format == "pickle":
+                mode = 'wb'
+                if compress:
+                    import gzip
+                    with gzip.open(file_path, mode) as f:
+                        pickle.dump(self.g, f)
+                else:
+                    with open(file_path, mode) as f:
+                        pickle.dump(self.g, f)
+            elif format == "json":
+                data = nx.node_link_data(self.g)
+
+                # Convert numpy arrays to lists for JSON serialization
+                for node in data['nodes']:
+                    if 'emb' in node and isinstance(node['emb'], np.ndarray):
+                        node['emb'] = node['emb'].tolist()
+                
+                with open(file_path, 'w') as f:
+                    json.dump(data, f, indent=2 if not compress else None)
+            else:
+                raise ValueError(f"Unsupported format: {format}")
+            
+            logger.info(f"Graph saved to {file_path}")
+            
+        except Exception as e:
+            logger.error(f"Failed to save graph: {e}")
+            raise
+    
+    def load_graph(self, file_path: Union[str, Path], format: str = "pickle") -> None:
+        """Load graph with enhanced error handling."""
+        file_path = Path(file_path)
+        
+        if not file_path.exists():
+            raise FileNotFoundError(f"Graph file not found: {file_path}")
+        
+        try:
+            if format == "pickle":
+                # Try compressed first, then uncompressed
+                try:
+                    import gzip
+                    with gzip.open(file_path, 'rb') as f:
+                        self.g = pickle.load(f)
+                except:
+                    with open(file_path, 'rb') as f:
+                        self.g = pickle.load(f)
+                        
+            elif format == "json":
+                with open(file_path, 'r') as f:
+                    data = json.load(f)
+                
+                # Convert embedding lists back to numpy arrays
+                for node in data['nodes']:
+                    if 'emb' in node and isinstance(node['emb'], list):
+                        node['emb'] = np.array(node['emb'])
+                
+                self.g = nx.node_link_graph(data)
+            else:
+                raise ValueError(f"Unsupported format: {format}")
+            
+            logger.info(
+                f"Graph loaded: {self.g.number_of_nodes()} nodes, "
+                f"{self.g.number_of_edges()} edges"
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to load graph: {e}")
+            raise
+
+    def cleanup(self) -> None:
+        """Clean up resources."""
+        try:
+            self.g.clear()
+            self.cache._memory_cache.clear()
+            if self.cache.redis_client:
+                self.cache.redis_client.close()
+            logger.info("PathRAG resources cleaned up")
+        except Exception as e:
+            logger.error(f"Cleanup failed: {e}")
+    
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit with cleanup."""
+        self.cleanup()

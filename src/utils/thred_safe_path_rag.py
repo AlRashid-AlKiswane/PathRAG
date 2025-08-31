@@ -126,7 +126,7 @@ class ThreadSafePathRAG:
         with self._write_lock:
             return self._path_rag.load_graph(path)
     
-    def save_graph(self, path):
+    def save_graph(self, path: str = "./pathrag_data/checkpoints/graph.pkl"):
         """
         Saves the current graph to the specified path in a thread-safe manner.
 
