@@ -123,8 +123,8 @@ class ExtractionImagesFromPDF:
 if __name__ == "__main__":
     # PDF input path
     # pdf_path = "/home/alrashida/Tessafold/PathRAG/assets/docs/Clockify_Time_Report_Summary_01_06_2025-30_06_2025.pdf"
-    pdf_path = "/home/alrashida/Tessafold/PathRAG/assets/docs/Clockify_Time_Report_Summary_01_07_2025-31_07_2025.pdf"
-
+    pdf_path = "/home/alrashida/Tessafold/PathRAG/assets/docs/ALR/Clockify_Time_Report_Summary_01_07_2025_31_07_2025_20250831_131744_2236c841.pdf"
+    pdf_path = "/home/alrashida/Tessafold/PathRAG/assets/docs/ALR/07_ConstructionMethodsStatements_20250831_131827_14dda024.pdf"
     # pdf_path = "/home/alrashida/Tessafold/PathRAG/assets/docs/Phys320_L8.pdf"
     # Output directory for extracted images
     output_dir = "./extracted_images"

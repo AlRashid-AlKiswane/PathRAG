@@ -21,7 +21,6 @@ import os
 import sys
 import subprocess
 import time
-import webbrowser
 from typing import Optional
 
 try:
@@ -133,11 +132,11 @@ def get_mongo_client() -> Optional[MongoClient]:
         None: If connection fails.
     """
     try:
-        if app_settings.MONGO_ENABLE_WEBUI and app_settings.MONGO_USE_LOCAL:
+        if app_settings.MONGODB_ENABLE_WEB_UI and app_settings.MONGODB_LOCAL_URI:
             _launch_mongodb_docker()
             _open_mongo_web_ui()
 
-        mongo_uri = app_settings.MONGO_LOCAL_URI or "mongodb://localhost:27017"
+        mongo_uri = app_settings.MONGODB_LOCAL_URI or "mongodb://localhost:27017"
         client = MongoClient(mongo_uri)
         logger.info("Connected to local MongoDB at: %s", mongo_uri)
 

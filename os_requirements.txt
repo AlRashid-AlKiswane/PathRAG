@@ -11,3 +11,6 @@ wget
 rsync
 yay
 pamac
+tesseract
+tesseract-data-eng
+python-pip

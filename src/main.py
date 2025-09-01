@@ -117,8 +117,8 @@ async def lifespan(app: FastAPI):
             app.state.model_manager = ConcurrentModelManager(
                 OllamaModel,
                 HuggingFaceModel,
-                app_settings.OLLAMA_MODEL,
-                app_settings.EMBEDDING_MODEL,
+                app_settings.OLLAMA_CHAT_MODEL,
+                app_settings.EMBEDDING_MODEL_NAME,
             )
             app.state.llm = app.state.model_manager.get_llm_instance()
             app.state.embedding_model = app.state.model_manager.get_embedding_instance()
@@ -135,7 +135,7 @@ async def lifespan(app: FastAPI):
             )
             app.state.path_rag = ThreadSafePathRAG(pathrag)
 
-            graph_path = Path(app_settings.STORAGE_GRAPH)
+            graph_path = Path(app_settings.CHECKPOINT_GRAPH_FILE)
             if graph_path.exists():
                 try:
                     await asyncio.get_event_loop().run_in_executor(
@@ -182,7 +182,7 @@ app.add_middleware(
 # === Register Routes ===
 try:
     app.include_router(upload_route)                 # File upload
-    app.include_router(chunking_route)               # Chunking
+    app.include_router(chunking_router)               # Chunking
     app.include_router(embedding_chunks_route)       # Embedding generation
     app.include_router(build_pathrag_route)          # Graph building
     app.include_router(live_retrieval_route)         # Retrieval
@@ -209,7 +209,6 @@ async def serve_ui():
         FileResponse: The main HTML page.
     """
     return FileResponse(f"{MAIN_DIR}/src/web/index.html")
-
 
 @app.get("/graph")
 async def get_graph(max_nodes: int = 100):
@@ -252,7 +251,6 @@ async def get_graph(max_nodes: int = 100):
     except Exception as e:
         logging.exception("Failed to generate graph visualization.")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
 
 @app.get("/db-info")
 def get_db_info() -> Dict[str, Any]:

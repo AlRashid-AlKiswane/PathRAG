@@ -1,22 +1,27 @@
 """
-User File Upload API Route - FIXED VERSION
-===========================================
+User File Upload API Route - COMPLETE FIXED VERSION
+===================================================
 
 This module provides a FastAPI route for handling user file uploads.  
 It processes documents by saving, chunking, embedding, OCR (if PDF has images),
 and building a PathRAG semantic graph. Additionally, file metadata is stored in MongoDB.
 
-Key Fix: Extract text content from Document objects before embedding generation.
+Key Fixes:
+- Extract text content from Document objects before embedding generation
+- Fixed OCR result handling (extract .text attribute from OCRResult objects)
+- Proper error handling and validation
+- Consistent text chunk processing
+- Better logging and debugging information
 
 Features:
 ---------
-- Validate file extension
-- Save file to user-specific directory
+- Validate file extension and file size
+- Save file to user-specific directory  
 - Extract images & text via OCR (if applicable)
 - Chunk documents into smaller pieces
 - Generate embeddings for chunks + OCR text
 - Build and save PathRAG semantic graph
-- Store metadata in MongoDB
+- Store metadata in MongoDB with proper error handling
 """
 
 import os
@@ -24,6 +29,7 @@ import sys
 import shutil
 from pathlib import Path
 import logging
+from typing import List, Union, Any
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from pymongo import MongoClient
@@ -45,10 +51,11 @@ from src.controllers import (
     chunking_docs,
     ExtractionImagesFromPDF,
 )
-from src.utils import get_size
+from src.utils import get_size, AutoSave
 from src.rag import PathRAG
 from src import get_path_rag, get_mongo_db, get_embedding_model
 from src.llms_providers import HuggingFaceModel
+from src.schemas import OCREngine
 
 # Initialize logger and settings
 logger = setup_logging(name="USER-UPLOAD-FILE")
@@ -62,52 +69,108 @@ user_file_route = APIRouter(
 
 UPLOAD_DIR = app_settings.DOC_LOCATION_STORE
 ALLOWED_EXTENSIONS = app_settings.FILE_TYPES
+MAX_FILE_SIZE_MB = getattr(app_settings, 'MAX_FILE_SIZE_MB', 50)  # 50MB default
 
 
-def extract_text_from_chunks(chunks):
+def extract_text_from_chunks(chunks: List[Any]) -> List[str]:
     """
     Extract text content from chunks, handling both Document objects and strings.
     
     Args:
-        chunks: List of chunks (Document objects or strings)
+        chunks: List of chunks (Document objects, strings, or dicts)
     
     Returns:
         List of strings containing the text content
     """
     text_chunks = []
     
-    for chunk in chunks:
+    for i, chunk in enumerate(chunks):
         try:
             # If it's a Document object (from langchain), extract page_content
             if hasattr(chunk, 'page_content'):
-                text_chunks.append(chunk.page_content)
+                content = chunk.page_content.strip()
+                if content:
+                    text_chunks.append(content)
+                    
             # If it's already a string, use it directly
             elif isinstance(chunk, str):
-                text_chunks.append(chunk)
-            # If it's a dict with 'content' or 'text' key
+                content = chunk.strip()
+                if content:
+                    text_chunks.append(content)
+                    
+            # If it's a dict with content keys
             elif isinstance(chunk, dict):
-                if 'content' in chunk:
-                    text_chunks.append(chunk['content'])
-                elif 'text' in chunk:
-                    text_chunks.append(chunk['text'])
-                elif 'page_content' in chunk:
-                    text_chunks.append(chunk['page_content'])
+                content = None
+                for key in ['content', 'text', 'page_content']:
+                    if key in chunk and chunk[key]:
+                        content = str(chunk[key]).strip()
+                        break
+                
+                if content:
+                    text_chunks.append(content)
                 else:
                     # Convert dict to string as fallback
-                    text_chunks.append(str(chunk))
+                    dict_str = str(chunk).strip()
+                    if dict_str and dict_str not in ['{}', 'None']:
+                        text_chunks.append(dict_str)
+                        
             else:
                 # Convert other types to string
-                text_chunks.append(str(chunk))
+                content = str(chunk).strip()
+                if content and content not in ['None', 'null', '']:
+                    text_chunks.append(content)
+                    
+        except Exception as e:
+            logger.warning(f"Failed to extract text from chunk {i}: {e}")
+            # Try to convert to string as fallback
+            try:
+                fallback_content = str(chunk).strip()
+                if fallback_content and fallback_content not in ['None', 'null', '']:
+                    text_chunks.append(fallback_content)
+            except:
+                logger.error(f"Complete failure to process chunk {i}")
+                continue
+    
+    logger.info(f"Extracted {len(text_chunks)} valid text chunks from {len(chunks)} input chunks")
+    return text_chunks
+
+
+def process_ocr_results(ocr_results: List[Any]) -> List[str]:
+    """
+    Process OCR results and extract text content.
+    
+    Args:
+        ocr_results: List of OCRResult objects or strings
+        
+    Returns:
+        List of strings containing OCR text
+    """
+    ocr_texts = []
+    
+    for i, result in enumerate(ocr_results):
+        try:
+            # If it's an OCRResult object, extract the text attribute
+            if hasattr(result, 'text'):
+                text_content = result.text.strip()
+                if text_content and result.confidence > 10:  # Only accept results with some confidence
+                    ocr_texts.append(text_content)
+                    logger.debug(f"OCR result {i}: {len(text_content)} chars, confidence: {result.confidence:.1f}%")
+                    
+            # If it's already a string
+            elif isinstance(result, str):
+                text_content = result.strip()
+                if text_content:
+                    ocr_texts.append(text_content)
+                    
+            else:
+                logger.warning(f"Unexpected OCR result type: {type(result)}")
                 
         except Exception as e:
-            logger.warning(f"Failed to extract text from chunk: {e}")
-            # Try to convert to string as fallback
-            text_chunks.append(str(chunk))
+            logger.warning(f"Failed to process OCR result {i}: {e}")
+            continue
     
-    # Filter out empty strings
-    text_chunks = [chunk for chunk in text_chunks if chunk and chunk.strip()]
-    
-    return text_chunks
+    logger.info(f"Processed {len(ocr_texts)} valid OCR text chunks from {len(ocr_results)} results")
+    return ocr_texts
 
 
 @user_file_route.post("", response_class=JSONResponse)
@@ -125,11 +188,28 @@ async def user_file(
         logger.info(f"Received upload request: user={user_id}, file={file.filename}")
 
         # Validate file extension
+        if not file.filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Filename is required"
+            )
+            
         file_ext = Path(file.filename).suffix.lower()
         if file_ext not in ALLOWED_EXTENSIONS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"File type {file_ext} not allowed",
+                detail=f"File type {file_ext} not allowed. Allowed types: {ALLOWED_EXTENSIONS}",
+            )
+
+        # Check file size
+        file.file.seek(0, 2)  # Seek to end
+        file_size = file.file.tell()
+        file.file.seek(0)  # Reset to beginning
+        
+        if file_size > MAX_FILE_SIZE_MB * 1024 * 1024:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File too large. Maximum size: {MAX_FILE_SIZE_MB}MB"
             )
 
         # Prepare user-specific save directory
@@ -143,112 +223,258 @@ async def user_file(
         # Save file with unique filename
         unique_filename = generate_unique_filename(file.filename)
         save_path = os.path.join(save_dir, unique_filename)
-        with open(save_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        
+        try:
+            with open(save_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+        except Exception as save_err:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to save file: {save_err}"
+            )
 
-        logger.info(f"File saved at {save_path} ({get_size(save_path)} MB)")
+        file_size_mb = get_size(save_path)
+        logger.info(f"File saved at {save_path} ({file_size_mb} MB)")
 
-        # OCR (if PDF with images)
-        chunks_ocr = []
+        # OCR Processing (if PDF with images)
+        ocr_texts = []
         if file_ext == ".pdf":
             try:
-                images = ExtractionImagesFromPDF(pdf_path=save_path).extract_images()
-                for img in images:
-                    full_path = os.path.join(MAIN_DIR, img)
-                    text = AdvancedOCRProcessor().extract_text(image=full_path)
-                    if text:
-                        chunks_ocr.extend(text if isinstance(text, list) else [text])
-                logger.info(f"OCR extracted {len(chunks_ocr)} chunks from images")
+                logger.info("Starting OCR processing for PDF...")
+                
+                # Initialize OCR processor with fallback engines
+                ocr_processor = AdvancedOCRProcessor(
+                    primary_engine=OCREngine.EASYOCR,
+                    fallback_engines=[OCREngine.PADDLEOCR, OCREngine.TESSERACT],
+                    language=['en'],
+                    gpu=True
+                )
+                
+                # Extract images from PDF
+                image_extractor = ExtractionImagesFromPDF(pdf_path=save_path)
+                images = image_extractor.extract_images()
+                
+                if images:
+                    logger.info(f"Extracted {len(images)} images from PDF")
+                    
+                    ocr_results = []
+                    for i, img_path in enumerate(images):
+                        try:
+                            # Ensure full path
+                            if not os.path.isabs(img_path):
+                                full_img_path = os.path.join(MAIN_DIR, img_path)
+                            else:
+                                full_img_path = img_path
+                                
+                            if os.path.exists(full_img_path):
+                                logger.debug(f"Processing image {i+1}/{len(images)}: {Path(full_img_path).name}")
+                                
+                                # Extract text from image
+                                ocr_result = ocr_processor.extract_text(
+                                    image=full_img_path,
+                                    preprocess=True
+                                )
+                                
+                                if ocr_result:
+                                    ocr_results.append(ocr_result)
+                                    
+                            else:
+                                logger.warning(f"Image file not found: {full_img_path}")
+                                
+                        except Exception as img_err:
+                            logger.warning(f"Failed to process image {i+1}: {img_err}")
+                            continue
+                    
+                    # Process OCR results to extract text
+                    ocr_texts = process_ocr_results(ocr_results)
+                    logger.info(f"OCR extracted {len(ocr_texts)} text chunks from {len(images)} images")
+                    
+                else:
+                    logger.info("No images found in PDF for OCR processing")
+                    
             except Exception as ocr_err:
                 logger.warning(f"OCR extraction failed: {ocr_err}")
+                ocr_texts = []  # Continue without OCR
 
-        # Chunking
-        chunks_meta = chunking_docs(file_path=save_path)
-        chunks = chunks_meta.get("chunks", [])
-        
-        # FIXED: Extract text content from Document objects
-        text_chunks = extract_text_from_chunks(chunks)
-        
-        if not text_chunks and not chunks_ocr:
-            raise ValueError("No chunks produced from document or OCR")
-
-        # Combine all text chunks (now all are strings)
-        all_text_chunks = text_chunks + chunks_ocr
-        
-        logger.info(f"Total text chunks prepared for embedding: {len(all_text_chunks)}")
-
-        # Embeddings - should work now with string inputs
+        # Document Chunking
         try:
-            embeddings_vectors = embedding_model.embed_texts(texts=all_text_chunks)
-            if not embeddings_vectors:
-                raise ValueError("Failed to generate embeddings - no vectors returned")
+            logger.info("Starting document chunking...")
+            chunks_meta = chunking_docs(file_path=save_path)
             
+            if not chunks_meta or "chunks" not in chunks_meta:
+                raise ValueError("Chunking failed - no chunks metadata returned")
+                
+            raw_chunks = chunks_meta.get("chunks", [])
+            
+            if not raw_chunks:
+                raise ValueError("Chunking failed - no chunks produced")
+                
+            logger.info(f"Document chunking produced {len(raw_chunks)} raw chunks")
+            
+        except Exception as chunk_err:
+            logger.error(f"Document chunking failed: {chunk_err}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to chunk document: {chunk_err}"
+            )
+        
+        # Extract text content from chunks
+        text_chunks = extract_text_from_chunks(raw_chunks)
+        
+        if not text_chunks and not ocr_texts:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="No text content could be extracted from the document"
+            )
+
+        # Combine all text chunks
+        all_text_chunks = text_chunks + ocr_texts
+        
+        # Remove empty or very short chunks
+        all_text_chunks = [chunk for chunk in all_text_chunks if chunk and len(chunk.strip()) > 10]
+        
+        if not all_text_chunks:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="No meaningful text content found after processing"
+            )
+        
+        logger.info(f"Total text chunks prepared for embedding: {len(all_text_chunks)} "
+                   f"(document: {len(text_chunks)}, OCR: {len(ocr_texts)})")
+
+        # Generate Embeddings
+        try:
+            logger.info("Generating embeddings...")
+            embeddings_vectors = embedding_model.embed_texts(texts=all_text_chunks)
+            
+            if embeddings_vectors is None or len(embeddings_vectors) == 0:
+                raise ValueError("Embedding model returned empty results")
+
             # Convert embeddings to numpy array if not already
             import numpy as np
             if not isinstance(embeddings_vectors, np.ndarray):
-                # Handle different embedding formats
                 if hasattr(embeddings_vectors, 'numpy'):
-                    # PyTorch tensor
                     embeddings_vectors = embeddings_vectors.numpy()
                 elif isinstance(embeddings_vectors, list):
-                    # List of embeddings
-                    embeddings_vectors = np.array(embeddings_vectors)
+                    if len(embeddings_vectors) > 0 and hasattr(embeddings_vectors[0], 'numpy'):
+                        embeddings_vectors = np.array([emb.numpy() for emb in embeddings_vectors])
+                    else:
+                        embeddings_vectors = np.array(embeddings_vectors)
                 else:
-                    # Try direct conversion
                     embeddings_vectors = np.array(embeddings_vectors)
             
+            if embeddings_vectors.size == 0:
+                raise ValueError("Generated embeddings array is empty")
+                
             logger.info(f"Generated embedding array with shape: {embeddings_vectors.shape}")
             
         except Exception as embed_err:
             logger.error(f"Embedding generation failed: {embed_err}")
-            raise ValueError(f"Failed to generate embeddings: {embed_err}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to generate embeddings: {embed_err}"
+            )
 
-        # Build PathRAG graph
-        graph_user_saved = os.path.join(MAIN_DIR, "storge_graph", f"{user_id}.pickle")
-        os.makedirs(os.path.dirname(graph_user_saved), exist_ok=True)
-        
+        # Build PathRAG Graph
         try:
-            path_rag.build_graph(chunks=all_text_chunks, embeddings=embeddings_vectors)
-            path_rag.save_graph(file_path=graph_user_saved)
-            logger.info(f"PathRAG graph saved to {graph_user_saved}")
+            logger.info("Building PathRAG semantic graph...")
+            
+            graph_dir = os.path.join(MAIN_DIR, "pathrag_data")
+            os.makedirs(graph_dir, exist_ok=True)
+            graph_user_saved_dir = os.path.join(graph_dir, f"{user_id}")
+            
+            # Build the graph
+            path_rag.build_graph(chunks=all_text_chunks, embeddings=embeddings_vectors, method="knn")
+
+            # Save the graph
+            autosave = AutoSave(pathrag_instance=path_rag, save_dir=graph_user_saved_dir)
+            autosave.save_checkpoint()
+            path_rag.save_graph(f"{graph_user_saved_dir}/{user_id}.pkl")
+            
+            # Verify the graph was saved
+            if not os.path.exists(graph_user_saved_dir):
+                raise ValueError("Graph file was not created successfully")
+                
+            logger.info(f"PathRAG graph built and saved to {graph_user_saved_dir}")
+
         except Exception as graph_err:
             logger.error(f"PathRAG graph building failed: {graph_err}")
-            raise ValueError(f"Failed to build PathRAG graph: {graph_err}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to build PathRAG graph: {graph_err}"
+            )
 
         # Store metadata in MongoDB
         try:
-            db = mongo_db[app_settings.MONGO_DB_NAME]
+            logger.info("Storing file metadata in MongoDB...")
+            
+            db = mongo_db[app_settings.MONGODB_NAME]
             collection = db["user_files"]
+            
             metadata = {
                 "user_id": user_id,
                 "filename": unique_filename,
+                "original_filename": file.filename,
                 "file_path": save_path,
-                "graph_path": graph_user_saved,
+                "file_size_mb": file_size_mb,
+                "file_extension": file_ext,
+                "graph_path": graph_user_saved_dir,
                 "num_chunks": len(all_text_chunks),
-                "num_ocr_chunks": len(chunks_ocr),
+                "num_ocr_chunks": len(ocr_texts),
                 "num_text_chunks": len(text_chunks),
+                "embedding_dimension": embeddings_vectors.shape[1] if len(embeddings_vectors.shape) > 1 else None,
+                "processing_timestamp": {"$currentDate": True}
             }
-            collection.insert_one(metadata)
-            logger.info("File metadata stored in MongoDB")
+            
+            # Remove existing entry for this user if exists
+            collection.delete_many({"user_id": user_id, "filename": unique_filename})
+            
+            # Insert new metadata
+            result = collection.insert_one(metadata)
+            
+            if result.inserted_id:
+                logger.info(f"File metadata stored in MongoDB with ID: {result.inserted_id}")
+            else:
+                logger.warning("MongoDB insert may have failed - no ID returned")
+                
         except Exception as db_err:
-            logger.warning(f"MongoDB insert failed: {db_err}")
+            logger.warning(f"MongoDB metadata storage failed: {db_err}")
+            # Don't fail the entire request for database issues
 
+        # Success Response
+        response_data = {
+            "status": "success",
+            "message": "File processed successfully",
+            "data": {
+                "user_id": user_id,
+                "file_name": unique_filename,
+                "original_filename": file.filename,
+                "file_size_mb": file_size_mb,
+                "file_path": save_path,
+                "graph_path": graph_user_saved_dir,
+                "processing_stats": {
+                    "total_chunks": len(all_text_chunks),
+                    "document_chunks": len(text_chunks),
+                    "ocr_chunks": len(ocr_texts),
+                    "embedding_dimension": embeddings_vectors.shape[1] if len(embeddings_vectors.shape) > 1 else None
+                }
+            }
+        }
+        
+        logger.info(f"File processing completed successfully for {file.filename}")
+        
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content={
-                "status": "success",
-                "message": "File processed successfully",
-                "file_name": unique_filename,
-                "graph_path": graph_user_saved,
-                "total_chunks": len(all_text_chunks),
-                "text_chunks": len(text_chunks),
-                "ocr_chunks": len(chunks_ocr),
-            },
+            content=response_data
         )
 
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+        
     except Exception as e:
-        logger.error(f"Failed to process file {file.filename}: {e}", exc_info=True)
+        logger.error(f"Unexpected error processing file {file.filename}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Processing failed: {str(e)}",
+            detail=f"Unexpected processing error: {str(e)}",
         )

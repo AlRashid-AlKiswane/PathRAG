@@ -46,7 +46,7 @@ class Chatbot(BaseModel):
     top_k: int = Field(5, ge=1, le=50, description="Number of top documents to retrieve.")
     temperature: float = Field(0.7, ge=0.0, le=1.0, description="LLM sampling temperature.")
     max_new_tokens: int = Field(256, ge=1, le=1024, description="Max tokens to generate.")
-    max_input_tokens: int = Field(1024, ge=1, le=4096, description="Max input tokens allowed.")
+    max_input_tokens: int = Field(1024, ge=1, le=16384, description="Max input tokens allowed.")
     user_id: str = Field(..., description="Unique user or session identifier.")
     cache: bool = Field(True, description="Flag to enable or disable caching.")
     max_hop: int = Field(2, description="Max Number the Hop between the Paths.")

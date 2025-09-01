@@ -52,11 +52,11 @@ def init_chunks_collection(db) -> None:
     try:
         if "chunks" not in db.list_collection_names():
             db.create_collection("chunks")
-            logger.info("✅ 'chunks' collection created.")
+            logger.info("'chunks' collection created.")
         else:
-            logger.info("ℹ️ 'chunks' collection already exists.")
+            logger.info("'chunks' collection already exists.")
     except Exception as e:
-        logger.exception("❌ Failed to initialize 'chunks' collection: %s", e)
+        logger.exception("Failed to initialize 'chunks' collection: %s", e)
         raise
 
 
@@ -72,11 +72,11 @@ def init_embed_vector_collection(db) -> None:
     try:
         if "embed_vector" not in db.list_collection_names():
             db.create_collection("embed_vector")
-            logger.info("✅ 'embed_vector' collection created.")
+            logger.info("'embed_vector' collection created.")
         else:
-            logger.info("ℹ️ 'embed_vector' collection already exists.")
+            logger.info("'embed_vector' collection already exists.")
     except Exception as e:
-        logger.exception("❌ Failed to initialize 'embed_vector' collection: %s", e)
+        logger.exception("Failed to initialize 'embed_vector' collection: %s", e)
         raise
 
 
@@ -95,11 +95,11 @@ def init_chatbot_collection(db) -> None:
     try:
         if "chatbot" not in db.list_collection_names():
             db.create_collection("chatbot")
-            logger.info("✅ 'chatbot' collection created.")
+            logger.info("'chatbot' collection created.")
         else:
-            logger.info("ℹ️ 'chatbot' collection already exists.")
+            logger.info("'chatbot' collection already exists.")
     except Exception as e:
-        logger.exception("❌ Failed to initialize 'chatbot' collection: %s", e)
+        logger.exception("Failed to initialize 'chatbot' collection: %s", e)
         raise
 
 
@@ -114,10 +114,10 @@ if __name__ == "__main__":
             init_chunks_collection(db)
             init_embed_vector_collection(db)
             init_chatbot_collection(db)
-            logger.info("✅ All collections initialized.")
+            logger.info("All collections initialized.")
         except Exception as e:
-            logger.error("❌ Failed to initialize collections: %s", e)
+            logger.error("Failed to initialize collections: %s", e)
             sys.exit(1)
     else:
-        logger.error("❌ Could not connect to MongoDB.")
+        logger.error("Could not connect to MongoDB.")
         sys.exit(1)

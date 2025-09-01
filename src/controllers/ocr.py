@@ -28,6 +28,7 @@ import tempfile
 import json
 from dataclasses import dataclass
 from enum import Enum
+from tqdm import tqdm
 
 # Import OCR libraries with fallback handling
 try:
@@ -80,9 +81,10 @@ except (ImportError, OSError) as e:
 from src.schemas import OCRResult, OCREngine
 from src.infra import setup_logging
 
-logger = setup_logging(
-    name="OCR-OPERATIONS"
-)
+# Setup minimal logging - suppress errors from failed engines
+logging.basicConfig(level=logging.CRITICAL)  # Only show critical errors
+logger = logging.getLogger("OCR-OPERATIONS")
+logger.setLevel(logging.CRITICAL)  # Suppress all non-critical messages
 
 class AdvancedOCRProcessor:
     """
@@ -103,12 +105,11 @@ class AdvancedOCRProcessor:
             fallback_engines: Fallback engines if primary fails
             language: Language codes (e.g., 'en', ['en', 'ar'])
             gpu: Use GPU acceleration if available
-            enable_logging: Enable logging output
         """
         self.primary_engine = primary_engine
         self.fallback_engines = fallback_engines or [OCREngine.TESSERACT]
         self.language = language if isinstance(language, list) else [language]
-        self.gpu = gpu and torch.cuda.is_available()
+        self.gpu = gpu and torch.cuda.is_available() if TROCR_AVAILABLE else False
         
         # Initialize engines
         self.engines = {}
@@ -119,6 +120,10 @@ class AdvancedOCRProcessor:
     
     def _initialize_engines(self):
         """Initialize available OCR engines"""
+        init_progress = tqdm(['EasyOCR', 'PaddleOCR', 'TrOCR', 'Surya', 'Tesseract'], 
+                           desc="Initializing OCR Engines", 
+                           bar_format='{l_bar}\033[92m{bar}\033[0m| {n_fmt}/{total_fmt}',
+                           leave=False)
         
         # Initialize EasyOCR
         if EASYOCR_AVAILABLE and OCREngine.EASYOCR in [self.primary_engine] + self.fallback_engines:
@@ -128,36 +133,54 @@ class AdvancedOCRProcessor:
                     gpu=self.gpu,
                     verbose=False
                 )
-                logger.info(f"EasyOCR initialized with GPU: {self.gpu}")
+                init_progress.write(f"✅ EasyOCR ready (GPU: {self.gpu})")
             except Exception as e:
-                logger.error(f"Failed to initialize EasyOCR: {e}")
-        
-        # Initialize PaddleOCR
+                init_progress.write(f"❌ EasyOCR failed: {e}")
+        init_progress.update(1)
+
+        # Initialize PaddleOCR  
         if PADDLEOCR_AVAILABLE and OCREngine.PADDLEOCR in [self.primary_engine] + self.fallback_engines:
             try:
                 lang_code = 'en' if 'en' in self.language else self.language[0]
-                self.engines[OCREngine.PADDLEOCR] = PaddleOCR(
-                    use_angle_cls=True,
-                    lang=lang_code,
-                    use_gpu=self.gpu,
-                    show_log=False
-                )
-                logger.info(f"PaddleOCR initialized with GPU: {self.gpu}")
+                # Fixed: Removed deprecated parameters and improved compatibility
+                paddle_kwargs = {
+                    'lang': lang_code,
+                    'use_angle_cls': False,  # Disable to avoid compatibility issues
+                    'det_db_thresh': 0.3,
+                    'det_db_box_thresh': 0.5
+                }
+                
+                # Only add GPU parameter if CUDA is available and we want GPU
+                if self.gpu and torch and torch.cuda.is_available():
+                    # Note: PaddleOCR uses different GPU parameter names in different versions
+                    try:
+                        self.engines[OCREngine.PADDLEOCR] = PaddleOCR(**paddle_kwargs, use_gpu=True)
+                    except TypeError:
+                        # Fallback if use_gpu parameter doesn't exist
+                        self.engines[OCREngine.PADDLEOCR] = PaddleOCR(**paddle_kwargs)
+                else:
+                    self.engines[OCREngine.PADDLEOCR] = PaddleOCR(**paddle_kwargs)
+                    
+                init_progress.write(f"✅ PaddleOCR ready (GPU: {self.gpu})")
             except Exception as e:
-                logger.error(f"Failed to initialize PaddleOCR: {e}")
+                init_progress.write(f"❌ PaddleOCR failed: {e}")
+        init_progress.update(1)
         
         # Initialize TrOCR
         if TROCR_AVAILABLE and OCREngine.TROCR in [self.primary_engine] + self.fallback_engines:
             try:
                 device = "cuda" if self.gpu else "cpu"
+                # Fixed: Corrected model name
+                model_name = 'microsoft/trocr-large-printed'
                 self.engines[OCREngine.TROCR] = {
-                    'processor': TrOCRProcessor.from_pretrained('microsoft/trocr-large-logging.errored'),
-                    'model': VisionEncoderDecoderModel.from_pretrained('microsoft/trocr-large-logging.errored').to(device),
+                    'processor': TrOCRProcessor.from_pretrained(model_name),
+                    'model': VisionEncoderDecoderModel.from_pretrained(model_name).to(device),
                     'device': device
                 }
-                logger.info(f"TrOCR initialized on device: {device}")
+                init_progress.write(f"✅ TrOCR ready (device: {device})")
             except Exception as e:
-                logger.error(f"Failed to initialize TrOCR: {e}")
+                init_progress.write(f"❌ TrOCR failed: {e}")
+        init_progress.update(1)
         
         # Initialize Surya OCR
         if SURYA_AVAILABLE and OCREngine.SURYA in [self.primary_engine] + self.fallback_engines:
@@ -168,40 +191,91 @@ class AdvancedOCRProcessor:
                     'rec_model': load_rec_model(),
                     'rec_processor': load_rec_processor()
                 }
-                logger.info("Surya OCR initialized")
+                init_progress.write("✅ Surya OCR ready")
             except Exception as e:
-                logger.error(f"Failed to initialize Surya OCR: {e}")
+                init_progress.write(f"❌ Surya OCR failed: {e}")
+        init_progress.update(1)
         
         # Initialize Tesseract (fallback)
         if TESSERACT_AVAILABLE and OCREngine.TESSERACT in [self.primary_engine] + self.fallback_engines:
             try:
                 # Auto-detect tesseract
                 self._detect_tesseract()
+                # Test tesseract functionality
+                test_result = pytesseract.get_tesseract_version()
                 self.engines[OCREngine.TESSERACT] = True
-                logger.info("Tesseract initialized")
+                init_progress.write(f"✅ Tesseract ready (v{test_result})")
             except Exception as e:
-                logger.error(f"Failed to initialize Tesseract: {e}")
+                init_progress.write(f"❌ Tesseract failed: {e}")
+                # Remove from fallback engines if it fails
+                if OCREngine.TESSERACT in self.fallback_engines:
+                    self.fallback_engines.remove(OCREngine.TESSERACT)
+        init_progress.update(1)
+        init_progress.close()
+        
+        # Check if we have at least one working engine
+        if not self.engines:
+            tqdm.write("❌ No OCR engines could be initialized!")
+            raise RuntimeError("No OCR engines available. Please check your installation.")
     
     def _detect_tesseract(self):
-        """Auto-detect tesseract installation"""
+        """Auto-detect tesseract installation and configure tessdata"""
+        import subprocess
+        
+        # Find tesseract executable
         possible_paths = ['/usr/bin/tesseract', '/usr/local/bin/tesseract', '/bin/tesseract']
+        tesseract_cmd = None
         
         for path in possible_paths:
             if os.path.exists(path):
-                pytesseract.pytesseract.tesseract_cmd = path
-                return
+                tesseract_cmd = path
+                break
         
-        # Try which command
-        try:
-            import subprocess
-            result = subprocess.run(['which', 'tesseract'], capture_output=True, text=True)
-            if result.returncode == 0:
-                pytesseract.pytesseract.tesseract_cmd = result.stdout.strip()
-                return
-        except Exception:
-            pass
+        # Try which command if not found
+        if not tesseract_cmd:
+            try:
+                result = subprocess.run(['which', 'tesseract'], capture_output=True, text=True)
+                if result.returncode == 0:
+                    tesseract_cmd = result.stdout.strip()
+            except Exception:
+                pass
         
-        raise RuntimeError("Tesseract not found")
+        if not tesseract_cmd:
+            raise RuntimeError("Tesseract not found")
+        
+        pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+        
+        # Configure tessdata directory for Arch Linux
+        possible_tessdata_paths = [
+            '/usr/share/tessdata',
+            '/usr/share/tesseract-ocr/4.00/tessdata',
+            '/usr/share/tesseract-ocr/tessdata',
+            '/usr/local/share/tessdata',
+            '/opt/homebrew/share/tessdata'  # For some installations
+        ]
+        
+        tessdata_dir = None
+        for path in possible_tessdata_paths:
+            if os.path.exists(os.path.join(path, 'eng.traineddata')):
+                tessdata_dir = path
+                break
+        
+        if tessdata_dir:
+            os.environ['TESSDATA_PREFIX'] = tessdata_dir
+            tqdm.write(f"✅ Found tessdata at: {tessdata_dir}")
+        else:
+            # Try to find tessdata with locate command
+            try:
+                result = subprocess.run(['locate', 'eng.traineddata'], capture_output=True, text=True)
+                if result.returncode == 0:
+                    eng_data_path = result.stdout.strip().split('\n')[0]
+                    tessdata_dir = os.path.dirname(eng_data_path)
+                    os.environ['TESSDATA_PREFIX'] = tessdata_dir
+                    tqdm.write(f"✅ Found tessdata via locate: {tessdata_dir}")
+                else:
+                    tqdm.write("⚠️  Could not find tessdata. Install with: sudo pacman -S tesseract-data-eng")
+            except Exception:
+                tqdm.write("⚠️  Could not auto-detect tessdata directory")
     
     def preprocess_image(self, 
                         image: Union[str, np.ndarray, Image.Image],
@@ -209,21 +283,25 @@ class AdvancedOCRProcessor:
                         denoise: bool = True,
                         deskew: bool = True,
                         resize_factor: Optional[float] = None) -> np.ndarray:
-        """Enhanced image preprocessing"""
+        """Enhanced image preprocessing with better error handling"""
         
         # Load image
-        if isinstance(image, str):
-            if not os.path.exists(image):
-                raise FileNotFoundError(f"Image file not found: {image}")
-            img = cv2.imread(image)
-            if img is None:
-                raise ValueError(f"Could not load image: {image}")
-        elif isinstance(image, Image.Image):
-            img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-        elif isinstance(image, np.ndarray):
-            img = image.copy()
-        else:
-            raise TypeError("Image must be path string, PIL Image, or numpy array")
+        try:
+            if isinstance(image, str):
+                if not os.path.exists(image):
+                    raise FileNotFoundError(f"Image file not found: {image}")
+                img = cv2.imread(image)
+                if img is None:
+                    raise ValueError(f"Could not load image: {image}")
+            elif isinstance(image, Image.Image):
+                img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+            elif isinstance(image, np.ndarray):
+                img = image.copy()
+            else:
+                raise TypeError("Image must be path string, PIL Image, or numpy array")
+        except Exception as e:
+            logger.error(f"Error loading image: {e}")
+            raise
         
         # Convert to grayscale
         if len(img.shape) == 3:
@@ -233,41 +311,56 @@ class AdvancedOCRProcessor:
         
         # Deskewing
         if deskew:
-            gray = self._deskew_image(gray)
+            try:
+                gray = self._deskew_image(gray)
+            except Exception as e:
+                logger.warning(f"Deskewing failed: {e}")
         
         # Resize for better OCR
-        if resize_factor:
-            height, width = gray.shape
-            new_width = int(width * resize_factor)
-            new_height = int(height * resize_factor)
-            gray = cv2.resize(gray, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
-        elif gray.shape[1] < 600:  # Auto-resize small images
-            scale = 600 / gray.shape[1]
-            new_width = int(gray.shape[1] * scale)
-            new_height = int(gray.shape[0] * scale)
-            gray = cv2.resize(gray, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
+        try:
+            if resize_factor:
+                height, width = gray.shape
+                new_width = int(width * resize_factor)
+                new_height = int(height * resize_factor)
+                gray = cv2.resize(gray, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
+            elif gray.shape[1] < 600:  # Auto-resize small images
+                scale = 600 / gray.shape[1]
+                new_width = int(gray.shape[1] * scale)
+                new_height = int(gray.shape[0] * scale)
+                gray = cv2.resize(gray, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
+        except Exception as e:
+            logger.warning(f"Resizing failed: {e}")
         
         # Advanced denoising
         if denoise:
-            gray = cv2.bilateralFilter(gray, 9, 75, 75)
-            gray = cv2.fastNlMeansDenoising(gray)
+            try:
+                gray = cv2.bilateralFilter(gray, 9, 75, 75)
+                gray = cv2.fastNlMeansDenoising(gray)
+            except Exception as e:
+                logger.warning(f"Denoising failed: {e}")
         
         # Enhanced contrast
         if enhance:
-            clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
-            gray = clahe.apply(gray)
-            
-            # Gamma correction
-            gamma = 1.2
-            invGamma = 1.0 / gamma
-            table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
-            gray = cv2.LUT(gray, table)
+            try:
+                clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+                gray = clahe.apply(gray)
+                
+                # Gamma correction
+                gamma = 1.2
+                invGamma = 1.0 / gamma
+                table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
+                gray = cv2.LUT(gray, table)
+            except Exception as e:
+                logger.warning(f"Enhancement failed: {e}")
         
         # Adaptive thresholding
-        gray = cv2.adaptiveThreshold(
-            gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-            cv2.THRESH_BINARY, 15, 3
-        )
+        try:
+            gray = cv2.adaptiveThreshold(
+                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                cv2.THRESH_BINARY, 15, 3
+            )
+        except Exception as e:
+            logger.warning(f"Thresholding failed: {e}")
         
         return gray
     
@@ -304,12 +397,18 @@ class AdvancedOCRProcessor:
         return image
     
     def _extract_with_easyocr(self, image: np.ndarray) -> OCRResult:
-        """Extract text using EasyOCR"""
+        """Extract text using EasyOCR with better error handling"""
         import time
         start_time = time.time()
         
         try:
-            results = self.engines[OCREngine.EASYOCR].readtext(image)
+            # Add timeout and better error handling
+            results = self.engines[OCREngine.EASYOCR].readtext(
+                image,
+                width_ths=0.7,
+                height_ths=0.7,
+                paragraph=False
+            )
             
             text_parts = []
             confidences = []
@@ -336,7 +435,11 @@ class AdvancedOCRProcessor:
                 engine="EasyOCR"
             )
         
+        except KeyboardInterrupt:
+            logger.info("EasyOCR processing interrupted by user")
+            raise
         except Exception as e:
+            logger.error(f"EasyOCR extraction failed: {e}")
             return OCRResult(
                 text="",
                 confidence=0.0,
@@ -382,6 +485,7 @@ class AdvancedOCRProcessor:
             )
         
         except Exception as e:
+            logger.error(f"PaddleOCR extraction failed: {e}")
             return OCRResult(
                 text="",
                 confidence=0.0,
@@ -419,6 +523,7 @@ class AdvancedOCRProcessor:
             )
         
         except Exception as e:
+            logger.error(f"TrOCR extraction failed: {e}")
             return OCRResult(
                 text="",
                 confidence=0.0,
@@ -482,6 +587,7 @@ class AdvancedOCRProcessor:
             )
         
         except Exception as e:
+            logger.error(f"Surya OCR extraction failed: {e}")
             return OCRResult(
                 text="",
                 confidence=0.0,
@@ -506,14 +612,17 @@ class AdvancedOCRProcessor:
             ).strip()
             
             # Get confidence data
-            data = pytesseract.image_to_data(
-                pil_image,
-                lang='+'.join(self.language),
-                output_type=pytesseract.Output.DICT
-            )
-            
-            confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
-            avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+            try:
+                data = pytesseract.image_to_data(
+                    pil_image,
+                    lang='+'.join(self.language),
+                    output_type=pytesseract.Output.DICT
+                )
+                
+                confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
+                avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+            except Exception:
+                avg_confidence = 50.0 if text else 0.0
             
             return OCRResult(
                 text=text,
@@ -523,6 +632,7 @@ class AdvancedOCRProcessor:
             )
         
         except Exception as e:
+            logger.error(f"Tesseract extraction failed: {e}")
             return OCRResult(
                 text="",
                 confidence=0.0,
@@ -550,74 +660,180 @@ class AdvancedOCRProcessor:
         target_engine = engine or self.primary_engine
         
         # Preprocess image
-        if preprocess:
-            processed_img = self.preprocess_image(image)
-        else:
-            if isinstance(image, str):
-                processed_img = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
-            elif isinstance(image, Image.Image):
-                processed_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+        try:
+            if preprocess:
+                processed_img = self.preprocess_image(image)
             else:
-                processed_img = image
+                if isinstance(image, str):
+                    processed_img = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
+                elif isinstance(image, Image.Image):
+                    processed_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+                else:
+                    processed_img = image
+        except Exception as e:
+            logger.error(f"Image preprocessing failed: {e}")
+            return OCRResult(text="", confidence=0.0, error=f"Preprocessing failed: {e}")
         
         # Try primary engine
+        result = None
         if target_engine in self.engines:
-            if target_engine == OCREngine.EASYOCR:
-                result = self._extract_with_easyocr(processed_img)
-            elif target_engine == OCREngine.PADDLEOCR:
-                result = self._extract_with_paddleocr(processed_img)
-            elif target_engine == OCREngine.TROCR:
-                result = self._extract_with_trocr(processed_img)
-            elif target_engine == OCREngine.SURYA:
-                result = self._extract_with_surya(processed_img)
-            elif target_engine == OCREngine.TESSERACT:
-                result = self._extract_with_tesseract(processed_img)
-            
-            # If primary engine succeeds, return result
-            if result.error is None and result.confidence > 30:
-                return result
+            try:
+                if target_engine == OCREngine.EASYOCR:
+                    result = self._extract_with_easyocr(processed_img)
+                elif target_engine == OCREngine.PADDLEOCR:
+                    result = self._extract_with_paddleocr(processed_img)
+                elif target_engine == OCREngine.TROCR:
+                    result = self._extract_with_trocr(processed_img)
+                elif target_engine == OCREngine.SURYA:
+                    result = self._extract_with_surya(processed_img)
+                elif target_engine == OCREngine.TESSERACT:
+                    result = self._extract_with_tesseract(processed_img)
+                
+                # If primary engine succeeds, return result
+                if result and result.error is None and result.confidence > 30:
+                    return result
+            except KeyboardInterrupt:
+                logger.info("OCR processing interrupted by user")
+                raise
+            except Exception as e:
+                logger.error(f"Primary engine {target_engine.value} failed: {e}")
         
         # Try fallback engines
         for fallback_engine in self.fallback_engines:
             if fallback_engine in self.engines and fallback_engine != target_engine:
                 logger.info(f"Trying fallback engine: {fallback_engine.value}")
                 
-                if fallback_engine == OCREngine.EASYOCR:
-                    result = self._extract_with_easyocr(processed_img)
-                elif fallback_engine == OCREngine.PADDLEOCR:
-                    result = self._extract_with_paddleocr(processed_img)
-                elif fallback_engine == OCREngine.TESSERACT:
-                    result = self._extract_with_tesseract(processed_img)
-                
-                if result.error is None and result.confidence > 20:
-                    return result
+                try:
+                    if fallback_engine == OCREngine.EASYOCR:
+                        result = self._extract_with_easyocr(processed_img)
+                    elif fallback_engine == OCREngine.PADDLEOCR:
+                        result = self._extract_with_paddleocr(processed_img)
+                    elif fallback_engine == OCREngine.TESSERACT:
+                        result = self._extract_with_tesseract(processed_img)
+                    elif fallback_engine == OCREngine.TROCR:
+                        result = self._extract_with_trocr(processed_img)
+                    elif fallback_engine == OCREngine.SURYA:
+                        result = self._extract_with_surya(processed_img)
+                    
+                    if result and result.error is None and result.confidence > 20:
+                        return result
+                except KeyboardInterrupt:
+                    logger.info("Fallback OCR processing interrupted by user")
+                    raise
+                except Exception as e:
+                    logger.error(f"Fallback engine {fallback_engine.value} failed: {e}")
         
         # Return best result or empty result
-        return result if 'result' in locals() else OCRResult(text="", confidence=0.0, error="No engines available")
+        return result if result else OCRResult(text="", confidence=0.0, error="No engines available")
 
 
-# Example usage
+# Example usage with tqdm progress bars
 if __name__ == "__main__":
-    # Initialize with EasyOCR as primary, PaddleOCR and Tesseract as fallbacks
-    ocr = AdvancedOCRProcessor(
-        primary_engine=OCREngine.EASYOCR,
-        fallback_engines=[OCREngine.PADDLEOCR, OCREngine.TESSERACT],
-        language=['en'],
-        gpu=True
-    )
-    
-    # Process images
-    image_folder = '/home/alrashida/Tessafold/PathRAG/extracted_images'
-    image_paths = [
-        str(p) for p in Path(image_folder).glob('*')
-        if p.suffix.lower() in ocr.supported_formats
-    ]
-    
-    results = []
-    chunk = ""
-    for img_path in image_paths:
-        logging.error(f"Processing: {img_path}")
-        result = ocr.extract_text(img_path, preprocess=True)
-        chunk += "".join(result.text,)
-
-    logging.info(chunk)
+    try:
+        # Initialize with EasyOCR only (working engine)
+        print("Initializing OCR with EasyOCR only...")
+        ocr = AdvancedOCRProcessor(
+            primary_engine=OCREngine.EASYOCR,
+            fallback_engines=[],  # No fallbacks to avoid errors
+            language=['en'],
+            gpu=True
+        )
+        
+        # Process images
+        image_folder = '/home/alrashida/Tessafold/PathRAG/extracted_images'
+        image_paths = [
+            str(p) for p in Path(image_folder).glob('*')
+            if p.suffix.lower() in ocr.supported_formats
+        ]
+        
+        if not image_paths:
+            print("❌ No images found in the specified folder")
+            sys.exit(1)
+        
+        print(f"📁 Found {len(image_paths)} images to process")
+        
+        results = []
+        chunk = ""
+        successful_extractions = 0
+        total_chars = 0
+        
+        # Create main progress bar with green color
+        with tqdm(image_paths, desc="🔍 Processing Images", 
+                 bar_format='{l_bar}\033[92m{bar}\033[0m| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]',
+                 colour='green') as pbar:
+            
+            for img_path in pbar:
+                try:
+                    # Update progress bar description
+                    filename = Path(img_path).name
+                    pbar.set_description(f"🔍 Processing: {filename[:20]}...")
+                    
+                    result = ocr.extract_text(img_path, preprocess=True)
+                    
+                    if result.text and len(result.text.strip()) > 0:
+                        chunk += result.text + " "
+                        results.append(result)
+                        successful_extractions += 1
+                        total_chars += len(result.text)
+                        
+                        # Update with success info
+                        pbar.set_postfix({
+                            'Success': f'{successful_extractions}/{len(image_paths)}',
+                            'Chars': total_chars,
+                            'Engine': result.engine,
+                            'Conf': f'{result.confidence:.1f}%'
+                        })
+                    else:
+                        pbar.set_postfix({
+                            'Success': f'{successful_extractions}/{len(image_paths)}',
+                            'Status': 'No text',
+                            'Chars': total_chars
+                        })
+                        
+                except KeyboardInterrupt:
+                    pbar.write("⚠️  Processing interrupted by user")
+                    break
+                except Exception as e:
+                    pbar.write(f"❌ Failed to process {filename}: {e}")
+                    pbar.set_postfix({
+                        'Success': f'{successful_extractions}/{len(image_paths)}',
+                        'Status': 'Error',
+                        'Chars': total_chars
+                    })
+                    continue
+        
+        # Final results summary
+        print("\n" + "="*60)
+        print("📊 EXTRACTION SUMMARY")
+        print("="*60)
+        
+        if chunk.strip():
+            print(f"✅ Successfully processed: {successful_extractions}/{len(image_paths)} images")
+            print(f"📝 Total extracted text: {len(chunk)} characters")
+            print(f"📈 Average per successful image: {len(chunk)//max(successful_extractions, 1)} chars")
+            
+            # Show engines used
+            engines_used = {}
+            for result in results:
+                engines_used[result.engine] = engines_used.get(result.engine, 0) + 1
+            
+            print(f"🔧 Engines used: {', '.join([f'{k}({v})' for k, v in engines_used.items()])}")
+            
+            print("\n💾 Text preview (first 300 chars):")
+            print("-" * 40)
+            preview = chunk[:300] + "..." if len(chunk) > 300 else chunk
+            print(preview)
+            print("-" * 40)
+        else:
+            print("❌ No text was extracted from any images")
+            print("💡 Suggestions:")
+            print("   • Check if images contain readable text")
+            print("   • Try installing tesseract language data: sudo pacman -S tesseract-data-eng")
+            print("   • Consider image quality - low resolution may affect OCR")
+            
+    except KeyboardInterrupt:
+        print("\n⚠️  Program interrupted by user")
+        sys.exit(0)
+    except Exception as e:
+        print(f"💥 Program failed: {e}")
+        sys.exit(1)

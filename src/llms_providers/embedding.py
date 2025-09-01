@@ -140,9 +140,6 @@ class HuggingFaceModel:
                 elif not isinstance(embedding, np.ndarray):
                     embedding = np.array(embedding)
 
-            preview_text = texts if isinstance(texts, str) else texts[0]
-            logger.debug("Generated embedding for text preview: %s...", preview_text[:50])
-
             return embedding
 
         except Exception as e:  # pylint: disable=broad-exception-caught

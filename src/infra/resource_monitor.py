@@ -89,10 +89,10 @@ class ResourceMonitor:
         """
         self.app_settings: Settings = get_settings()
 
-        self.cpu_threshold: float = self.app_settings.CPU_THRESHOLD
-        self.memory_threshold: float = self.app_settings.MEMORY_THRESHOLD
-        self.disk_threshold: float = self.app_settings.DISK_THRESHOLD
-        self.gpu_threshold: float = self.app_settings.GPUs_THRESHOLD
+        self.cpu_threshold: float = self.app_settings.MONITOR_CPU_THRESHOLD
+        self.memory_threshold: float = self.app_settings.MONITOR_MEMORY_THRESHOLD
+        self.disk_threshold: float = self.app_settings.MONITOR_DISK_THRESHOLD
+        self.gpu_threshold: float = self.app_settings.MONITOR_GPU_THRESHOLD
         self.gpu_available: bool = getattr(self.app_settings, "GPU_AVAILABLE", False)
 
     def check_cpu_usage(self) -> Dict[str, Union[float, str]]:
@@ -196,7 +196,7 @@ class ResourceMonitor:
         """
         Continuously monitor system resources at configured intervals.
         """
-        interval = self.app_settings.MONITOR_INTERVAL
+        interval = self.app_settings.MONITOR_HEALTH_CHECK_INTERVAL_SEC
         logger.info("Starting system resource monitoring (interval: %d sec)...", interval)
 
         try:

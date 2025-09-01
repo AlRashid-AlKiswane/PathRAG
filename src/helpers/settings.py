@@ -57,6 +57,58 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+    
+    # Center
+    CENTER_MAX_WORKERS: int = Field(2, env="DEV_MAX_WORKERS")
+
+    # -----------------------
+    # Development Environment
+    # -----------------------
+    DEV_DEBUG_MODE: bool = Field(True, env="DEV_DEBUG_MODE")
+    DEV_MAX_WORKERS: int = Field(2, env="DEV_MAX_WORKERS")
+    DEV_BATCH_SIZE: int = Field(500, env="DEV_BATCH_SIZE")
+    DEV_CACHE_SIZE_MB: int = Field(100, env="DEV_CACHE_SIZE_MB")
+    DEV_MEMORY_LIMIT_GB: float = Field(2.0, env="DEV_MEMORY_LIMIT_GB")
+    DEV_MAX_GRAPH_NODES: int = Field(10000, env="DEV_MAX_GRAPH_NODES")
+    DEV_CHECKPOINT_INTERVAL_DOCS: int = Field(1000, env="DEV_CHECKPOINT_INTERVAL_DOCS")
+    DEV_ENABLE_PROFILING: bool = Field(True, env="DEV_ENABLE_PROFILING")
+    
+    # New required fields
+    DEV_DECAY_RATE: float = Field(0.8, env="DEV_DECAY_RATE")
+    DEV_PRUNE_THRESH: float = Field(0.5, env="DEV_PRUNE_THRESH")
+    DEV_SIM_THRESHOLD: float = Field(0.7, env="DEV_SIM_THRESHOLD")
+
+    # -----------------------
+    # Production Environment
+    # -----------------------
+    PROD_DEBUG_MODE: bool = Field(False, env="PROD_DEBUG_MODE")
+    PROD_MAX_WORKERS: int = Field(8, env="PROD_MAX_WORKERS")
+    PROD_BATCH_SIZE: int = Field(2000, env="PROD_BATCH_SIZE")
+    PROD_CACHE_SIZE_MB: int = Field(1000, env="PROD_CACHE_SIZE_MB")
+    PROD_MEMORY_LIMIT_GB: float = Field(16.0, env="PROD_MEMORY_LIMIT_GB")
+    PROD_MAX_GRAPH_NODES: int = Field(100000, env="PROD_MAX_GRAPH_NODES")
+    PROD_CHECKPOINT_INTERVAL_DOCS: int = Field(5000, env="PROD_CHECKPOINT_INTERVAL_DOCS")
+    PROD_ENABLE_PROFILING: bool = Field(False, env="PROD_ENABLE_PROFILING")
+
+    PROD_DECAY_RATE: float = Field(0.9, env="PROD_DECAY_RATE")
+    PROD_PRUNE_THRESH: float = Field(0.6, env="PROD_PRUNE_THRESH")
+    PROD_SIM_THRESHOLD: float = Field(0.75, env="PROD_SIM_THRESHOLD")
+
+    # -----------------------
+    # Memory-Constrained Environment
+    # -----------------------
+    MEMORY_MAX_WORKERS: int = Field(2, env="MEMORY_MAX_WORKERS")
+    MEMORY_BATCH_SIZE: int = Field(200, env="MEMORY_BATCH_SIZE")
+    MEMORY_CACHE_SIZE_MB: int = Field(50, env="MEMORY_CACHE_SIZE_MB")
+    MEMORY_MEMORY_LIMIT_GB: float = Field(1.0, env="MEMORY_MEMORY_LIMIT_GB")
+    MEMORY_MAX_GRAPH_NODES: int = Field(5000, env="MEMORY_MAX_GRAPH_NODES")
+    MEMORY_CHECKPOINT_INTERVAL_DOCS: int = Field(500, env="MEMORY_CHECKPOINT_INTERVAL_DOCS")
+    MEMORY_ENABLE_SWAP: bool = Field(True, env="MEMORY_ENABLE_SWAP")
+
+    MEMORY_DECAY_RATE: float = Field(0.7, env="MEMORY_DECAY_RATE")
+    MEMORY_PRUNE_THRESH: float = Field(0.4, env="MEMORY_PRUNE_THRESH")
+    MEMORY_SIM_THRESHOLD: float = Field(0.65, env="MEMORY_SIM_THRESHOLD")
+
 
     # -----------------------------
     # Mongo / Database
@@ -65,6 +117,7 @@ class Settings(BaseSettings):
     MONGODB_LOCAL_URI: str = Field("mongodb://localhost:27017/pathrag_ncec", env="MONGODB_LOCAL_URI")
     MONGODB_REMOTE_URI: Optional[str] = Field(None, env="MONGODB_REMOTE_URI")
     MONGODB_ENABLE_WEB_UI: bool = Field(True, env="MONGODB_ENABLE_WEB_UI")
+    MONGODB_NAME: str = Field(..., env="MONGODB_NAME")
 
     # -----------------------------
     # Document storage / uploads
@@ -97,6 +150,7 @@ class Settings(BaseSettings):
     OLLAMA_EMBEDDING_MODEL: Optional[str] = Field(None, env="OLLAMA_EMBEDDING_MODEL")
     OLLAMA_CHAT_MODEL: Optional[str] = Field(None, env="OLLAMA_CHAT_MODEL")
 
+    BUILD_GRAPH_METHOD: str = Field(..., env="BUILD_GRAPH_METHOD")
     # -----------------------------
     # Generation / Inference
     # -----------------------------
@@ -182,10 +236,15 @@ class Settings(BaseSettings):
             return bool(v)
         return parsed
 
-    class Config:
-        # keep for compatibility if any code imports .Config
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    # -----------------------------
+    # Pydantic Settings meta
+    # -----------------------------
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
 
 def get_settings(env_file: Optional[str] = None) -> Settings:
     """

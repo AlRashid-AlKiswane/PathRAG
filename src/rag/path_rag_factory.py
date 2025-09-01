@@ -30,14 +30,14 @@ class PathRAGFactory:
         config = PathRAGConfig(
             max_workers=settings.DEV_MAX_WORKERS,
             batch_size=settings.DEV_BATCH_SIZE,
-            cache_size=settings.DEV_CACHE_SIZE,
+            cache_size=settings.DEV_CACHE_SIZE_MB,
             memory_limit_gb=settings.DEV_MEMORY_LIMIT_GB,
-            max_graph_size=settings.DEV_MAX_GRAPH_SIZE,
-            decay_rate=settings.DEV_DECAY_RATE,
-            prune_thresh=settings.DEV_PRUNE_THRESH,
-            sim_threshold=settings.DEV_SIM_THRESHOLD,
-            checkpoint_interval=settings.DEV_CHECKPOINT_INTERVAL,
-            enable_caching=settings.DEV_ENABLE_CACHING,
+            max_graph_size=settings.DEV_MAX_GRAPH_NODES,
+            decay_rate=getattr(settings, "DEV_DECAY_RATE", 0.8),
+            prune_thresh=getattr(settings, "DEV_PRUNE_THRESH", 0.5),
+            sim_threshold=getattr(settings, "DEV_SIM_THRESHOLD", 0.7),
+            checkpoint_interval=settings.DEV_CHECKPOINT_INTERVAL_DOCS,
+            enable_caching=settings.DEV_ENABLE_PROFILING,
         )
         return PathRAG(embedding_model, config)
 
@@ -47,14 +47,14 @@ class PathRAGFactory:
         config = PathRAGConfig(
             max_workers=settings.PROD_MAX_WORKERS,
             batch_size=settings.PROD_BATCH_SIZE,
-            cache_size=settings.PROD_CACHE_SIZE,
+            cache_size=settings.PROD_CACHE_SIZE_MB,
             memory_limit_gb=settings.PROD_MEMORY_LIMIT_GB,
-            max_graph_size=settings.PROD_MAX_GRAPH_SIZE,
-            decay_rate=settings.PROD_DECAY_RATE,
-            prune_thresh=settings.PROD_PRUNE_THRESH,
-            sim_threshold=settings.PROD_SIM_THRESHOLD,
-            checkpoint_interval=settings.PROD_CHECKPOINT_INTERVAL,
-            enable_caching=settings.PROD_ENABLE_CACHING,
+            max_graph_size=settings.PROD_MAX_GRAPH_NODES,
+            decay_rate=getattr(settings, "PROD_DECAY_RATE", 0.9),
+            prune_thresh=getattr(settings, "PROD_PRUNE_THRESH", 0.6),
+            sim_threshold=getattr(settings, "PROD_SIM_THRESHOLD", 0.75),
+            checkpoint_interval=settings.PROD_CHECKPOINT_INTERVAL_DOCS,
+            enable_caching=settings.PROD_ENABLE_PROFILING,
         )
         return PathRAG(embedding_model, config)
 
@@ -64,14 +64,14 @@ class PathRAGFactory:
         config = PathRAGConfig(
             max_workers=settings.MEMORY_MAX_WORKERS,
             batch_size=settings.MEMORY_BATCH_SIZE,
-            cache_size=settings.MEMORY_CACHE_SIZE,
+            cache_size=settings.MEMORY_CACHE_SIZE_MB,
             memory_limit_gb=settings.MEMORY_MEMORY_LIMIT_GB,
-            max_graph_size=settings.MEMORY_MAX_GRAPH_SIZE,
-            decay_rate=settings.MEMORY_DECAY_RATE,
-            prune_thresh=settings.MEMORY_PRUNE_THRESH,
-            sim_threshold=settings.MEMORY_SIM_THRESHOLD,
-            checkpoint_interval=settings.MEMORY_CHECKPOINT_INTERVAL,
-            enable_caching=settings.MEMORY_ENABLE_CACHING,
+            max_graph_size=settings.MEMORY_MAX_GRAPH_NODES,
+            decay_rate=getattr(settings, "MEMORY_DECAY_RATE", 0.7),
+            prune_thresh=getattr(settings, "MEMORY_PRUNE_THRESH", 0.4),
+            sim_threshold=getattr(settings, "MEMORY_SIM_THRESHOLD", 0.65),
+            checkpoint_interval=settings.MEMORY_CHECKPOINT_INTERVAL_DOCS,
+            enable_caching=not settings.MEMORY_ENABLE_SWAP,
         )
         return PathRAG(embedding_model, config)
 

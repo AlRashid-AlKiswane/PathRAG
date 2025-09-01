@@ -111,8 +111,8 @@ def chunking_docs(file_path: Optional[str] = None) -> Dict[str, Any]:
 
     try:
         splitter = RecursiveCharacterTextSplitter(
-            chunk_size=app_settings.CHUNKS_SIZE,
-            chunk_overlap=app_settings.CHUNKS_OVERLAP,
+            chunk_size=app_settings.TEXT_CHUNK_SIZE,
+            chunk_overlap=app_settings.TEXT_CHUNK_OVERLAP,
         )
         chunks = splitter.split_documents(documents)
         logger.info("Successfully split document into %d chunks.", len(chunks))

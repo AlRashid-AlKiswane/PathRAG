@@ -17,7 +17,7 @@ This module centralizes route imports to simplify app router registration.
 """
 
 from .upload_files import upload_route
-from .chunking_docs import chunking_route
+from .chunking_docs import chunking_router
 from .embedding_chunks import embedding_chunks_route
 from .live_retrevel import live_retrieval_route
 from .storage_management import storage_management_route
@@ -28,7 +28,7 @@ from .route_chunker_md_files import md_chunker_routes
 from .user_file import user_file_route
 __all__ = [
     "upload_route",
-    "chunking_route",
+    "chunking_router",
     "embedding_chunks_route",
     "live_retrieval_route",
     "storage_management_route",
