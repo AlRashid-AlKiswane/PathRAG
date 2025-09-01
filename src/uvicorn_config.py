@@ -84,7 +84,7 @@ if __name__ == "__main__":
         app="main:app",
         host=cfg.UVICORN_HOST,
         port=cfg.UVICORN_PORT,
-        workers= 1, # cfg.UVICORN_WORKERS,
+        workers= cfg.UVICORN_WORKERS,
         reload=cfg.UVICORN_RELOAD,
         log_level=cfg.UVICORN_LOG_LEVEL,
         proxy_headers=cfg.UVICORN_PROXY_HEADERS,

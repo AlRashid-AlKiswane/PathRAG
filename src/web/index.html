@@ -3,196 +3,800 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🌌 PathRAG Knowledge Graph</title>
+  <title>PathRAG Knowledge Graph</title>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     :root {
-      --bg-dark: #121212;
-      --card-dark: #1e1e1e;
-      --text-light: #e0e0e0;
-      --border: #333;
-      --highlight: #00bcd4;
+      --primary: #6366f1;
+      --primary-hover: #5855eb;
+      --secondary: #10b981;
+      --accent: #f59e0b;
+      --danger: #ef4444;
+      --bg-primary: #0f0f23;
+      --bg-secondary: #1a1a3e;
+      --bg-card: #252552;
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --border: #374151;
+      --border-light: #4b5563;
+      --shadow: rgba(0, 0, 0, 0.25);
+      --shadow-lg: rgba(0, 0, 0, 0.4);
+      --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: var(--bg-dark);
-      color: var(--text-light);
-      margin: 0;
-      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
     }
 
-    .container {
-      max-width: 1200px;
+    .app-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .header-content {
+      max-width: 1400px;
       margin: 0 auto;
-      padding: 30px 20px;
+      padding: 0 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    h1 {
-      text-align: center;
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--gradient);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stats {
+      display: flex;
+      gap: 2rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
       font-weight: 600;
-      font-size: 2rem;
-      color: var(--highlight);
+      color: var(--text-primary);
+    }
+
+    .main-content {
+      flex: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      width: 100%;
+    }
+
+    .control-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .node-count {
+      background: var(--primary);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: var(--primary);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: var(--primary);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+      border-color: var(--border-light);
+    }
+
+    .graph-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px var(--shadow-lg);
+      position: relative;
+    }
+
+    .graph-wrapper {
+      position: relative;
     }
 
     #graph {
-      height: 700px;
+      height: 600px;
       width: 100%;
-      background-color: var(--card-dark);
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      background: transparent;
     }
 
-    .controls {
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    input[type="range"] {
-      width: 300px;
-    }
-
-    button {
-      background-color: var(--highlight);
-      border: none;
-      color: white;
-      padding: 8px 14px;
-      font-size: 14px;
-      margin-left: 10px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #019caf;
-    }
-
-    #loading {
-      text-align: center;
-      margin: 10px 0;
-      color: #aaa;
-      font-style: italic;
-    }
-
-    #nodeInfoBox {
-      display: none;
+    .loading-overlay {
       position: absolute;
-      top: 120px;
-      left: 40px;
-      width: 350px;
-      background-color: var(--card-dark);
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(37, 37, 82, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .node-info-panel {
+      position: fixed;
+      top: 50%;
+      right: -400px;
+      width: 380px;
+      max-height: 80vh;
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      padding: 15px;
-      z-index: 9999;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      border-radius: 16px;
+      box-shadow: 0 12px 48px var(--shadow-lg);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateY(-50%);
+      z-index: 1000;
+      overflow: hidden;
+    }
+
+    .node-info-panel.show {
+      right: 2rem;
+    }
+
+    .node-info-header {
+      background: var(--gradient);
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .node-info-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .node-info-subtitle {
+      opacity: 0.9;
+      font-size: 0.875rem;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      width: 32px;
+      height: 32px;
       border-radius: 8px;
-      color: var(--text-light);
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    #nodeInfoBox h3 {
-      margin-top: 0;
-      color: var(--highlight);
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
     }
 
-    pre {
-      background-color: #212121;
-      color: #ccc;
-      padding: 10px;
-      border-radius: 5px;
+    .node-info-content {
+      padding: 1.5rem;
+      max-height: calc(80vh - 120px);
+      overflow-y: auto;
+    }
+
+    .info-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .info-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .info-value {
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .metadata-block {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
       overflow-x: auto;
-      font-size: 13px;
+      white-space: pre-wrap;
     }
 
-    table {
-      width: 100%;
-      font-size: 14px;
-      border-collapse: collapse;
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
     }
 
-    td {
-      padding: 5px 0;
-      vertical-align: top;
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
     }
 
-    td:first-child {
-      font-weight: bold;
-      color: #bbb;
-      width: 80px;
+    @media (max-width: 768px) {
+      .header-content {
+        padding: 0 1rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .stats {
+        gap: 1rem;
+      }
+
+      .main-content {
+        padding: 1rem;
+      }
+
+      .controls-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .node-info-panel {
+        width: calc(100% - 2rem);
+        right: -100%;
+      }
+
+      .node-info-panel.show {
+        right: 1rem;
+      }
+
+      #graph {
+        height: 500px;
+      }
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-light);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🌌 PathRAG Knowledge Graph</h1>
-    <div id="loading">Loading graph...</div>
-    <div id="graph"></div>
+  <div class="app-container">
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <div class="logo-icon">🧠</div>
+          <div class="logo-text">PathRAG Knowledge Graph</div>
+        </div>
+        <div class="stats">
+          <div class="stat-item">
+            <div class="stat-value" id="nodeCount">0</div>
+            <div>Nodes</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="edgeCount">0</div>
+            <div>Edges</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="clusterCount">0</div>
+            <div>Clusters</div>
+          </div>
+        </div>
+      </div>
+    </header>
 
-    <div class="controls">
-      <label>Nodes: <span id="nodeValue">100</span></label><br/>
-      <input type="range" id="nodeSlider" min="10" max="10000" value="100"/>
-      <button onclick="refreshGraph()">Refresh</button>
-      <button id="toggleLinesBtn" onclick="toggleLines()">Show Lines</button>
+    <main class="main-content">
+      <div class="control-panel">
+        <div class="controls-grid">
+          <div class="slider-container">
+            <div class="slider-label">
+              <span>Maximum Nodes</span>
+              <span class="node-count" id="nodeValue">100</span>
+            </div>
+            <input type="range" class="slider" id="nodeSlider" min="10" max="100000" value="100" step="10">
+          </div>
+          <button class="btn" onclick="refreshGraph()">
+            <span>🔄</span>
+            Refresh Graph
+          </button>
+          <button class="btn btn-secondary" id="toggleLinesBtn" onclick="toggleLines()">
+            <span>🔗</span>
+            Show Connections
+          </button>
+        </div>
+      </div>
+
+      <div class="graph-container">
+        <div class="graph-wrapper">
+          <div id="graph"></div>
+          <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading knowledge graph...</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div class="node-info-panel" id="nodeInfoPanel">
+      <div class="node-info-header">
+        <div class="node-info-title" id="nodeTitle">Node Information</div>
+        <div class="node-info-subtitle" id="nodeSubtitle">Click on a node to explore</div>
+        <button class="close-btn" onclick="closeNodeInfo()">×</button>
+      </div>
+      <div class="node-info-content" id="nodeInfoContent">
+        <div class="empty-state">
+          <div class="empty-state-icon">🎯</div>
+          <p>Select a node in the graph to view detailed information</p>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div id="nodeInfoBox"></div>
-
   <script>
     const graphDiv = document.getElementById("graph");
-    const loading = document.getElementById("loading");
+    const loadingOverlay = document.getElementById("loadingOverlay");
     const slider = document.getElementById("nodeSlider");
     const valueLabel = document.getElementById("nodeValue");
-    const infoBox = document.getElementById("nodeInfoBox");
+    const infoPanel = document.getElementById("nodeInfoPanel");
     const toggleBtn = document.getElementById("toggleLinesBtn");
+    
+    // Stats elements
+    const nodeCountEl = document.getElementById("nodeCount");
+    const edgeCountEl = document.getElementById("edgeCount");
+    const clusterCountEl = document.getElementById("clusterCount");
 
     let originalGraphData = [];
     let linesVisible = false;
+    let currentStats = { nodes: 0, edges: 0, clusters: 0 };
 
-    slider.addEventListener("input", () => {
-      valueLabel.textContent = slider.value;
+    // Initialize slider
+    slider.addEventListener("input", (e) => {
+      valueLabel.textContent = e.target.value;
     });
 
-    async function loadGraph(maxNodes = 1000000) {
-      loading.style.display = "block";
-      graphDiv.style.display = "none";
-      infoBox.style.display = "none";
-      infoBox.innerHTML = "";
+    function updateStats(data) {
+      let nodeCount = 0;
+      let edgeCount = 0;
+      let clusterCount = 0;
+
+      data.forEach(trace => {
+        if (trace.mode === "markers") {
+          nodeCount += trace.x ? trace.x.length : 0;
+          clusterCount++;
+        } else if (trace.mode === "lines") {
+          edgeCount++;
+        }
+      });
+
+      currentStats = { nodes: nodeCount, edges: edgeCount, clusters: clusterCount };
+      
+      // Animate counter updates
+      animateValue(nodeCountEl, 0, nodeCount, 800);
+      animateValue(edgeCountEl, 0, edgeCount, 800);
+      animateValue(clusterCountEl, 0, clusterCount, 800);
+    }
+
+    function animateValue(element, start, end, duration) {
+      const range = end - start;
+      const increment = range / (duration / 16);
+      let current = start;
+      
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= end) {
+          element.textContent = Math.floor(end);
+          clearInterval(timer);
+        } else {
+          element.textContent = Math.floor(current);
+        }
+      }, 16);
+    }
+
+    async function loadGraph(maxNodes = 100) {
+      showLoading(true);
+      closeNodeInfo();
 
       try {
-        const res = await fetch(`/graph?max_nodes=${maxNodes}`);
-        const graphResponse = await res.json();
-        originalGraphData = colorizeNodes(graphResponse.data);  // 🎨 Add colors
+        // Call your actual API endpoint
+        const response = await fetch(`/graph?max_nodes=${maxNodes}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const graphResponse = await response.json();
+        
+        // The API returns Plotly JSON format with data and layout
+        originalGraphData = colorizeNodes(graphResponse.data || graphResponse);
 
-        for (let trace of originalGraphData) {
+        // Hide lines by default
+        originalGraphData.forEach(trace => {
           if (trace.mode === "lines") {
             trace.visible = false;
           }
-        }
+        });
 
-        await Plotly.newPlot("graph", originalGraphData, graphResponse.layout, { responsive: true });
+        // Use the layout from API or create a modern one
+        const layout = graphResponse.layout || {
+          paper_bgcolor: 'transparent',
+          plot_bgcolor: 'transparent',
+          font: { 
+            color: '#ffffff', 
+            family: 'Inter, sans-serif',
+            size: 12
+          },
+          showlegend: false,
+          margin: { l: 20, r: 20, t: 20, b: 20 },
+          xaxis: { 
+            showgrid: false, 
+            zeroline: false, 
+            showticklabels: false,
+            showline: false
+          },
+          yaxis: { 
+            showgrid: false, 
+            zeroline: false, 
+            showticklabels: false,
+            showline: false
+          },
+          hovermode: 'closest'
+        };
+
+        // Ensure modern styling
+        layout.paper_bgcolor = 'transparent';
+        layout.plot_bgcolor = 'transparent';
+        layout.font = { 
+          color: '#ffffff', 
+          family: 'Inter, sans-serif',
+          size: 12
+        };
+
+        await Plotly.newPlot("graph", originalGraphData, layout, { 
+          responsive: true,
+          displayModeBar: false
+        });
+
         graphDiv.on('plotly_click', handlePlotClick);
-
-        loading.style.display = "none";
-        graphDiv.style.display = "block";
+        updateStats(originalGraphData);
+        
       } catch (err) {
-        loading.textContent = "Error loading graph: " + err.message;
-        console.error(err);
+        console.error('Error loading graph:', err);
+        if (err.message.includes('404')) {
+          showError('Graph is empty or not initialized. Please ensure your PathRAG system has processed some data.');
+        } else if (err.message.includes('500')) {
+          showError('Server error occurred while generating the graph visualization.');
+        } else {
+          showError(`Failed to load graph data: ${err.message}`);
+        }
+      } finally {
+        showLoading(false);
       }
     }
 
+    function generateMockGraphData(maxNodes) {
+      // This function is kept as a fallback but won't be used with real API
+      console.warn("Using mock data - this should only happen if API is unavailable");
+      
+      const nodeCount = Math.min(maxNodes, 1000);
+      const clusterCount = Math.max(1, Math.floor(nodeCount / 20));
+      const traces = [];
+
+      // Generate node clusters
+      for (let cluster = 0; cluster < clusterCount; cluster++) {
+        const nodesInCluster = Math.floor(nodeCount / clusterCount);
+        const centerX = (Math.random() - 0.5) * 10;
+        const centerY = (Math.random() - 0.5) * 10;
+        
+        const x = [];
+        const y = [];
+        const text = [];
+        const ids = [];
+
+        for (let i = 0; i < nodesInCluster; i++) {
+          const nodeId = `node_${cluster}_${i}`;
+          const angle = (i / nodesInCluster) * 2 * Math.PI;
+          const radius = Math.random() * 2 + 0.5;
+          
+          x.push(centerX + radius * Math.cos(angle));
+          y.push(centerY + radius * Math.sin(angle));
+          text.push(`Node: ${nodeId}<br>Cluster: ${cluster}<br>Connections: ${Math.floor(Math.random() * 10) + 1}`);
+          ids.push(nodeId);
+        }
+
+        traces.push({
+          x: x,
+          y: y,
+          text: text,
+          ids: ids,
+          mode: 'markers',
+          type: 'scatter',
+          marker: {
+            size: Array(nodesInCluster).fill(0).map(() => Math.random() * 15 + 8),
+            opacity: 0.8,
+            line: {
+              width: 2,
+              color: 'rgba(255, 255, 255, 0.3)'
+            }
+          },
+          hovertemplate: '<b>%{text}</b><extra></extra>',
+          name: `Cluster ${cluster}`
+        });
+
+        // Generate some edges
+        if (Math.random() > 0.3) {
+          const edgeX = [];
+          const edgeY = [];
+          
+          for (let i = 0; i < Math.min(5, nodesInCluster - 1); i++) {
+            const fromIdx = Math.floor(Math.random() * nodesInCluster);
+            const toIdx = Math.floor(Math.random() * nodesInCluster);
+            
+            if (fromIdx !== toIdx) {
+              edgeX.push(x[fromIdx], x[toIdx], null);
+              edgeY.push(y[fromIdx], y[toIdx], null);
+            }
+          }
+          
+          traces.push({
+            x: edgeX,
+            y: edgeY,
+            mode: 'lines',
+            type: 'scatter',
+            line: {
+              width: 1,
+              color: 'rgba(255, 255, 255, 0.2)'
+            },
+            hoverinfo: 'none',
+            name: `Cluster ${cluster} Edges`
+          });
+        }
+      }
+
+      return traces;
+    }
+
+    function colorizeNodes(data) {
+      const colors = [
+        '#6366f1', '#10b981', '#f59e0b', '#ef4444', 
+        '#8b5cf6', '#06b6d4', '#f97316', '#84cc16',
+        '#ec4899', '#14b8a6', '#f43f5e', '#22d3ee'
+      ];
+      
+      let colorIndex = 0;
+      
+      return data.map(trace => {
+        if (trace.mode === "markers") {
+          trace.marker = trace.marker || {};
+          trace.marker.color = colors[colorIndex % colors.length];
+          colorIndex++;
+        }
+        return trace;
+      });
+    }
+
+    function showLoading(show) {
+      loadingOverlay.style.display = show ? 'flex' : 'none';
+    }
+
+    function showError(message) {
+      loadingOverlay.innerHTML = `
+        <div style="color: var(--danger); text-align: center;">
+          <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
+          <div>${message}</div>
+        </div>
+      `;
+      loadingOverlay.style.display = 'flex';
+    }
+
     function refreshGraph() {
-      loadGraph(slider.value);
+      loadGraph(parseInt(slider.value));
     }
 
     function toggleLines() {
       linesVisible = !linesVisible;
-      for (let trace of originalGraphData) {
+      
+      originalGraphData.forEach(trace => {
         if (trace.mode === "lines") {
           trace.visible = linesVisible;
         }
-      }
-      toggleBtn.textContent = linesVisible ? "Hide Lines" : "Show Lines";
-      Plotly.react("graph", originalGraphData, {}, { responsive: true });
+      });
+      
+      toggleBtn.innerHTML = linesVisible 
+        ? '<span>🔗</span> Hide Connections' 
+        : '<span>🔗</span> Show Connections';
+      
+      Plotly.react("graph", originalGraphData);
     }
 
     async function handlePlotClick(eventData) {
@@ -208,71 +812,97 @@
         }
       }
 
-      if (!nodeId) {
-        infoBox.innerHTML = `<p style="color:gray;">Node ID not found in label.</p>`;
-        infoBox.style.display = "block";
-        return;
-      }
+      if (!nodeId) return;
 
-      // Show only edges connected to this node
+      // Highlight connected edges if visible
       if (linesVisible) {
-        for (let trace of originalGraphData) {
+        originalGraphData.forEach(trace => {
           if (trace.mode === "lines") {
             trace.visible = trace.name && trace.name.includes(`(${nodeId})`);
           }
-        }
-        await Plotly.react("graph", originalGraphData, {}, { responsive: true });
+        });
+        await Plotly.react("graph", originalGraphData);
       }
 
       try {
-        const res = await fetch(`/graph/node/${encodeURIComponent(nodeId)}`);
-        const nodeData = await res.json();
+        // Call your actual node info endpoint
+        const response = await fetch(`/graph/node/${encodeURIComponent(nodeId)}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const nodeData = await response.json();
 
         if (nodeData.error) {
-          infoBox.innerHTML = `<p style="color:red;">${nodeData.error}</p>`;
+          showNodeInfo({
+            node_id: nodeId,
+            label: `Node ${nodeId}`,
+            text: `Error: ${nodeData.error}`,
+            metadata: {}
+          });
         } else {
-          infoBox.innerHTML = `
-            <h3>🧠 Node Info</h3>
-            <table>
-              <tr><td>ID</td><td>${nodeData.node_id}</td></tr>
-              <tr><td>Label</td><td>${nodeData.label}</td></tr>
-              <tr><td>Text</td><td>${nodeData.text}</td></tr>
-            </table>
-            <pre>${JSON.stringify(nodeData.metadata, null, 2)}</pre>
-          `;
+          showNodeInfo(nodeData);
         }
 
-        infoBox.style.display = "block";
       } catch (err) {
         console.error("Error fetching node data:", err);
-        infoBox.innerHTML = `<p style="color:red;">Error loading node data: ${err.message}</p>`;
-        infoBox.style.display = "block";
+        // Show basic node info even if API call fails
+        showNodeInfo({
+          node_id: nodeId,
+          label: `Node ${nodeId}`,
+          text: `Unable to load detailed information: ${err.message}`,
+          metadata: {
+            error: "Failed to fetch node details",
+            timestamp: new Date().toISOString()
+          }
+        });
       }
     }
 
-    // Hide info box when clicking outside
-    document.addEventListener("click", (event) => {
-      if (!infoBox.contains(event.target) && !graphDiv.contains(event.target)) {
-        infoBox.style.display = "none";
-      }
+    function showNodeInfo(nodeData) {
+      const titleEl = document.getElementById("nodeTitle");
+      const subtitleEl = document.getElementById("nodeSubtitle");
+      const contentEl = document.getElementById("nodeInfoContent");
+
+      titleEl.textContent = nodeData.label || nodeData.node_id;
+      subtitleEl.textContent = `ID: ${nodeData.node_id}`;
+
+      contentEl.innerHTML = `
+        <div class="info-section">
+          <div class="info-label">Node ID</div>
+          <div class="info-value">${nodeData.node_id}</div>
+        </div>
+        
+        <div class="info-section">
+          <div class="info-label">Content</div>
+          <div class="info-value">${nodeData.text || 'No content available'}</div>
+        </div>
+        
+        <div class="info-section">
+          <div class="info-label">Metadata</div>
+          <div class="metadata-block">${JSON.stringify(nodeData.metadata || {}, null, 2)}</div>
+        </div>
+      `;
+
+      infoPanel.classList.add('show');
+    }
+
+    function closeNodeInfo() {
+      infoPanel.classList.remove('show');
+    }
+
+    // Initialize graph on load
+    window.addEventListener('load', () => {
+      loadGraph();
     });
 
-    // Assign random colors for multiple collections/categories
-    function colorizeNodes(data) {
-      const colors = ['#00BCD4', '#FFC107', '#FF5722', '#8BC34A', '#E91E63', '#9C27B0', '#03A9F4', '#FF9800'];
-      let colorIndex = 0;
-
-      return data.map(trace => {
-        if (trace.mode === "markers") {
-          trace.marker = trace.marker || {};
-          trace.marker.color = colors[colorIndex % colors.length];
-          colorIndex++;
-        }
-        return trace;
-      });
-    }
-
-    window.onload = () => loadGraph();
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      if (graphDiv.style.display !== 'none') {
+        Plotly.Plots.resize(graphDiv);
+      }
+    });
   </script>
 </body>
 </html>
