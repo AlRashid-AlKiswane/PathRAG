@@ -356,11 +356,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [FastAPI](https://fastapi.tiangolo.com/) for the web framework
 - [Ollama](https://ollama.ai/) for language model integration
 
-## 📞 Support
-
-For support and questions:
-- 📧 Email: support@pathrag.com
-- 🐛 Issues: [GitHub Issues](https://github.com/AlRashid-AlKiswane/AlRashid-Al-Kiswane)
 
 ---
 
