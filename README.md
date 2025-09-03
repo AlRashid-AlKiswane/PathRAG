@@ -171,9 +171,8 @@ python src/uvicorn_config.py
 ```
 
 ### Accessing the Interface
-- **Web UI**: http://0.0.0.0:8001/
-- **API Documentation**: http://0.0.0.0:8001/docs
-- **Health Check**: http://0.0.0.0:8001/health
+- **Web UI**: http://0.0.0.0:8000/
+- **API Documentation**: http://0.0.0.0:8000/docs
 
 ## 🔧 Graph Building Methods
 
@@ -211,40 +210,6 @@ BUILD_GRAPH_METHOD="knn"  # Change to your preferred method
    - Processing: Full OCR + text chunking (recommended)
 
 ## 📚 API Documentation
-
-### Core Endpoints
-
-#### Document Upload
-```http
-POST /api/v1/documents/upload
-Content-Type: multipart/form-data
-
-{
-  "file": [binary_file],
-  "processing_mode": "all",
-  "user_id": "optional_user_id"
-}
-```
-
-#### Query Documents
-```http
-POST /api/v1/query
-Content-Type: application/json
-
-{
-  "query": "Your question here",
-  "user_id": "optional_user_id",
-  "max_results": 10
-}
-```
-
-#### Health Check
-```http
-GET /health
-```
-
-For complete API documentation, visit: http://0.0.0.0:8001/docs
-
 ## 📁 Project Structure
 
 ```
