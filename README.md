@@ -213,26 +213,160 @@ BUILD_GRAPH_METHOD="knn"  # Change to your preferred method
 ## 📁 Project Structure
 
 ```
-pathrag/
-├── src/
-│   ├── uvicorn_config.py      # Application entry point
-│   ├── api/                   # API endpoints
-│   ├── core/                  # Core processing logic
-│   └── models/                # Data models
-├── assets/
-│   └── docs/                  # User uploaded documents
-├── extracted_images/          # PDF image extractions
-├── pathrag_data/
-│   ├── user_id/              # Personal user graphs
-│   └── checkpoints/          # System checkpoints
-├── storage/
-│   ├── documents/            # Document storage
-│   ├── temp/                 # Temporary files
-│   └── backups/              # Backup files
-├── logs/                     # Application logs
-├── .env                      # Main configuration
-├── .uvicorn.env             # Server configuration
-└── requirements.txt         # Python dependencies
+src
+ ┣ __pycache__
+ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┣ dependencies.cpython-313.pyc
+ ┃ ┗ main.cpython-313.pyc
+ ┣ controllers
+ ┃ ┣ __pycache__
+ ┃ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┃ ┣ chunking_documents.cpython-313.pyc
+ ┃ ┃ ┣ ex_images_pdf.cpython-313.pyc
+ ┃ ┃ ┣ life_span.cpython-313.pyc
+ ┃ ┃ ┣ md_files_chunking.cpython-313.pyc
+ ┃ ┃ ┣ ocr.cpython-313.pyc
+ ┃ ┃ ┣ text_operation.cpython-313.pyc
+ ┃ ┃ ┗ unique_filename_generator.cpython-313.pyc
+ ┃ ┣ __init__.py
+ ┃ ┣ chunking_documents.py
+ ┃ ┣ ex_images_pdf.py
+ ┃ ┣ md_files_chunking.py
+ ┃ ┣ ocr.py
+ ┃ ┣ ocr_handon.py
+ ┃ ┣ text_operation.py
+ ┃ ┗ unique_filename_generator.py
+ ┣ helpers
+ ┃ ┣ __pycache__
+ ┃ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┃ ┗ settings.cpython-313.pyc
+ ┃ ┣ __init__.py
+ ┃ ┗ settings.py
+ ┣ infra
+ ┃ ┣ __pycache__
+ ┃ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┃ ┣ logger.cpython-313.pyc
+ ┃ ┃ ┣ memory_monitor.cpython-313.pyc
+ ┃ ┃ ┗ resource_monitor.cpython-313.pyc
+ ┃ ┣ __init__.py
+ ┃ ┣ logger.py
+ ┃ ┣ memory_monitor.py
+ ┃ ┗ resource_monitor.py
+ ┣ llms_providers
+ ┃ ┣ __pycache__
+ ┃ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┃ ┣ embedding.cpython-313.pyc
+ ┃ ┃ ┗ ollama_provider.cpython-313.pyc
+ ┃ ┣ __init__.py
+ ┃ ┣ embedding.py
+ ┃ ┗ ollama_provider.py
+ ┣ mongodb
+ ┃ ┣ __pycache__
+ ┃ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┃ ┣ graph_clear_collection.cpython-313.pyc
+ ┃ ┃ ┣ graph_collection.cpython-313.pyc
+ ┃ ┃ ┣ graph_engin.cpython-313.pyc
+ ┃ ┃ ┣ graph_insert.cpython-313.pyc
+ ┃ ┃ ┣ graph_pull_from_collection.cpython-313.pyc
+ ┃ ┃ ┣ mongodb_clear_collection.cpython-313.pyc
+ ┃ ┃ ┣ mongodb_collection.cpython-313.pyc
+ ┃ ┃ ┣ mongodb_engin.cpython-313.pyc
+ ┃ ┃ ┣ mongodb_insert.cpython-313.pyc
+ ┃ ┃ ┗ mongodb_pull_from_collection.cpython-313.pyc
+ ┃ ┣ __init__.py
+ ┃ ┣ mongodb_clear_collection.py
+ ┃ ┣ mongodb_collection.py
+ ┃ ┣ mongodb_engin.py
+ ┃ ┣ mongodb_insert.py
+ ┃ ┗ mongodb_pull_from_collection.py
+ ┣ prompt
+ ┃ ┣ __pycache__
+ ┃ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┃ ┗ prompt_templates.cpython-313.pyc
+ ┃ ┣ __init__.py
+ ┃ ┗ prompt_templates.py
+ ┣ rag
+ ┃ ┣ __pycache__
+ ┃ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┃ ┣ graph_cache.cpython-313.pyc
+ ┃ ┃ ┣ path_rag_factory.cpython-313.pyc
+ ┃ ┃ ┣ path_rag_metrics.cpython-313.pyc
+ ┃ ┃ ┣ pathrag.cpython-313.pyc
+ ┃ ┃ ┗ plot_graph.cpython-313.pyc
+ ┃ ┣ __init__.py
+ ┃ ┣ graph_cache.py
+ ┃ ┣ path_rag_factory.py
+ ┃ ┣ path_rag_metrics.py
+ ┃ ┣ pathrag.py
+ ┃ ┗ plot_graph.py
+ ┣ routes
+ ┃ ┣ __pycache__
+ ┃ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┃ ┣ build_path_rag.cpython-313.pyc
+ ┃ ┃ ┣ chatbot.cpython-313.pyc
+ ┃ ┃ ┣ chunking_docs.cpython-313.pyc
+ ┃ ┃ ┣ embedding_chunks.cpython-313.pyc
+ ┃ ┃ ┣ live_retrevel.cpython-313.pyc
+ ┃ ┃ ┣ resource_monitor.cpython-313.pyc
+ ┃ ┃ ┣ route_chunker_md_files.cpython-313.pyc
+ ┃ ┃ ┣ storage_management.cpython-313.pyc
+ ┃ ┃ ┣ upload_files.cpython-313.pyc
+ ┃ ┃ ┗ user_file.cpython-313.pyc
+ ┃ ┣ __init__.py
+ ┃ ┣ build_path_rag.py
+ ┃ ┣ chatbot.py
+ ┃ ┣ chunking_docs.py
+ ┃ ┣ embedding_chunks.py
+ ┃ ┣ live_retrevel.py
+ ┃ ┣ resource_monitor.py
+ ┃ ┣ route_chunker_md_files.py
+ ┃ ┣ storage_management.py
+ ┃ ┣ upload_files.py
+ ┃ ┗ user_file.py
+ ┣ schemas
+ ┃ ┣ __pycache__
+ ┃ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┃ ┣ build_method_graph.cpython-313.pyc
+ ┃ ┃ ┣ chatbot.cpython-313.pyc
+ ┃ ┃ ┣ checkpoint_meta_data.cpython-313.pyc
+ ┃ ┃ ┣ chunker_route.cpython-313.pyc
+ ┃ ┃ ┣ md_chunks.cpython-313.pyc
+ ┃ ┃ ┣ ocr_core.cpython-313.pyc
+ ┃ ┃ ┗ rag.cpython-313.pyc
+ ┃ ┣ __init__.py
+ ┃ ┣ build_method_graph.py
+ ┃ ┣ chatbot.py
+ ┃ ┣ checkpoint_meta_data.py
+ ┃ ┣ chunker_route.py
+ ┃ ┣ md_chunks.py
+ ┃ ┣ ocr_core.py
+ ┃ ┗ rag.py
+ ┣ utils
+ ┃ ┣ __pycache__
+ ┃ ┃ ┣ __init__.cpython-313.pyc
+ ┃ ┃ ┣ auto_save_manager.cpython-313.pyc
+ ┃ ┃ ┣ checkpoint.cpython-313.pyc
+ ┃ ┃ ┣ clean_md_contect.cpython-313.pyc
+ ┃ ┃ ┣ do_senitize.cpython-313.pyc
+ ┃ ┃ ┣ ollama_maneger.cpython-313.pyc
+ ┃ ┃ ┣ size_file.cpython-313.pyc
+ ┃ ┃ ┣ thred_safe_path_rag.cpython-313.pyc
+ ┃ ┃ ┗ timer_decorator.cpython-313.pyc
+ ┃ ┣ __init__.py
+ ┃ ┣ auto_save_manager.py
+ ┃ ┣ checkpoint.py
+ ┃ ┣ clean_md_contect.py
+ ┃ ┣ do_senitize.py
+ ┃ ┣ ollama_maneger.py
+ ┃ ┣ size_file.py
+ ┃ ┣ thred_safe_path_rag.py
+ ┃ ┗ timer_decorator.py
+ ┣ web
+ ┃ ┗ index.html
+ ┣ __init__.py
+ ┣ dependencies.py
+ ┣ main.py
+ ┗ uvicorn_config.py
 ```
 
 ## 🔧 Troubleshooting
