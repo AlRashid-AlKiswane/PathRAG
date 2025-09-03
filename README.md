@@ -115,23 +115,6 @@ pathrag_env\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Step 5: Setup Docker
-```bash
-# Start Docker service (Linux)
-sudo systemctl start docker
-sudo systemctl enable docker
-
-# Add user to docker group (Linux)
-sudo usermod -aG docker $USER
-
-# Start MongoDB container
-docker run -d \
-  --name pathrag-mongodb \
-  -p 27017:27017 \
-  -v pathrag_mongo_data:/data/db \
-  mongo:latest
-```
-
 ## ⚙️ Configuration
 
 PathRAG uses two environment files for configuration:
