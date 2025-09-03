@@ -394,7 +394,7 @@ sudo apt install tesseract-ocr tesseract-ocr-eng
 #### Port Already in Use
 ```bash
 # Check what's using the port
-sudo netstat -tulpn | grep 8001
+sudo netstat -tulpn | grep 8000
 
 # Kill the process or change port in .uvicorn.env
 ```
