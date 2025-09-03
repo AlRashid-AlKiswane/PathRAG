@@ -1,8 +1,5 @@
 # PathRAG - Advanced Document Processing & Retrieval System
 
-![PathRAG Logo](https://via.placeholder.com/800x200/1e40af/ffffff?text=PathRAG%20-%20Intelligent%20Document%20Processing)
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-4.4+-green.svg)](https://www.mongodb.com/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://www.docker.com/)
